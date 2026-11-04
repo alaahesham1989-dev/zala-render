@@ -80,6 +80,7 @@ jobs:
           E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
           for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+          aws s3 sync "s3://${R2_BUCKET}/render-input/${EP}" "media/cache/narration/${EP}" --endpoint-url "$E" --no-progress
 
       - name: Run
         run: |
