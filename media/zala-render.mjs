@@ -509,14 +509,14 @@ const loadPlaces = () => { try { return JSON.parse(fs.readFileSync(path.join(CON
 
 /** The director's pass: runs once per story, and again whenever its rules change. */
 async function stageDirector(script) {
-  if (script.directed === 4) return;
+  if (script.directed === 5) return;
   const id = script.id;
   const all = loadLibrary();
   const pics = usablePictures(id);
   const byId = new Map(all.map((i) => [i.id, i]));
   const live = pics.map((p) => byId.get(p.id)).filter(Boolean);
   const thumb = async (p) => { const file = await downloadImage(p.url); try { return file ? smallJpeg(file) : null; } catch { return null; } };
-  const tools = { thumb, log, sleep, keyFor, markSpent };
+  const tools = { thumb, log, sleep, keyFor, markSpent, places: loadPlaces() };
   const clean = await screenPictures(live, tools);
   fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
   if (clean.length < 20) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
@@ -1219,7 +1219,7 @@ function reelAss(reel, words, total) {
   const base = buildReelAss(words, { W: VW, H: VH, mode: 'short' });
   const styles = [
     style('Badge', 'Lato', 34, GOLD, { bold: -1, sp: 4, out: 3, sh: 1 }),
-    style('Hook', 'Anton', 104, WHITE, { sp: 1, out: 6, sh: 3 }),
+    style('Hook', 'Anton', 128, GOLD, { sp: 1, out: 7, sh: 3 }),
     style('HookSub', 'Lato', 40, GOLD, { bold: -1, out: 3, sh: 1 }),
     style('End1', 'Anton', 84, GOLD, { sp: 1, out: 4, sh: 2, an: 8 }),
     style('End2', 'Lato', 46, WHITE, { bold: -1, out: 3, sh: 1, an: 8 }),
@@ -1231,9 +1231,9 @@ function reelAss(reel, words, total) {
   // wrap the hook by hand: libass' balance is poor at this size
   const words2 = String(reel.hook || reel.title).toUpperCase().split(/\s+/);
   const rows = [];
-  for (const w of words2) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 17) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
+  for (const w of words2) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 14) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
   lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${aesc(rows.join('\n'))}`));
-  if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${276 + rows.length * 128})\\fad(200,250)}${aesc(reel.sub)}`));
+  if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${276 + rows.length * 156})\\fad(200,250)}${aesc(reel.sub)}`));
   const e0 = total - REEL_OUTRO + 0.3;
   lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1230)\\fad(250,0)}FULL STORY ON YOUTUBE`));
   lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1340)\\fad(250,0)}@zalavip  ·  zalavip.com`));
@@ -1257,8 +1257,9 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   reel.lines.forEach((f, i) => {
     const d = durationOf(voiceFileOf(script, f));
     const start = i === 0 ? 0 : t - 0.1;
-    const list = lineAssets(data, f.key);
-    const assets = list.length ? list : [lastAsset];
+    const list = lineAssets(data, f.key).filter((a) => !a.card);
+    const anyPicture = () => reel.lines.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card) || tl.flat.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card);
+    const assets = list.length ? list : [lastAsset || anyPicture()];
     const lineSpan = d + 0.35;
     voices.push({ file: voiceFileOf(script, f), t });
     words.push(...spreadWords(f.cap, t, d));
