@@ -18,7 +18,7 @@ on:
         required: true
         default: full-episode
         type: choice
-        options: [full-episode, describe-library, meta-test]
+        options: [full-episode, describe-library, meta-test, review]
       voice_model:
         description: "Gemini voice model for the whole episode (empty = the usual one)"
         required: false
@@ -95,6 +95,12 @@ jobs:
             echo "Today: $ACTION"
           fi
           case "$ACTION" in
+            review)
+              E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+              aws s3 sync "s3://${R2_BUCKET}/renders/${EP}/publish" "review-in" --endpoint-url "$E" --no-progress
+              node media/tools/review-render.mjs review-in "content/youtube/${EP}.json" review-out
+              aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress
+              ;;
             full-episode)
               node media/library-harvest.mjs upload
               node media/library-harvest.mjs describe "$EP" --limit 400 --requests 5
