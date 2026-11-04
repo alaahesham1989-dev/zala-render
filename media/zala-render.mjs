@@ -260,14 +260,15 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
       } else {
         // a narration already made is never paid for twice: the file stays until its lines are cut
         const fresh = !fs.existsSync(chunk);
-        if (fresh) { await speakLine(group.map((f) => f.say).join('\n\n'), vp, chunk); made++; }
+        if (fresh) { await speakLine(group.map((f) => f.say).join('\n\n'), { ...vp, style: `${vp.style} Leave a clear one-second pause between paragraphs.` }, chunk); made++; }
         try {
           splitChunk(chunk, group.map((f) => pronounce(f.say)), files);
           log(`  [${group[0].label} to ${group[group.length - 1].label}] ${durationOf(chunk).toFixed(1)}s, ${group.length} lines`);
         } catch (e) {
-          log(`  [${group[0].label}] could not cut this narration at its pauses (${e.message}), asking for these lines one by one`);
+          log(`  [${group[0].label}] could not cut this narration at its pauses (${e.message}), asking for these lines in two smaller parts`);
           files.forEach((x) => fs.rmSync(x, { force: true }));
-          queue.unshift(...group.map((f) => [f]));
+          const half = Math.ceil(group.length / 2);
+          queue.unshift(group.slice(0, half), group.slice(half));
         }
         if (fresh) await sleep(VOICE_REQUEST_GAP);
       }
@@ -370,7 +371,6 @@ async function stageStory(id) {
   const file = path.join(CONTENT, 'youtube', `${id}.json`);
   let old = null;
   try { old = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
-  if (old?.fromLibrary) return;
   const topics = JSON.parse(fs.readFileSync(LIB_TOPICS, 'utf8'));
   const topic = topics[id];
   if (!topic) throw new Error(`${id} is not in content/library/topics.json`);
@@ -379,17 +379,21 @@ async function stageStory(id) {
   let plan = {};
   try { plan = JSON.parse(fs.readFileSync(path.join(CONTENT, 'youtube', 'production-matrix.json'), 'utf8')).long_episodes.find((e) => e.id === id) || {}; } catch {}
   const words = Math.round(((plan.target_duration_sec || 300) / 60) * 150);
+  const spokenWords = (chapters) => (chapters || []).flatMap((c) => c.lines || []).reduce((n, l) => n + String(l.en || '').split(/\s+/).filter(Boolean).length, 0);
+  // a story already written stays, unless it is clearly too short for the episode
+  if (old?.fromLibrary && spokenWords(old.chapters) >= words * 0.8) return;
   const catalog = pics.slice(0, 220).map((p) => [p.id, p.seen.type, p.seen.subject, p.seen.what, p.seen.period, p.seen.place, p.seen.mood].join(' | ')).join('\n');
   log(`Story: writing ${id} from ${pics.length} library pictures`);
   const known = new Set(pics.map((p) => p.id));
   let story = null;
+  let lastTry = '';
   for (let attempt = 1; attempt <= 3 && !story; attempt++) {
-    const a = await askGemini([{ text: `${STORY_RULES}\n\nEpisode idea: ${plan.title_en || topic.title}\nStarting hook idea: ${plan.hook || ''}\nLength: about ${words} spoken words in total.\n\nFACT BANK:\n${JSON.stringify(factsFor(id, topic)).slice(0, 30000)}\n\nPICTURE CATALOG (id | type | subject | what is visible | period | place | mood):\n${catalog}` }]);
+    const a = await askGemini([{ text: `${STORY_RULES}\n\nEpisode idea: ${plan.title_en || topic.title}\nStarting hook idea: ${plan.hook || ''}\nLength: ${words} spoken words in total, never under ${Math.round(words * 0.85)}. That is about ${Math.round(words / 24)} lines across 5 to 7 chapters. A shorter story is rejected. Reach the length by staying longer with the people, the places and what each picture shows, and by using every fact in the fact bank, never by inventing anything.${lastTry}\n\nFACT BANK:\n${JSON.stringify(factsFor(id, topic)).slice(0, 30000)}\n\nPICTURE CATALOG (id | type | subject | what is visible | period | place | mood):\n${catalog}` }]);
     const lines = a?.chapters?.flatMap((c) => c.lines || []) || [];
     if (!lines.length) continue;
-    // long episodes run 8 to 12 minutes; a clearly short story gets another try, but the last try always goes on
-    const spoken = lines.reduce((n, l) => n + String(l.en || '').split(/\s+/).length, 0);
-    if (attempt < 3 && spoken < words * 0.8) { log(`Story: ${spoken} words is too short for ${words}, trying again`); continue; }
+    // long episodes run 8 to 12 minutes: a short story is never voiced, so no voice requests go to waste
+    const spoken = spokenWords(a.chapters);
+    if (spoken < words * 0.8) { log(`Story: ${spoken} words is too short for ${words}`); lastTry = ` Your last attempt had only ${spoken} words, so write much more this time.`; continue; }
     for (const l of lines) l.pictures = (l.pictures || []).filter((p) => known.has(p));
     if (lines.filter((l) => l.pictures.length).length / lines.length >= 0.9) story = a;
   }
