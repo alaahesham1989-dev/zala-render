@@ -1,29 +1,12 @@
 # zala-render
 
-Video rendering machine for the ZALA VIP YouTube channel. It turns a script (JSON) and a narration file into a
-finished documentary-style video using open-license images and footage (Wikimedia Commons, Pixabay) and ffmpeg.
+The cloud video renderer for the ZALA VIP channel (https://www.zalavip.com). Choose an episode and press run.
 
-This repository holds code only. It holds no keys, no scripts, no audio and no video.
-Keys are GitHub Actions secrets; scripts, narration and finished renders live in private cloud storage.
+This repository holds code only. It holds no keys, scripts, audio or video.
+Keys are GitHub Actions secrets. Scripts, the picture index, facts and finished videos live in private cloud storage.
 
-## Run in the cloud
+## Run
 
-Actions → "Render episode" → Run workflow → enter the episode id (for example `ZV003`).
+Actions → "ZALA episode" → Run workflow → enter the episode id, for example `ZV-L01`.
 
-Required repository secrets: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `PIXABAY_API_KEY`.
-
-## Run locally
-
-```
-cd media
-npm ci
-node tools/fetch-fonts.mjs
-node tools/prep-assets.mjs ../content/youtube/<id>.json
-node cinema.mjs ../content/youtube/<id>.json final
-```
-
-Narration is expected at `media/cache/voice/<id>.mp3`.
-
-## Quality gates in this repository
-- `tools/prep-assets.mjs` and `tools/review-sheets.mjs`: every image is matched to its query and written to numbered review sheets.
-- The workflow fails a render whose loudness is outside -17..-12 LUFS or whose true peak is above -0.5 dBFS.
+Order of work: pictures go from open-license sources straight to storage, each gets a description of what it shows, the story is written from those pictures, then voice, motion, render and checks. Finished files go to `renders/<id>/`.
