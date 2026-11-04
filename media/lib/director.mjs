@@ -76,6 +76,7 @@ RULES:
 - Modern photos and MODERN pictures only for lines about modern discoveries or today. Never a modern building for an ancient one.
 - later-painting is fine for dramatic scenes from the story, but not for a claim about evidence or a specific object.
 - Give 1 to 2 pictures per line. Prefer variety and never repeat a picture within this chapter.
+- A line telling the story of a person may show that person's portrait, coin, or a painting of the scene. The opening line of the episode must always have a striking picture of its main subject.
 - If no picture truly fits, give an empty list and write "card": up to 7 words stating the key fact of the line, using only words from the line.
 Always include "card" for every line, even when pictures fit.
 Return only JSON {"items":[{"n":0,"pictures":["id"],"card":""}]}.
@@ -98,7 +99,7 @@ ${free.map(catalogRow).join('\n')}` }], tools);
     const checks = chapter.lines.flatMap((l) => l.pictures.map((id) => ({ l, id })));
     for (let i = 0; i < checks.length; i += 6) {
       const group = checks.slice(i, i + 6);
-      const parts = [{ text: 'For each numbered picture you get the sentence spoken over it in a true-history video. Answer "fits" true only if the picture really shows the person, place, object or event of the sentence. A generic ancient object or a different person does not fit. Return only JSON {"items":[{"n":0,"fits":true,"why":""}]}.' }];
+      const parts = [{ text: 'For each numbered picture you get the sentence spoken over it in a true-history video. Answer "fits" true if the picture really shows the person, place, object or event of the sentence, including a portrait or coin of the person the sentence is about or a painting of that scene. A generic ancient object or a different person does not fit. Return only JSON {"items":[{"n":0,"fits":true,"why":""}]}.' }];
       const ok = [];
       for (const c of group) {
         const data = await thumb(byId.get(c.id));
@@ -122,6 +123,6 @@ ${free.map(catalogRow).join('\n')}` }], tools);
   const lines = script.chapters.flatMap((c) => c.lines);
   const cards = lines.filter((l) => !l.pictures.length);
   cards.forEach((l) => { if (!l.card) l.card = l.en.split(/[,.]/)[0].split(/\s+/).slice(0, 7).join(' '); });
-  script.directed = 3;
+  script.directed = 4;
   log(`Director: ${lines.length - cards.length} lines with pictures, ${cards.length} with a text card`);
 }
