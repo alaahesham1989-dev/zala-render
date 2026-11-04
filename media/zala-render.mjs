@@ -352,6 +352,9 @@ async function stageStory(id) {
     const a = await askGemini([{ text: `${STORY_RULES}\n\nEpisode idea: ${plan.title_en || topic.title}\nStarting hook idea: ${plan.hook || ''}\nLength: about ${words} spoken words in total.\n\nFACT BANK:\n${JSON.stringify(factsFor(id, topic)).slice(0, 30000)}\n\nPICTURE CATALOG (id | type | subject | what is visible | period | place | mood):\n${catalog}` }]);
     const lines = a?.chapters?.flatMap((c) => c.lines || []) || [];
     if (!lines.length) continue;
+    // long episodes run 8 to 12 minutes; a clearly short story gets another try, but the last try always goes on
+    const spoken = lines.reduce((n, l) => n + String(l.en || '').split(/\s+/).length, 0);
+    if (attempt < 3 && spoken < words * 0.8) { log(`Story: ${spoken} words is too short for ${words}, trying again`); continue; }
     for (const l of lines) l.pictures = (l.pictures || []).filter((p) => known.has(p));
     if (lines.filter((l) => l.pictures.length).length / lines.length >= 0.9) story = a;
   }

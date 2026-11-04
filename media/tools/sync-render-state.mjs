@@ -29,10 +29,16 @@ async function put(key, body) {
   if (!res.ok) throw new Error(`R2 said ${res.status} for ${key}`);
 }
 
-const files = [];
-for (const dir of ['library', 'factbank', 'youtube']) {
-  for (const f of fs.readdirSync(path.join(CONTENT, dir))) {
-    if (/\.(json|jsonl)$/.test(f)) files.push(`${dir}/${f}`);
+// The server updates the picture index and scripts on R2, so name the files to send (youtube/production-matrix.json).
+// --everything was for the first copy only: it overwrites the server's newer work with this computer's older files.
+const named = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const files = [...named];
+if (!named.length) {
+  if (!process.argv.includes('--everything')) throw new Error('Name the files to send, for example youtube/production-matrix.json');
+  for (const dir of ['library', 'factbank', 'youtube']) {
+    for (const f of fs.readdirSync(path.join(CONTENT, dir))) {
+      if (/\.(json|jsonl)$/.test(f)) files.push(`${dir}/${f}`);
+    }
   }
 }
 let bytes = 0;
