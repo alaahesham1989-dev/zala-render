@@ -47,6 +47,7 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       GEMINI_TTS_MODEL: ${{ inputs.voice_model }}
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
       SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
