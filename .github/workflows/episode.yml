@@ -41,6 +41,7 @@ jobs:
       AWS_REQUEST_CHECKSUM_CALCULATION: when_required
       AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
       SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
@@ -84,18 +85,18 @@ jobs:
           case "$ACTION" in
             full-episode)
               node media/library-harvest.mjs upload
-              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 15
+              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 5
               node media/library-harvest.mjs coverage
               node media/zala-render.mjs all "$EP"
               ;;
             describe-library)
               node media/library-harvest.mjs upload
-              node media/library-harvest.mjs describe --limit 1500 --requests 60
+              node media/library-harvest.mjs describe --limit 1500 --requests 20
               node media/library-harvest.mjs coverage
               ;;
             meta-test)
               node media/library-harvest.mjs upload
-              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 15
+              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 5
               node media/zala-render.mjs story "$EP"
               node media/zala-render.mjs images "$EP"
               node media/zala-render.mjs meta-test "$EP"
