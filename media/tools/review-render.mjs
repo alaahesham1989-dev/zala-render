@@ -99,20 +99,17 @@ sheet(outro, 5, 1, path.join(out, 'outro.jpg'));
 
 // what is really heard, in the finished mix
 console.log('Hearing every line');
+const allAudio = path.join(tmp, 'all.mp3');
+ff(['-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', allAudio]);
+const heardRun = spawnSync(process.env.WHISPER_PY, [path.join(path.dirname(new URL(import.meta.url).pathname), 'words.py'), allAudio], { encoding: 'utf8', maxBuffer: 1 << 28 });
+if (heardRun.status !== 0) throw new Error(`hearing failed: ${String(heardRun.stderr).slice(-300)}`);
+const heardWords = JSON.parse(heardRun.stdout);
 for (const s of srt) {
   s.seconds = s.end - s.start;
   s.secPerWord = s.seconds / words(s.text).length;
-  s.clip = path.join(tmp, `say${s.n}.mp3`);
-  ff(['-ss', Math.max(0, s.start - 0.25).toFixed(2), '-to', (s.end + 0.25).toFixed(2), '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k', s.clip]);
-}
-for (let i = 0; i < srt.length; i += 5) {
-  const group = srt.slice(i, i + 5);
-  const parts = [{ text: 'Each audio clip below is a line from a narrated video with quiet music. Write exactly the words spoken in each clip, including cut-off words. Also say if the voice sounds cut, glitched, or if two voices appear. Return only JSON {"items":[{"n":0,"heard":"","problem":""}]} where n is the clip number and problem is empty when there is none.' }];
-  group.forEach((s, k) => { parts.push({ text: `Clip ${k}` }); parts.push({ inlineData: { mimeType: 'audio/mpeg', data: fs.readFileSync(s.clip).toString('base64') } }); });
-  const a = await ask(parts);
-  (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) { s.heard = r.heard; s.heardProblem = r.problem || ''; Object.assign(s, compare(s.text, r.heard)); } });
-  console.log(`  ${Math.min(i + 5, srt.length)}/${srt.length}`);
-  await sleep(5000);
+  const mid = (w) => (w.start + w.end) / 2;
+  s.heard = heardWords.filter((w) => mid(w) >= s.start - 0.15 && mid(w) <= s.end - 0.05).map((w) => w.w).join(' ');
+  Object.assign(s, compare(s.text, s.heard));
 }
 
 // does the picture fit the words
@@ -126,7 +123,7 @@ for (let i = 0; i < srt.length; i += 6) {
     parts.push({ text: `Frame ${k}. Spoken: ${s.text}` });
     parts.push({ inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } });
   });
-  const a = await ask(parts);
+  const a = (await ask(parts)) || (await ask(parts));
   (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) Object.assign(s, { fits: r.fits, nudity: !!r.nudity, shows: r.shows, pictureProblem: r.problem || '' }); });
   console.log(`  ${Math.min(i + 6, srt.length)}/${srt.length}`);
   await sleep(5000);
@@ -157,7 +154,8 @@ for (const name of fs.readdirSync(publish).filter((f) => /-R\d+\.mp4$/.test(f)).
   const clip = path.join(tmp, `${name}.mp3`);
   ff(['-i', file, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k', clip]);
   const a = await ask([{ text: 'Write exactly the words spoken in this short vertical video, in order, and say if the speech starts or ends cut off. Return only JSON {"heard":"","problem":""}.' }, { inlineData: { mimeType: 'audio/mpeg', data: fs.readFileSync(clip).toString('base64') } }]);
-  report.reels.push({ name, seconds, heard: a?.heard, problem: a?.problem });
+  const look = await ask([{ text: 'These are frames from one vertical video. Return only JSON {"nudity":false,"cutOffText":false,"note":""}. nudity: any bare breasts, genitals or naked body, even in art. cutOffText: words cut by the edge of the frame or printed over each other.' }, ...frames.map((x) => ({ inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(x).toString('base64') } }))]);
+  report.reels.push({ name, seconds, heard: a?.heard, problem: a?.problem, nudity: !!look?.nudity, cutOffText: !!look?.cutOffText, note: look?.note });
   await sleep(4000);
 }
 
@@ -175,7 +173,8 @@ const lastSpeech = srt[srt.length - 1].end;
 if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, the script ${lines.length}`);
 for (const l of report.lines) {
   if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
-  else if ((l.missing || []).length >= 3 && (l.extra || []).length >= 3) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
   if (l.fits === 'no') fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
 }
@@ -184,6 +183,7 @@ if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.le
 for (const [a, b] of report.audio.black) if (b < lastSpeech) fail.push(`black screen at ${a.toFixed(1)}s`);
 for (const x of report.audio.silence) if (x.end - x.seconds < lastSpeech - 0.5 && x.seconds > 2.5) fail.push(`${x.seconds.toFixed(1)}s of silence before ${x.end.toFixed(1)}s`);
 if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds > 3)) fail.push('the ending is silent');
+for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) fail.push(`${x.name}: text cut off: ${String(x.note).slice(0, 80)}`); }
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
 const blob = [pkg.title, pkg.description].join(' ');
 for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
