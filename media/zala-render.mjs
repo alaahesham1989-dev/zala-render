@@ -26,11 +26,13 @@ import { buildAss as buildReelAss } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
 import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
 import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
+import { numerals } from './lib/display-numbers.mjs';
+import { screenPictures, directEpisode } from './lib/director.mjs';
 
 const W = 1920, H = 1080, FPS = 30;
 const VW = 1080, VH = 1920;
 const SW = 2880, SH = 1620;   // working size of stills for smooth camera moves
-const LEAD = 0.5, LINE_GAP = 0.35, CHAPTER_GAP = 1.2, STING = 3.4, OUTRO = 14, TAIL = 1.0;
+const LEAD = 0.5, LINE_GAP = 0.35, CHAPTER_GAP = 1.2, STING = 3.4, OUTRO = 10, TAIL = 1.0;
 const REEL_MAX = 58, REEL_OUTRO = 3.2;
 const X264 = ['-c:v', 'libx264', '-preset', 'fast', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', String(FPS)];
 const DEFAULT_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-tts';
@@ -95,7 +97,7 @@ function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
     ci, li, key: `${ci}.${li}`, label: `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
-    en: l.en, ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, sfx: l.sfx, callout: l.callout,
+    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, sfx: l.sfx, callout: l.callout,
   })));
   return limit ? flat.slice(0, limit) : flat;
 }
@@ -252,9 +254,11 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
     if (!number) continue;
     const group = flat.filter((f) => Number(f.label.match(/^c(\d+)_/)?.[1]) === number);
     const files = group.map((f) => voiceFileOf(script, f, vp));
-    if (!group.length || files.every((x) => fs.existsSync(x))) continue;
+    const cutMark = path.join(CACHE, 'voice', script.id, `cut-v2-chapter-${number}.txt`);
+    if (!group.length || (fs.existsSync(cutMark) && files.every((x) => fs.existsSync(x)))) continue;
     fs.mkdirSync(path.dirname(files[0]), { recursive: true });
     splitChunk(path.join(narrated, name), group.map((f) => f.say), files);
+    fs.writeFileSync(cutMark, 'words');
     log(`  chapter ${number}: narration cut into ${group.length} lines, ${durationOf(path.join(narrated, name)).toFixed(1)}s`);
     for (const f of group) { const at = pending.indexOf(f); if (at >= 0) pending.splice(at, 1); }
   }
@@ -453,14 +457,51 @@ async function downloadImage(url) {
 }
 const smallJpeg = (file) => ff(['-i', file, '-frames:v', '1', '-vf', 'scale=512:-2', '-f', 'image2pipe', '-c:v', 'mjpeg', '-q:v', '5', 'pipe:1']).toString('base64');
 
+/** An honest text card for a line no picture truly shows. */
+function cardStill(text) {
+  const dir = path.join(CACHE, 'cards');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${hash(text)}.jpg`);
+  if (fs.existsSync(file)) return file;
+  const words = numerals(text).toUpperCase().split(/\s+/);
+  const rows = [];
+  for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 20) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
+  const txt = path.join(dir, `${hash(text)}.txt`);
+  fs.writeFileSync(txt, rows.join('\n'));
+  const font = filterPath(path.join(FONTS, 'Anton-Regular.ttf'));
+  ff(['-f', 'lavfi', '-i', `color=c=0x0b0906:s=${SW}x${SH}:d=1`, '-frames:v', '1', '-vf',
+    `vignette=PI/5,drawbox=x=${Math.round(SW * 0.5) - 180}:y=${Math.round(SH * 0.5) + rows.length * 112 + 40}:w=360:h=8:color=0xD4AF37:t=fill,drawtext=fontfile='${font}':textfile='${filterPath(txt)}':fontcolor=0xD4AF37:fontsize=200:line_spacing=24:x=(w-text_w)/2:y=(h-text_h)/2`, '-q:v', '3', file]);
+  fs.rmSync(txt, { force: true });
+  return file;
+}
+
+/** The director's pass: runs once per story, and again whenever its rules change. */
+async function stageDirector(script) {
+  if (script.directed === 3) return;
+  const id = script.id;
+  const all = loadLibrary();
+  const pics = usablePictures(id);
+  const byId = new Map(all.map((i) => [i.id, i]));
+  const live = pics.map((p) => byId.get(p.id)).filter(Boolean);
+  const thumb = async (p) => { const file = await downloadImage(p.url); try { return file ? smallJpeg(file) : null; } catch { return null; } };
+  const tools = { thumb, log, sleep, keyFor, markSpent };
+  const clean = await screenPictures(live, tools);
+  fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
+  if (clean.length < 20) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
+  await directEpisode(script, clean, tools);
+  fs.writeFileSync(path.join(CONTENT, 'youtube', `${id}.json`), JSON.stringify(script, null, 2) + '\n', 'utf8');
+  fs.rmSync(shotsFile(id), { force: true });
+  flatten(script).forEach(() => {});
+}
+
 async function stageImages(script, flat) {
   const id = script.id;
   const data = loadShots(id);
   const byId = new Map(loadLibrary().map((i) => [i.id, i]));
   for (const f of flat) {
-    if (data.lines[f.key]?.sig === hash(f.en + (f.pictures || []).join())) {
+    if (data.lines[f.key]?.sig === hash(f.en + (f.pictures || []).join() + (f.card || ''))) {
       // the plan is in git; fetch any picture this computer doesn't have yet
-      for (const b of data.lines[f.key].beats) if (!fs.existsSync(abs(b.asset.file))) { const file = await downloadImage(b.asset.url); if (file) b.asset.file = rel(file); }
+      for (const b of data.lines[f.key].beats) if (!fs.existsSync(abs(b.asset.file))) { const file = b.asset.card ? cardStill(b.asset.card) : await downloadImage(b.asset.url); if (file) b.asset.file = rel(file); }
       continue;
     }
     const beats = [];
@@ -473,7 +514,8 @@ async function stageImages(script, flat) {
         asset: { kind: 'image', file: rel(file), url: p.url, page: p.source_url, attribution: `"${String(p.title).slice(0, 80)}" by ${p.author}, ${p.license}, via ${p.source === 'ZALA vault' ? 'Wikimedia Commons' : p.source}`, license: p.license },
       });
     }
-    data.lines[f.key] = { sig: hash(f.en + (f.pictures || []).join()), en: f.en, beats };
+    if (!beats.length && f.card) beats.push({ need: f.card, picture: null, animate: false, motion: '', asset: { kind: 'image', card: f.card, file: rel(cardStill(f.card)), url: '', page: '', attribution: '' } });
+    data.lines[f.key] = { sig: hash(f.en + (f.pictures || []).join() + (f.card || '')), en: f.en, beats };
   }
   fallbackEmptyLines(flat, data);
   saveShots(id, data);
@@ -927,7 +969,7 @@ function musicBed(work, T, marks) {
   if (fs.existsSync(out)) return { file: out, loop: false };
   log('Sound: writing the music bed');
   const { lift, end } = marks;
-  const vol = curve([[0, 0], [1.2, 0.5], [lift - 1, 0.6], [lift + 3, 1], [end - 4, 0.75], [end + 4, 0]]);
+  const vol = curve([[0, 0], [1.2, 0.5], [lift - 1, 0.6], [lift + 3, 1], [end - 4, 0.75], [end + OUTRO - 1, 0.5], [end + OUTRO, 0]]);
   const pad = (a, b, c, d) => `0.12*(sin(2*PI*${110 * a}*t)+0.8*sin(2*PI*${164.81 * b}*t)+0.55*sin(2*PI*${220 * c}*t)+0.45*sin(2*PI*${261.63 * d}*t+0.5*sin(2*PI*0.11*t)))*(0.72+0.28*sin(2*PI*0.043*t))+0.2*sin(2*PI*55*t)`;
   const padF = path.join(work, 'm-pad.wav'), windF = path.join(work, 'm-wind.wav');
   ff(['-f', 'lavfi', '-i', `aevalsrc='${pad(1, 1, 1.002, 1)}|${pad(1.0015, 0.9985, 0.999, 1.002)}':d=${T.toFixed(2)}:s=48000`, '-af', 'lowpass=f=1150,aecho=0.7:0.7:900|1500:0.4|0.28,tremolo=f=0.1:d=0.25', padF]);
@@ -999,7 +1041,7 @@ function chunkText(s, max = 64) {
 
 function masterAss(tl, script, { arabic }) {
   const head = `[Script Info]\nScriptType: v4.00+\nPlayResX: ${W}\nPlayResY: ${H}\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n` + [
-    style('En', 'Lato', 50, WHITE, { bold: -1, out: 3, sh: 1.5, an: 2, mv: arabic ? 128 : 56, ml: 160 }),
+    style('En', 'Lato', 60, WHITE, { bold: -1, out: 3, sh: 1.5, an: 2, mv: arabic ? 128 : 56, ml: 160 }),
     style('Ar', 'Segoe UI', 44, GOLD, { bold: -1, out: 3, sh: 1.2, an: 2, mv: 40, ml: 160 }),
     style('Big', 'Anton', 92, GOLD, { sp: 1, out: 3, sh: 2 }),
     style('Sub', 'Lato', 28, WHITE, { bold: -1, sp: 2, out: 2 }),
@@ -1018,7 +1060,7 @@ function masterAss(tl, script, { arabic }) {
   tl.flat.forEach((f, i) => {
     const next = tl.flat[i + 1];
     const end = Math.min(f.T1 + 0.25, next ? next.T0 - 0.03 : f.T1 + 0.5);
-    const parts = chunkText(f.en);
+    const parts = chunkText(f.cap);
     const tot = parts.reduce((a, p) => a + p.length, 0);
     let t = f.T0 - 0.03;
     parts.forEach((p) => {
@@ -1062,7 +1104,7 @@ function masterAss(tl, script, { arabic }) {
   dl(6, o + 1.6, o + OUTRO - 0.8, 'Out2', '{\\an7\\pos(96,780)\\fad(500,500)}LIKE  ·  COMMENT  ·  SHARE');
   dl(6, o + 2.2, o + OUTRO - 0.8, 'Out3', '{\\an7\\pos(98,860)\\fad(500,500)}Plan your Egypt trip:  zalavip.com');
   dl(6, o + 2.6, o + OUTRO - 0.8, 'Next1', '{\\an7\\pos(1010,96)\\fad(500,500)}WATCH NEXT');
-  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next2', `{\\an7\\pos(1010,140)\\fad(500,500)}${aesc(script.outroNext || 'THE NEXT CASE IS COMING')}`);
+  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next2', `{\\an7\\pos(1010,140)\\fad(500,500)}${aesc(script.nextPublished || 'THE NEXT CASE IS COMING')}`);
   return head + ev.join('\n') + '\n';
 }
 
@@ -1093,7 +1135,7 @@ function pickReels(script, flat) {
   return plan.map((r, i) => {
     const lines = [];
     let t = 0;
-    for (const f of flat.filter((x) => x.ci === r.chapter - 1)) {
+    for (const f of flat.filter((x) => x.ci === r.chapter - 1).slice(r.from || 0)) {
       const d = durationOf(voiceFileOf(script, f));
       if (lines.length && t + d + 0.25 > REEL_MAX - REEL_OUTRO) break;
       lines.push(f);
@@ -1166,7 +1208,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     const assets = list.length ? list : [lastAsset];
     const lineSpan = d + 0.35;
     voices.push({ file: voiceFileOf(script, f), t });
-    words.push(...spreadWords(f.en, t, d));
+    words.push(...spreadWords(f.cap, t, d));
     assets.forEach((asset, b) => {
       lastAsset = asset;
       scenes.push({ asset, start: start + (b * lineSpan) / assets.length, idx: scenes.length, sfx: f.sfx });
@@ -1268,11 +1310,11 @@ function uploadPackage(script, tl, data, reels, dir, masterFile) {
     id: script.id, title: script.title, description: description.slice(0, 4900),
     tags: script.tags || [script.series, 'Egypt', 'Ancient Egypt', 'Egypt history', 'Egypt travel'].filter(Boolean),
     file: path.basename(masterFile), thumbnail: `${script.id}_thumbnail.jpg`, captions: { en: `${script.id}.en.srt` },
-    duration: Math.round(tl.total * 10) / 10, voice: `${voiceParams(script).voice} / ${voiceParams(script).model}`,
+    duration: Math.round(tl.total * 10) / 10, voice: script.voiceNote || `${voiceParams(script).voice} / ${voiceParams(script).model}`,
     altered_content: animated, reels, renderedAt: new Date().toISOString(),
   };
   fs.writeFileSync(path.join(dir, `${script.id}.youtube.json`), JSON.stringify(pkg, null, 2));
-  fs.writeFileSync(path.join(dir, `${script.id}.en.srt`), srt(tl, 'en'), 'utf8');
+  fs.writeFileSync(path.join(dir, `${script.id}.en.srt`), srt(tl, 'cap'), 'utf8');
 }
 
 // ── final inspection ─────────────────────────────────────────────────────────
@@ -1434,6 +1476,13 @@ async function main() {
   if (cmd === 'all') {
     if (!stageCheck(script, flat, { voiceFrom })) process.exit(1);
     await stageVoice(script, flat, { voiceFrom });
+    if (!script.verticalOnly) {
+      await stageDirector(script);
+      const directed = flatten(script, limit);
+      await stageImages(script, directed);
+      if (!noMeta) await stageAnimate(script, directed);
+      return stageRender(script, directed, { noReels, reelsOnly });
+    }
     await stageImages(script, flat);
     if (!noMeta) await stageAnimate(script, flat);
     return stageRender(script, flat, { noReels, reelsOnly });
