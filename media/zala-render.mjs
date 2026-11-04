@@ -255,9 +255,11 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
 
 // ── Gemini text + vision ─────────────────────────────────────────────────────
 /** One JSON answer from the first text model that responds; null when none does, so callers fall back instead of stopping. */
+const outOfQuota = new Set();   // models that used up today's free requests: no point waiting on them
 async function askGemini(parts) {
   for (let round = 1; round <= 5; round++) {
     for (const model of TEXT_MODELS) {   // when one model is busy the next usually isn't, so move on at once
+      if (outOfQuota.has(model)) continue;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
@@ -267,8 +269,11 @@ async function askGemini(parts) {
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text;
         if (res.ok && text) return JSON.parse(text);
-      } catch {}
+        if (JSON.stringify(data.error || '').includes('PerDay')) { outOfQuota.add(model); log(`  ${model}: today's free Gemini requests are used up`); }
+        else log(`  ${model}: answered ${res.status} ${String(data.error?.status || '')}`);
+      } catch (e) { log(`  ${model}: ${e.name}`); }
     }
+    if (outOfQuota.size === TEXT_MODELS.length) return null;
     await sleep(20000 * round);
   }
   return null;

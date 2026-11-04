@@ -276,9 +276,11 @@ async function cmdHarvest(target, { limit, dry }) {
 }
 
 // ── describe: what is really in each picture ─────────────────────────────────
+const outOfQuota = new Set();   // models that used up today's free requests: no point waiting on them
 async function askVision(parts) {
   for (let round = 1; round <= 5; round++) {
     for (const model of TEXT_MODELS) {
+      if (outOfQuota.has(model)) continue;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
@@ -287,8 +289,11 @@ async function askVision(parts) {
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text;
         if (res.ok && text) return JSON.parse(text);
-      } catch {}
+        if (JSON.stringify(data.error || '').includes('PerDay')) { outOfQuota.add(model); log(`  ${model}: today's free Gemini requests are used up`); }
+        else log(`  ${model}: answered ${res.status} ${String(data.error?.status || '')}`);
+      } catch (e) { log(`  ${model}: ${e.name}`); }
     }
+    if (outOfQuota.size === TEXT_MODELS.length) return null;
     await sleep(20000 * round);
   }
   return null;
@@ -307,9 +312,12 @@ async function localFile(it) {
 
 async function cmdDescribe(target, { limit }) {
   const items = loadItems();
-  const todo = items.filter((i) => i.kind === 'image' && (!i.seen || (i.seen.usable !== false && !i.seen.symbols)) && (!target || i.topics?.includes(target))).slice(0, limit);
+  // pictures this episode already bans by name use up no free requests
+  let banned = null;
+  try { const r = target && JSON.parse(fs.readFileSync(TOPICS, 'utf8'))[target]?.forbid; if (r) banned = new RegExp(r, 'i'); } catch {}
+  const todo = items.filter((i) => i.kind === 'image' && (!i.seen || (i.seen.usable !== false && !i.seen.symbols)) && (!target || i.topics?.includes(target)) && !(banned && banned.test(`${i.title} ${i.note || ''}`))).slice(0, limit);
   log(`Describing ${todo.length} pictures`);
-  const BATCH = 8;
+  const BATCH = 16;   // the free plan counts requests, not pictures, so each request carries more
   for (let i = 0; i < todo.length; i += BATCH) {
     const group = todo.slice(i, i + BATCH);
     const parts = [{
