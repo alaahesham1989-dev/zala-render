@@ -245,6 +245,19 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
       ff(['-i', legacy, '-ar', '48000', file]);
     } else pending.push(f);
   }
+  // a finished narration for a chapter (media/cache/narration/<id>/chapter-N.mp3) is cut into its lines and needs no voice requests
+  const narrated = path.join(CACHE, 'narration', script.id);
+  for (const name of fs.existsSync(narrated) ? fs.readdirSync(narrated) : []) {
+    const number = Number(name.match(/^chapter-(\d+)\./)?.[1]);
+    if (!number) continue;
+    const group = flat.filter((f) => Number(f.label.match(/^c(\d+)_/)?.[1]) === number);
+    const files = group.map((f) => voiceFileOf(script, f, vp));
+    if (!group.length || files.every((x) => fs.existsSync(x))) continue;
+    fs.mkdirSync(path.dirname(files[0]), { recursive: true });
+    splitChunk(path.join(narrated, name), group.map((f) => f.say), files);
+    log(`  chapter ${number}: narration cut into ${group.length} lines, ${durationOf(path.join(narrated, name)).toFixed(1)}s`);
+    for (const f of group) { const at = pending.indexOf(f); if (at >= 0) pending.splice(at, 1); }
+  }
   const queue = groupLines(pending, flat, VOICE_WORDS_PER_REQUEST);
   log(`Voice: ${pending.length} lines in ${queue.length} requests`);
   while (queue.length) {
