@@ -84,7 +84,7 @@ jobs:
           case "$ACTION" in
             full-episode)
               node media/library-harvest.mjs upload
-              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 10
+              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 15
               node media/library-harvest.mjs coverage
               node media/zala-render.mjs all "$EP"
               ;;
@@ -95,7 +95,7 @@ jobs:
               ;;
             meta-test)
               node media/library-harvest.mjs upload
-              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 10
+              node media/library-harvest.mjs describe "$EP" --limit 400 --requests 15
               node media/zala-render.mjs story "$EP"
               node media/zala-render.mjs images "$EP"
               node media/zala-render.mjs meta-test "$EP"
