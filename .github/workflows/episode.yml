@@ -4,6 +4,8 @@ name: ZALA episode
 # package goes to R2 (renders/<id>/). The owner's computer downloads and uploads nothing.
 # Scripts, the picture index and facts live in R2 (render-state/), never in this public repository.
 on:
+  schedule:
+    - cron: '30 8 * * *'   # 10:30 Cairo, after Gemini's free requests renew: finishes the episode, then keeps describing the library
   workflow_dispatch:
     inputs:
       episode:
@@ -27,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 330
     env:
-      EP: ${{ inputs.episode }}
-      ACTION: ${{ inputs.action }}
+      EP: ${{ inputs.episode || 'ZV-L01' }}
+      ACTION: ${{ inputs.action || 'daily' }}
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -75,6 +77,10 @@ jobs:
 
       - name: Run
         run: |
+          if [ "$ACTION" = daily ]; then
+            if aws s3 ls "s3://${R2_BUCKET}/renders/${EP}/" --recursive --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" | grep -q "_report.json"; then ACTION=describe-library; else ACTION=full-episode; fi
+            echo "Today: $ACTION"
+          fi
           case "$ACTION" in
             full-episode)
               node media/library-harvest.mjs upload
