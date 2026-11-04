@@ -89,7 +89,9 @@ jobs:
               ;;
             meta-test)
               node media/library-harvest.mjs upload
-              node media/library-harvest.mjs describe "$EP" --limit 40
+              node media/library-harvest.mjs describe "$EP" --limit 400
+              node media/zala-render.mjs story "$EP"
+              node media/zala-render.mjs images "$EP"
               node media/zala-render.mjs meta-test "$EP"
               ;;
           esac
