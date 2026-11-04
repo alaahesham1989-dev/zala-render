@@ -110,6 +110,13 @@ for (const s of srt) {
   const mid = (w) => (w.start + w.end) / 2;
   s.heard = heardWords.filter((w) => mid(w) >= s.start - 0.15 && mid(w) <= s.end - 0.05).map((w) => w.w).join(' ');
   Object.assign(s, compare(s.text, s.heard));
+  // a line that seems empty gets its own hearing before anyone calls it missing
+  if (s.missing.length > words(s.text).length * 0.6) {
+    const clip = path.join(tmp, `again${s.n}.mp3`);
+    ff(['-ss', Math.max(0, s.start - 0.3).toFixed(2), '-to', (s.end + 0.3).toFixed(2), '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', clip]);
+    const again = spawnSync(process.env.WHISPER_PY, [path.join(path.dirname(new URL(import.meta.url).pathname), 'words.py'), clip], { encoding: 'utf8', maxBuffer: 1 << 26 });
+    if (again.status === 0) { s.heard = JSON.parse(again.stdout).map((w) => w.w).join(' '); Object.assign(s, compare(s.text, s.heard)); }
+  }
 }
 
 // does the picture fit the words
@@ -173,6 +180,7 @@ const lastSpeech = srt[srt.length - 1].end;
 if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, the script ${lines.length}`);
 for (const l of report.lines) {
   if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
+  else if ((l.missing || []).length > words(l.text).length * 0.6) fail.push(`line ${l.n}: most words were not heard: ${l.text.slice(0, 60)}`);
   else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
@@ -187,6 +195,19 @@ for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
 const blob = [pkg.title, pkg.description].join(' ');
 for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
+// cards in a row, reused from the director's rule, and pictures showing nudity are removed for the next run
+const nude = [...new Set(report.lines.filter((l) => l.nudity).flatMap((l) => l.pictures || []))];
+if (nude.length) {
+  const lib = path.join('content', 'library', 'items.jsonl');
+  if (fs.existsSync(lib)) {
+    const rows = fs.readFileSync(lib, 'utf8').split('\n').filter(Boolean).map((x) => JSON.parse(x));
+    for (const it of rows) if (nude.includes(it.id) && it.seen) it.seen.check = { ...(it.seen.check || {}), nudity: true, note: 'flagged by quality control' };
+    fs.writeFileSync(lib, rows.map((x) => JSON.stringify(x)).join('\n') + '\n');
+    delete script.directed;
+    fs.writeFileSync(scriptFile, JSON.stringify(script, null, 2) + '\n');
+    console.log(`Quality control removed ${nude.length} pictures for the next run`);
+  }
+}
 const verdict = { id, pass: fail.length === 0, reasons: fail, checkedAt: new Date().toISOString() };
 fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify(verdict, null, 1));
 console.log(verdict.pass ? 'QUALITY: PASSED' : `QUALITY: HELD\n${fail.map((x) => `  - ${x}`).join('\n')}`);
