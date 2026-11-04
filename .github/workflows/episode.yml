@@ -74,6 +74,12 @@ jobs:
           npm ci
           node tools/fetch-fonts.mjs
 
+      - name: Install word timing
+        run: |
+          python3 -m venv /tmp/whisper
+          /tmp/whisper/bin/pip install --quiet faster-whisper
+          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+
       - name: Bring scripts, picture index, facts and finished work from R2
         run: |
           set -euo pipefail
@@ -113,7 +119,10 @@ jobs:
               node media/library-harvest.mjs upload
               node media/library-harvest.mjs describe "$EP" --limit 400 --requests 5
               node media/library-harvest.mjs coverage
-              node media/zala-render.mjs all "$EP"
+              node media/zala-render.mjs all "$EP" --no-meta
+              E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+              node media/tools/review-render.mjs "/${EP}/publish" "content/youtube/${EP}.json" review-out
+              aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress
               ;;
             describe-library)
               node media/library-harvest.mjs upload
