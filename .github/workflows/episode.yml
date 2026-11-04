@@ -121,7 +121,7 @@ jobs:
               node media/library-harvest.mjs coverage
               node media/zala-render.mjs all "$EP" --no-meta
               E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-              node media/tools/review-render.mjs "/${EP}/publish" "content/youtube/${EP}.json" review-out
+              node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
               aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress
               ;;
             describe-library)
