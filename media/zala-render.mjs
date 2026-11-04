@@ -24,6 +24,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { FFMPEG, ff, durationOf, dimensionsOf, filterPath } from './lib/ff.mjs';
 import { buildAss as buildReelAss } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
+import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
 
 const W = 1920, H = 1080, FPS = 30;
 const VW = 1080, VH = 1920;
@@ -177,7 +178,7 @@ function msToQuotaReset() {
 }
 
 async function speakLine(text, vp, file) {
-  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is missing from .env.local');
+  if (!geminiKeys.length) throw new Error('GEMINI_API_KEY is missing from .env.local');
   const body = {
     model: vp.model,
     input: [{ type: 'user_input', content: [{ type: 'text', text: pronounce(text), annotations: [{ type: 'speech_metadata', style: vp.style }] }] }],
@@ -185,10 +186,12 @@ async function speakLine(text, vp, file) {
     generation_config: { speech_config: [{ voice: vp.voice }] },
   };
   for (let attempt = 1, waits = 0; ; attempt++) {
+    const key = keyFor(vp.model);
+    if (!key) throw new QuotaError('every key has used up its day');
     let res, data;
     try {
       res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY }, body: JSON.stringify(body), signal: AbortSignal.timeout(120000),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(120000),
       });
       data = await res.json();
     } catch (e) {
@@ -209,12 +212,17 @@ async function speakLine(text, vp, file) {
     }
     const msg = String(data?.error?.message || JSON.stringify(data).slice(0, 300));
     if (res.status === 429) {
-      if (/per.?day|daily|PerDay|RPD/i.test(msg) || waits >= 2) throw new QuotaError(msg);
+      if (/per.?day|daily|PerDay|RPD/i.test(msg) || waits >= 2) {
+        log(`  voice: today's free requests are used up on key ${markSpent(vp.model, key)}`);
+        waits = 0;
+        continue;
+      }
       waits++;
       log(`  speed limit reached, waiting a minute…`);
       await sleep(65000);
       continue;
     }
+    if (keyRefused(res.status, data?.error)) { log(`  voice: Google refused key ${markSpent(vp.model, key)}`); continue; }
     if (res.status >= 500 && attempt < 5) { await sleep(4000 * attempt); continue; }
     throw new Error(`Gemini voice error ${res.status}: ${msg}`);
   }
@@ -243,10 +251,13 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
     } catch (e) {
       if (!(e instanceof QuotaError)) throw e;
       const left = flat.filter((x) => !fs.existsSync(voiceFileOf(script, x, vp))).length;
+      // the server stops here and saves its work: the next run carries on from the same line
+      if (process.env.CI) throw new Error(`Gemini's daily voice limit is used up on every key. ${left} of ${flat.length} lines left, saved work carries on in the next run.`);
       const wait = msToQuotaReset();
       log(`Gemini's daily voice limit is used up. ${left} of ${flat.length} lines left. Waiting ${Math.round(wait / 60000)} minutes for the reset, then carrying on.`);
       log(`If this computer is turned off, run the same command again and it continues from here.`);
       await sleep(wait);
+      clearSpent();
       queue.unshift(f);
     }
   }
@@ -255,25 +266,26 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
 
 // ── Gemini text + vision ─────────────────────────────────────────────────────
 /** One JSON answer from the first text model that responds; null when none does, so callers fall back instead of stopping. */
-const outOfQuota = new Set();   // models that used up today's free requests: no point waiting on them
 async function askGemini(parts) {
   for (let round = 1; round <= 5; round++) {
     for (const model of TEXT_MODELS) {   // when one model is busy the next usually isn't, so move on at once
-      if (outOfQuota.has(model)) continue;
+      const key = keyFor(model);   // models that used up today's free requests on every key: no point waiting on them
+      if (!key) continue;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
           body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.3 } }),
           signal: AbortSignal.timeout(240000),
         });
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text;
         if (res.ok && text) return JSON.parse(text);
-        if (JSON.stringify(data.error || '').includes('PerDay')) { outOfQuota.add(model); log(`  ${model}: today's free Gemini requests are used up`); }
+        if (JSON.stringify(data.error || '').includes('PerDay')) log(`  ${model}: today's free Gemini requests are used up on key ${markSpent(model, key)}`);
+        else if (keyRefused(res.status, data.error)) log(`  ${model}: Google refused key ${markSpent(model, key)}`);
         else log(`  ${model}: answered ${res.status} ${String(data.error?.status || '')}`);
       } catch (e) { log(`  ${model}: ${e.name}`); }
     }
-    if (outOfQuota.size === TEXT_MODELS.length) return null;
+    if (TEXT_MODELS.every((m) => !keyFor(m))) return null;
     await sleep(20000 * round);
   }
   return null;
@@ -471,7 +483,7 @@ async function generateMusic(script) {
   try {
     log('Sound: composing music');
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MUSIC_MODEL}:generateContent`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keyFor(MUSIC_MODEL) || '' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }), signal: AbortSignal.timeout(300000),
     });
     const data = await res.json();
@@ -1252,11 +1264,11 @@ function stageCheck(script, flat, { voiceFrom } = {}) {
   const secs = needChars / 15;
   log(`${script.id}: ${script.title}`);
   log(`Chapters ${script.chapters.length}, lines ${flat.length}`);
-  log(`Voice: ${vp.voice} on ${vp.model}, key ${process.env.GEMINI_API_KEY ? 'found' : 'MISSING'}`);
+  log(`Voice: ${vp.voice} on ${vp.model}, ${geminiKeys.length} Gemini keys`);
   log(`Voice still needed: ${need.length} requests, about ${Math.round(secs)}s of speech, about ${Math.round(secs * AUDIO_TOKENS_PER_SEC + needChars / 4)} tokens`);
   notes.forEach((n) => log(`Note: ${n}`));
   problems.forEach((n) => log(`PROBLEM: ${n}`));
-  if (!process.env.GEMINI_API_KEY) problems.push('GEMINI_API_KEY missing');
+  if (!geminiKeys.length) problems.push('GEMINI_API_KEY missing');
   return problems.length === 0;
 }
 
