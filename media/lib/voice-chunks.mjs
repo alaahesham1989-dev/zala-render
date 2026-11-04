@@ -22,13 +22,25 @@ export function groupLines(pending, flat, maxWords) {
   return groups;
 }
 
-/** Cuts one narration into line files. Throws when the pauses do not fit the lines, so no line is ever cut wrongly. */
-export function splitChunk(chunk, texts, files) {
-  const { lines, rate } = alignLines(chunk, texts.map((text) => ({ text })));
+// A storyteller's pauses can be short: try the clearest reading of them first, then look for finer ones.
+const PAUSE_READINGS = [{ noise: '-40dB', minDur: 0.22 }, { noise: '-35dB', minDur: 0.16 }, { noise: '-30dB', minDur: 0.12 }, { noise: '-26dB', minDur: 0.08 }];
+
+function cutPoints(chunk, texts, reading) {
+  const { lines, rate } = alignLines(chunk, texts.map((text) => ({ text })), reading);
   for (const l of lines) {
     const ratio = (l.t1 - l.t0) / (l.syl / rate);
-    if (!(ratio > 0.55 && ratio < 1.9)) throw new Error(`a line came out ${ratio.toFixed(2)} times its expected length`);
+    if (!(ratio > 0.5 && ratio < 2.2)) throw new Error(`a line came out ${ratio.toFixed(2)} times its expected length`);
   }
+  return lines;
+}
+
+/** Cuts one narration into line files. Throws when the pauses do not fit the lines, so no line is ever cut wrongly. */
+export function splitChunk(chunk, texts, files) {
+  let lines = null, problem = null;
+  for (const reading of PAUSE_READINGS) {
+    try { lines = cutPoints(chunk, texts, reading); break; } catch (e) { problem = e; }
+  }
+  if (!lines) throw problem;
   lines.forEach((l, i) => {
     ff(['-ss', l.t0.toFixed(3), '-to', l.t1.toFixed(3), '-i', chunk, '-af', 'afade=t=in:d=0.015,areverse,afade=t=in:d=0.015,areverse', '-ar', '48000', files[i]]);
   });
