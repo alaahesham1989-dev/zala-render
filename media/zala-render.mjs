@@ -97,7 +97,7 @@ function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
     ci, li, key: `${ci}.${li}`, label: `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
-    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, sfx: l.sfx, callout: l.callout,
+    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout,
   })));
   return limit ? flat.slice(0, limit) : flat;
 }
@@ -457,27 +457,59 @@ async function downloadImage(url) {
 }
 const smallJpeg = (file) => ff(['-i', file, '-frames:v', '1', '-vf', 'scale=512:-2', '-f', 'image2pipe', '-c:v', 'mjpeg', '-q:v', '5', 'pipe:1']).toString('base64');
 
-/** An honest text card for a line no picture truly shows. */
-function cardStill(text) {
+/** A text card over a darkened picture, one version for wide video and one for reels. */
+function cardStill(text, bg, vertical = false) {
   const dir = path.join(CACHE, 'cards');
   fs.mkdirSync(dir, { recursive: true });
-  const file = path.join(dir, `${hash(text)}.jpg`);
+  const file = path.join(dir, `${hash([text, bg || '', vertical].join('|'))}.jpg`);
   if (fs.existsSync(file)) return file;
+  const CW = vertical ? 1620 : SW, CH = vertical ? 2880 : SH, size = vertical ? 170 : 210, per = vertical ? 13 : 20;
   const words = numerals(text).toUpperCase().split(/\s+/);
   const rows = [];
-  for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 20) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
-  const txt = path.join(dir, `${hash(text)}.txt`);
-  fs.writeFileSync(txt, rows.join('\n'));
+  for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= per) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
   const font = filterPath(path.join(FONTS, 'Anton-Regular.ttf'));
-  ff(['-f', 'lavfi', '-i', `color=c=0x0b0906:s=${SW}x${SH}:d=1`, '-frames:v', '1', '-vf',
-    `vignette=PI/5,drawbox=x=${Math.round(SW * 0.5) - 180}:y=${Math.round(SH * 0.5) + rows.length * 112 + 40}:w=360:h=8:color=0xD4AF37:t=fill,drawtext=fontfile='${font}':textfile='${filterPath(txt)}':fontcolor=0xD4AF37:fontsize=200:line_spacing=24:x=(w-text_w)/2:y=(h-text_h)/2`, '-q:v', '3', file]);
-  fs.rmSync(txt, { force: true });
+  const lineH = Math.round(size * 1.3);
+  const top = Math.round(CH / 2 - (rows.length * lineH) / 2);
+  const txts = rows.map((r, i) => { const t = path.join(dir, `${hash(file)}-${i}.txt`); fs.writeFileSync(t, r); return t; });
+  const draw = txts.map((t, i) => `drawtext=fontfile='${font}':textfile='${filterPath(t)}':fontcolor=0xD4AF37:fontsize=${size}:borderw=6:bordercolor=black@0.7:x=(w-text_w)/2:y=${top + i * lineH}`).join(',');
+  const bar = `drawbox=x=${Math.round(CW / 2) - 170}:y=${top + rows.length * lineH + 30}:w=340:h=10:color=0xD4AF37:t=fill`;
+  const look = `scale=${CW}:${CH}:force_original_aspect_ratio=increase,crop=${CW}:${CH},gblur=sigma=26,eq=brightness=-0.32:saturation=0.55,vignette=PI/4`;
+  const input = bg && fs.existsSync(bg) ? ['-i', bg] : ['-f', 'lavfi', '-i', `color=c=0x14100a:s=${CW}x${CH}:d=1`];
+  ff([...input, '-frames:v', '1', '-vf', `${look},${bar},${draw}`, '-q:v', '3', file]);
+  txts.forEach((t) => fs.rmSync(t, { force: true }));
   return file;
 }
 
+/** A real map of a place in the story, with its name on it. */
+async function mapStill(place) {
+  const token = process.env.MAPBOX_TOKEN;
+  if (!token) return null;
+  const dir = path.join(CACHE, 'maps');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${hash(place.name + place.zoom)}.jpg`);
+  if (fs.existsSync(file)) return file;
+  const url = `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/pin-l+d4af37(${place.lng},${place.lat})/${place.lng},${place.lat},${place.zoom},0/1280x720@2x?access_token=${token}`;
+  try {
+    const res = await fetch(url, { headers: { Referer: 'https://www.zalavip.com/' }, signal: AbortSignal.timeout(60000) });
+    if (!res.ok) { log(`  map of ${place.name}: answered ${res.status}`); return null; }
+    const raw = `${file}.raw`;
+    fs.writeFileSync(raw, Buffer.from(await res.arrayBuffer()));
+    const font = filterPath(path.join(FONTS, 'Anton-Regular.ttf'));
+    const small = filterPath(path.join(FONTS, 'Lato-Bold.ttf'));
+    const name = `${file}.txt`;
+    fs.writeFileSync(name, place.name.toUpperCase());
+    ff(['-i', raw, '-frames:v', '1', '-vf', `eq=saturation=0.85:brightness=-0.04,drawtext=fontfile='${font}':textfile='${filterPath(name)}':fontcolor=0xD4AF37:fontsize=110:borderw=6:bordercolor=black@0.8:x=(w-text_w)/2:y=h*0.68,drawtext=fontfile='${small}':text='Mapbox / OpenStreetMap':fontcolor=white@0.8:fontsize=28:x=w-text_w-30:y=h-50`, '-q:v', '3', file]);
+    fs.rmSync(raw, { force: true });
+    fs.rmSync(name, { force: true });
+    return file;
+  } catch (e) { log(`  map of ${place.name}: ${e.message.slice(0, 80)}`); return null; }
+}
+
+const loadPlaces = () => { try { return JSON.parse(fs.readFileSync(path.join(CONTENT, 'library', 'places.json'), 'utf8')); } catch { return []; } };
+
 /** The director's pass: runs once per story, and again whenever its rules change. */
 async function stageDirector(script) {
-  if (script.directed === 3) return;
+  if (script.directed === 4) return;
   const id = script.id;
   const all = loadLibrary();
   const pics = usablePictures(id);
@@ -489,9 +521,15 @@ async function stageDirector(script) {
   fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
   if (clean.length < 20) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
   await directEpisode(script, clean, tools);
+  // the first time a place is named, the viewer sees where it is
+  const seenPlaces = new Set();
+  for (const l of script.chapters.flatMap((c) => c.lines)) {
+    delete l.map;
+    const place = loadPlaces().find((p) => !seenPlaces.has(p.name) && new RegExp(p.match).test(l.en));
+    if (place) { seenPlaces.add(place.name); l.map = place.name; }
+  }
   fs.writeFileSync(path.join(CONTENT, 'youtube', `${id}.json`), JSON.stringify(script, null, 2) + '\n', 'utf8');
   fs.rmSync(shotsFile(id), { force: true });
-  flatten(script).forEach(() => {});
 }
 
 async function stageImages(script, flat) {
@@ -499,12 +537,17 @@ async function stageImages(script, flat) {
   const data = loadShots(id);
   const byId = new Map(loadLibrary().map((i) => [i.id, i]));
   for (const f of flat) {
-    if (data.lines[f.key]?.sig === hash(f.en + (f.pictures || []).join() + (f.card || ''))) {
+    if (data.lines[f.key]?.sig === hash(f.en + (f.pictures || []).join() + (f.card || '') + (f.map || ''))) {
       // the plan is in git; fetch any picture this computer doesn't have yet
-      for (const b of data.lines[f.key].beats) if (!fs.existsSync(abs(b.asset.file))) { const file = b.asset.card ? cardStill(b.asset.card) : await downloadImage(b.asset.url); if (file) b.asset.file = rel(file); }
+      for (const b of data.lines[f.key].beats) if (!fs.existsSync(abs(b.asset.file))) { if (b.asset.card) continue; const place = b.asset.map && loadPlaces().find((p) => p.name === b.asset.map); const file = place ? await mapStill(place) : await downloadImage(b.asset.url); if (file) b.asset.file = rel(file); }
       continue;
     }
     const beats = [];
+    if (f.map) {
+      const place = loadPlaces().find((p) => p.name === f.map);
+      const file = place && await mapStill(place);
+      if (file) beats.push({ need: place.name, picture: null, animate: false, motion: '', asset: { kind: 'image', map: place.name, file: rel(file), url: '', page: '', attribution: 'Maps: Mapbox, OpenStreetMap' } });
+    }
     for (const pid of f.pictures || []) {
       const p = byId.get(pid);
       const file = p && await downloadImage(p.url);
@@ -514,8 +557,18 @@ async function stageImages(script, flat) {
         asset: { kind: 'image', file: rel(file), url: p.url, page: p.source_url, attribution: `"${String(p.title).slice(0, 80)}" by ${p.author}, ${p.license}, via ${p.source === 'ZALA vault' ? 'Wikimedia Commons' : p.source}`, license: p.license },
       });
     }
-    if (!beats.length && f.card) beats.push({ need: f.card, picture: null, animate: false, motion: '', asset: { kind: 'image', card: f.card, file: rel(cardStill(f.card)), url: '', page: '', attribution: '' } });
-    data.lines[f.key] = { sig: hash(f.en + (f.pictures || []).join() + (f.card || '')), en: f.en, beats };
+    if (!beats.length && f.card) beats.push({ need: f.card, picture: null, animate: false, motion: '', asset: { kind: 'image', card: f.card, file: '', url: '', page: '', attribution: '' } });
+    data.lines[f.key] = { sig: hash(f.en + (f.pictures || []).join() + (f.card || '') + (f.map || '')), en: f.en, beats };
+  }
+  // cards sit on the last real picture shown, darkened
+  const isPicture = (b) => b.asset && !b.asset.card && !b.asset.map && b.asset.file;
+  let bg = flat.flatMap((f) => data.lines[f.key].beats).find(isPicture)?.asset.file;
+  for (const f of flat) for (const b of data.lines[f.key].beats) {
+    if (isPicture(b)) bg = b.asset.file;
+    if (b.asset?.card) {
+      b.asset.file = rel(cardStill(b.asset.card, bg && abs(bg)));
+      b.asset.vfile = rel(cardStill(b.asset.card, bg && abs(bg), true));
+    }
   }
   fallbackEmptyLines(flat, data);
   saveShots(id, data);
@@ -1147,7 +1200,7 @@ function pickReels(script, flat) {
 
 function reelScene(s, out) {
   const FR = Math.max(2, Math.round(s.dur * FPS));
-  const src = abs(s.asset.file);
+  const src = abs(s.asset.vfile || s.asset.file);
   if (s.asset.kind === 'video') return clipArgs(src, VW, VH, FR, out);
   const { width, height } = dimensionsOf(src);
   const tall = 2880, cropW = Math.round((tall * VW) / VH);
@@ -1270,7 +1323,8 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
 function thumbnail(script, tl, data, dir, work) {
   const tW = 1280, tH = 720;
   const key = script.thumbnailShot ? script.thumbnailShot.split('.').map((n) => Number(n) - 1).join('.') : tl.flat[0].key;
-  const src = data.lines[key]?.beats?.find((b) => b.asset)?.asset || lineAssets(data, tl.flat[0].key)[0];
+  const real = (b) => b.asset && !b.asset.card && !b.asset.map;
+  const src = data.lines[key]?.beats?.find(real)?.asset || tl.flat.flatMap((f) => data.lines[f.key]?.beats || []).find(real)?.asset || lineAssets(data, tl.flat[0].key)[0];
   const words = String(script.thumbnailText || script.title).toUpperCase().split(/\s+/);
   const rows = [];
   for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 10) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
