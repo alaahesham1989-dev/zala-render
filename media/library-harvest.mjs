@@ -277,10 +277,13 @@ async function cmdHarvest(target, { limit, dry }) {
 
 // ── describe: what is really in each picture ─────────────────────────────────
 const outOfQuota = new Set();   // models that used up today's free requests: no point waiting on them
+let callsLeft = Infinity;   // every call to Gemini counts, busy answers too: part of the day's free requests stays for the story and the motion checks
 async function askVision(parts) {
   for (let round = 1; round <= 5; round++) {
     for (const model of TEXT_MODELS) {
       if (outOfQuota.has(model)) continue;
+      if (callsLeft <= 0) return null;
+      callsLeft--;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
@@ -318,9 +321,9 @@ async function cmdDescribe(target, { limit, requests }) {
   const todo = items.filter((i) => i.kind === 'image' && (!i.seen || (i.seen.usable !== false && !i.seen.symbols)) && (!target || i.topics?.includes(target)) && !(banned && banned.test(`${i.title} ${i.note || ''}`))).slice(0, limit);
   log(`Describing ${todo.length} pictures`);
   const BATCH = 16;   // the free plan counts requests, not pictures, so each request carries more
-  let sent = 0;   // keeps part of the day's free requests for the story and the motion checks
+  if (requests) callsLeft = requests;
   for (let i = 0; i < todo.length; i += BATCH) {
-    if (requests && sent >= requests) { log(`Stopped after ${sent} requests, the rest of today's free requests stay for the story.`); break; }
+    if (callsLeft <= 0) { log(`Stopped after ${requests} calls to Gemini, the rest of today's free requests stay for the story.`); break; }
     const group = todo.slice(i, i + BATCH);
     const parts = [{
       text: `You catalog pictures for a YouTube channel telling true stories about ancient Egypt to Americans. For each picture numbered below, using what you SEE plus its label, return JSON {"items":[{"n":0,"what":"one factual sentence of what is visible","subject":"named person, object or place if certain, else empty","period":"historical period shown or made, e.g. 30 BC, New Kingdom, 18th century painting, modern photo","place":"","type":"statue|relief|coin|artifact|painting|engraving|archaeological site|landscape|modern photo|manuscript|other","mood":"one or two words","symbols":["every religious sign, script or modern object you can see, named plainly, such as christian cross, church, crescent, mosque, arabic writing, latin writing, car, power line; empty if none"],"wide":true if there is a real scene or landscape that gentle motion would suit,"usable":false if it is a modern replica, cartoon, unrelated to Egypt or its ancient neighbours, has a large watermark or text, or is too poor to show full screen,"reason":"only if unusable"}]}. Never guess a name you cannot support from the label or the picture.`,
@@ -337,9 +340,11 @@ async function cmdDescribe(target, { limit, requests }) {
       } catch { it.seen = { usable: false, reason: 'unreadable file' }; }
     }
     if (ok.length) {
-      sent++;
       const a = await askVision(parts);
-      if (!a?.items) { log('Gemini is not answering right now; finished pictures are saved. Run describe again later.'); break; }
+      if (!a?.items) {
+        log(callsLeft <= 0 ? `Stopped after ${requests} calls to Gemini, the rest of today's free requests stay for the story.` : 'Gemini is not answering right now; finished pictures are saved. Run describe again later.');
+        break;
+      }
       for (const r of a.items) { const it = ok[r.n]; if (it) { const { n, ...seen } = r; it.seen = seen; } }
     }
     saveItems(items);
