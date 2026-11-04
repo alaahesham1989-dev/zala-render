@@ -24,7 +24,8 @@ const FILES = path.join(CACHE, 'library');
 const UA = 'ZALA-VIP-media/1.0 (https://www.zalavip.com)';
 const MIN_SIDE = 1000, MAX_IMAGE_MB = 25, MAX_DOC_MB = 60, MAX_VIDEO_MB = 90;
 const R2_CAP_GB = 8;       // stays inside R2's free 10 GB
-const TEXT_MODELS = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash'];
+// Lite models have 500 free requests a day, and describing pictures never touches the 20 a day the story needs
+const TEXT_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
 const LICENSE_OK = /^(public domain|pd|cc0|cc by(-sa)? ?\d(\.\d)?|cc-by(-sa)?-\d(\.\d)?)/i;
 const JUNK = /replica|souvenir|\btoy\b|cartoon|logo|icon\b|flag of|\bmap of\b|coat of arms|poster|stamp|wikipedia|screenshot|\bmodel\b|miniature/i;
 
