@@ -5,7 +5,7 @@
 // No AI-generated footage: real open-license photos/videos (see assets.mjs) with Ken Burns motion.
 import fs from 'node:fs';
 import path from 'node:path';
-import { ff, durationOf, filterPath, X264 } from './ff.mjs';
+import { ff, durationOf, dimensionsOf, filterPath, X264 } from './ff.mjs';
 import { speak, DEFAULT_VOICE } from './tts.mjs';
 import { findAsset } from './assets.mjs';
 import { buildAss } from './captions.mjs';
@@ -71,13 +71,26 @@ function sceneClip(asset, dur, fmt, idx, file) {
       '-vf', `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1${tail}`, ...X264, file]);
   } else {
     const frames = Math.max(2, Math.round(dur * FPS));
-    const zoomIn = idx % 2 === 0;
-    const z = zoomIn ? `1+0.12*on/${frames}` : `1.12-0.12*on/${frames}`;
-    const pan = ['iw/2-(iw/zoom/2)', `(iw-iw/zoom)*on/${frames}`, `(iw-iw/zoom)*(1-on/${frames})`][idx % 3];
-    ff(['-i', asset.file, '-frames:v', String(frames),
-      '-vf', `scale=${W * 2}:${H * 2}:force_original_aspect_ratio=increase,crop=${W * 2}:${H * 2},` +
-        `zoompan=z='${z}':x='${pan}':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS},setsar=1${tail}`,
-      ...X264, file]);
+    const dims = dimensionsOf(asset.file);
+    const isLandscapeInPortrait = (H > W) && (dims.width > 0 && dims.height > 0) && (dims.width / dims.height > 1.15);
+
+    if (isLandscapeInPortrait) {
+      // Elegant blurred background + full centered artwork (never crop historic masterpieces)
+      ff(['-loop', '1', '-i', asset.file, '-t', dur.toFixed(2),
+        '-filter_complex',
+        `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},boxblur=24:18[bg];` +
+        `[0:v]scale=${W}:-2:force_original_aspect_ratio=decrease[fg];` +
+        `[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1${tail}[v]`,
+        '-map', '[v]', ...X264, file]);
+    } else {
+      const zoomIn = idx % 2 === 0;
+      const z = zoomIn ? `1+0.12*on/${frames}` : `1.12-0.12*on/${frames}`;
+      const pan = ['iw/2-(iw/zoom/2)', `(iw-iw/zoom)*on/${frames}`, `(iw-iw/zoom)*(1-on/${frames})`][idx % 3];
+      ff(['-i', asset.file, '-frames:v', String(frames),
+        '-vf', `scale=${W * 2}:${H * 2}:force_original_aspect_ratio=increase,crop=${W * 2}:${H * 2},` +
+          `zoompan=z='${z}':x='${pan}':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS},setsar=1${tail}`,
+        ...X264, file]);
+    }
   }
 }
 

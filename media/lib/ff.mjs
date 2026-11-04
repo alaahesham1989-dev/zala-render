@@ -17,6 +17,18 @@ export function ff(args) {
 export const durationOf = (file) =>
   Number(execFileSync(process.env.FFPROBE_PATH || ffprobe.path, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file]).toString().trim()) || 0;
 
+export const dimensionsOf = (file) => {
+  try {
+    const out = execFileSync(process.env.FFPROBE_PATH || ffprobe.path, [
+      '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=s=x:p=0', file
+    ]).toString().trim();
+    const [w, h] = out.split('x').map(Number);
+    return { width: w || 0, height: h || 0 };
+  } catch {
+    return { width: 0, height: 0 };
+  }
+};
+
 /** Escape a path for use inside an ffmpeg filter argument (Windows drive colons, quotes, backslashes). */
 export const filterPath = (p) => p.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "\\'");
 

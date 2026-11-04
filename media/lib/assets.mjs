@@ -8,12 +8,71 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { CACHE } from './paths.mjs';
+import dns from 'node:dns';
+import { CACHE, VAULT } from './paths.mjs';
+
+dns.setDefaultResultOrder('ipv4first');
 
 const DIR = path.join(CACHE, 'assets');
 fs.mkdirSync(DIR, { recursive: true });
 const UA = 'ZALA-VIP-media/1.0 (https://www.zalavip.com; contact via site)';
 const OK_LICENSES = /^(public domain|pd|cc0|cc by(-sa)? ?\d(\.\d)?|cc-by(-sa)?-\d(\.\d)?)/i;
+
+const DEFAULT_AVOID = [
+  'replica', 'model', 'reconstruction', 'reproduction', 'drawing', 'illustration',
+  'diagram', 'cartoon', 'fake', 'miniature', 'souvenir', 'postcard', 'toy'
+];
+
+let _vaultItems = null;
+function getVault() {
+  if (_vaultItems) return _vaultItems;
+  _vaultItems = [];
+  try {
+    if (fs.existsSync(VAULT)) {
+      const files = fs.readdirSync(VAULT).filter((f) => f.endsWith('.json') && !['taxonomy.json', 'master-index.json'].includes(f));
+      for (const f of files) {
+        try {
+          const list = JSON.parse(fs.readFileSync(path.join(VAULT, f), 'utf8'));
+          if (Array.isArray(list)) _vaultItems.push(...list);
+        } catch {}
+      }
+    }
+  } catch {}
+  return _vaultItems;
+}
+
+function lookupVault(query) {
+  const q = String(query || '').toLowerCase().trim();
+  if (!q) return null;
+  const vault = getVault();
+  const qTokens = q.split(/[^a-z0-9\u0600-\u06FF]+/).filter((t) => t.length >= 3);
+  if (!qTokens.length) return null;
+
+  let best = null, bestScore = 0;
+  for (const item of vault) {
+    let score = 0;
+    const id = (item.id || '').toLowerCase();
+    const titleEn = (item.title?.en || '').toLowerCase();
+    const titleAr = (item.title?.ar || '').toLowerCase();
+    const tags = (item.tags || []).map((t) => String(t).toLowerCase());
+
+    if (id === q || titleEn === q || titleAr === q) score += 100;
+    if (titleEn.includes(q) || q.includes(titleEn)) score += 50;
+
+    for (const t of qTokens) {
+      if (id.includes(t)) score += 15;
+      if (titleEn.includes(t)) score += 10;
+      if (titleAr.includes(t)) score += 10;
+      if (tags.some((tag) => tag.includes(t))) score += 8;
+    }
+
+    if (score > bestScore && score >= 50) {
+      bestScore = score;
+      best = item;
+    }
+  }
+  return best;
+}
 
 const hash = (s) => crypto.createHash('sha1').update(s).digest('hex').slice(0, 16);
 const stripHtml = (s) => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
@@ -98,6 +157,7 @@ async function pixabay(query, orientation, wantVideo, used) {
 
 // ── Wikimedia Commons ─────────────────────────────────────────────────────────
 async function wikimedia(query, used, avoid = []) {
+  const avoidAll = [...avoid, ...DEFAULT_AVOID];
   const api = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=12' +
     `&gsrsearch=${encodeURIComponent(`filetype:bitmap ${query}`)}&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=2400`;
   const j = await getJson(api);
@@ -107,7 +167,7 @@ async function wikimedia(query, used, avoid = []) {
   const pages = Object.values(j.query?.pages || {})
     .sort((a, b) => score(b) - score(a) || (a.index || 0) - (b.index || 0));
   for (const p of pages) {
-    if (avoid.some((w) => String(p.title || '').toLowerCase().includes(String(w).toLowerCase()))) continue;
+    if (avoidAll.some((w) => String(p.title || '').toLowerCase().includes(String(w).toLowerCase()))) continue;
     const ii = p.imageinfo?.[0];
     if (!ii || used.has(`wm-${p.pageid}`)) continue;
     const meta = ii.extmetadata || {};
@@ -141,18 +201,63 @@ async function met(query, used) {
  * @param {{ orientation: 'portrait'|'landscape', used: Set<string>, preferVideo?: boolean }} opts
  */
 export async function findAsset(item, { orientation, used, preferVideo = true }) {
+  if (item.file && fs.existsSync(item.file)) {
+    const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(item.file);
+    return {
+      kind: isVideo ? 'video' : 'image',
+      file: item.file,
+      duration: item.duration || 0,
+      source: 'verified-archive',
+      url: item.url || '',
+      author: item.author || 'Historical Archive',
+      license: item.license || 'Public Domain',
+      attribution: item.attribution || 'ZALA Verified Archive'
+    };
+  }
   // A script may pin an exact open-license file (from content/media/candidates.json).
-  if (item.media_url && item.license && OK_LICENSES.test(item.license) && !used.has(item.media_url)) {
-    used.add(item.media_url);
-    const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(item.media_url);
+  const pinUrl = item.media_url || item.url;
+  if (pinUrl && item.license && OK_LICENSES.test(item.license) && !used.has(pinUrl)) {
+    used.add(pinUrl);
+    const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(pinUrl);
     try {
-      return { kind: isVideo ? 'video' : 'image', file: await download(item.media_url, isVideo ? '.mp4' : '.jpg'), duration: item.duration || 0,
-        source: item.source || 'pinned', url: item.page_url || item.media_url, author: item.author || 'Unknown', license: item.license,
+      return { kind: isVideo ? 'video' : 'image', file: await download(pinUrl, isVideo ? '.mp4' : '.jpg'), duration: item.duration || 0,
+        source: item.source || 'pinned', url: item.page_url || pinUrl, author: item.author || 'Unknown', license: item.license,
         attribution: item.attribution || `${item.author || 'Unknown'}, ${item.license}` };
     } catch (err) {
       console.warn(`[assets] pinned media failed: ${err.message}`);
     }
+    if (item.pinOnly) return null;   // a dead pin must not quietly become a random search result
   }
+
+  // Tier 1: Check ZALA Heritage Vault first (curated authentic Egyptian artifacts & monuments)
+  const vaultMatch = lookupVault(item.query);
+  if (vaultMatch && !used.has(`vault-${vaultMatch.id}`)) {
+    used.add(`vault-${vaultMatch.id}`);
+    const localFile = path.join(CACHE, 'vault', `${vaultMatch.id}.jpg`);
+    let file = localFile;
+    if (!fs.existsSync(localFile) || fs.statSync(localFile).size < 1000) {
+      const url = vaultMatch.image?.r2_url || vaultMatch.image?.direct_url;
+      if (url) {
+        try {
+          file = await download(url, '.jpg');
+        } catch (err) {
+          console.warn(`[assets] vault download fallback for ${vaultMatch.id}: ${err.message}`);
+        }
+      }
+    }
+    if (fs.existsSync(file) && fs.statSync(file).size >= 1000) {
+      return {
+        kind: 'image',
+        file,
+        source: 'ZALA Heritage Vault',
+        url: vaultMatch.image?.r2_url || vaultMatch.image?.direct_url || vaultMatch.image?.source_url || '',
+        author: vaultMatch.image?.author || 'Historical Archive',
+        license: vaultMatch.image?.license || 'Public Domain / CC BY-SA',
+        attribution: `"${vaultMatch.title?.en || vaultMatch.id}" (${vaultMatch.era}) — ZALA Heritage Vault`
+      };
+    }
+  }
+
   const order = {
     pexels: ['pexels', 'pixabay', 'wikimedia', 'met'], pixabay: ['pixabay', 'pexels', 'wikimedia', 'met'],
     wikimedia: ['wikimedia', 'pexels', 'pixabay', 'met'], met: ['met', 'wikimedia', 'pexels', 'pixabay'],

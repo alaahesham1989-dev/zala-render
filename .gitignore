@@ -11,3 +11,6 @@ media/tmp/
 media/brand/fonts/
 content/youtube/*.json
 !content/youtube/pronunciation.json
+content/
+!content/youtube/
+!content/youtube/pronunciation.json

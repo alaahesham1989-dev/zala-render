@@ -1,0 +1,104 @@
+name: ZALA episode
+
+# Everything runs on this server: pictures go from their sources straight to R2, and the finished
+# package goes to R2 (renders/<id>/). The owner's computer downloads and uploads nothing.
+# Scripts, the picture index and facts live in R2 (render-state/), never in this public repository.
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id, e.g. ZV-L01"
+        required: true
+        default: ZV-L01
+        type: string
+      action:
+        description: "What to run"
+        required: true
+        default: full-episode
+        type: choice
+        options: [full-episode, describe-library, meta-test]
+
+concurrency:
+  group: zala-episode
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      EP: ${{ inputs.episode }}
+      ACTION: ${{ inputs.action }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
+      SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      META_COOKIES: ${{ secrets.META_COOKIES }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install ffmpeg and Arabic-capable fonts
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core
+          ffmpeg -hide_banner -filters | grep -E " (subtitles|drawtext|xfade|zoompan) "
+
+      - name: Install tools and fonts
+        working-directory: media
+        run: |
+          npm ci
+          node tools/fetch-fonts.mjs
+
+      - name: Bring scripts, picture index, facts and finished work from R2
+        run: |
+          set -euo pipefail
+          E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
+          for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+
+      - name: Run
+        run: |
+          case "$ACTION" in
+            full-episode)
+              node media/library-harvest.mjs upload
+              node media/library-harvest.mjs describe "$EP" --limit 400
+              node media/library-harvest.mjs coverage
+              node media/zala-render.mjs all "$EP"
+              ;;
+            describe-library)
+              node media/library-harvest.mjs upload
+              node media/library-harvest.mjs describe --limit 1500
+              node media/library-harvest.mjs coverage
+              ;;
+            meta-test)
+              node media/library-harvest.mjs upload
+              node media/library-harvest.mjs describe "$EP" --limit 40
+              node media/zala-render.mjs meta-test "$EP"
+              ;;
+          esac
+
+      - name: Save work back to R2, even after a failure
+        if: always()
+        run: |
+          E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress --exclude "*" --include "library/*" --include "youtube/*"
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
+          [ -d "media/out/$EP" ] && aws s3 sync "media/out/$EP" "s3://${R2_BUCKET}/renders/$EP" --endpoint-url "$E" --no-progress
+          echo "Finished files are in R2 under renders/$EP/" >> "$GITHUB_STEP_SUMMARY"

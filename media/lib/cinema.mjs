@@ -559,7 +559,7 @@ async function buildAudio({ tl, voice, script, work, mixFile, scenes }) {
   const labels = [];
   ev.forEach((e, i) => { const ms = Math.round(e.t * 1000); fc += `[${i + 2}:a]aformat=channel_layouts=stereo,volume=${e.g},adelay=${ms}|${ms}[s${i}];`; labels.push(`[s${i}]`); });
   fc += `${labels.join('')}amix=inputs=${labels.length}:normalize=0,volume=0.9[sfxbus];`;
-  fc += `[vo][md][sfxbus]amix=inputs=3:normalize=0:weights='1 0.55 0.75',loudnorm=I=-15:LRA=9:TP=-1.5,alimiter=limit=0.95[out]`;
+  fc += `[vo][md][sfxbus]amix=inputs=3:normalize=0:weights='1 0.55 0.75',loudnorm=I=-15:LRA=9:TP=-1.5,alimiter=limit=0.80:level=disabled[out]`;
   const gf = path.join(work, 'mix.filter');
   fs.writeFileSync(gf, fc);
   log(`audio mix: ${ev.length} sound effects`);
