@@ -82,7 +82,7 @@ jobs:
           for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
           aws s3 sync "s3://${R2_BUCKET}/render-input/${EP}" "media/cache/narration/${EP}" --endpoint-url "$E" --no-progress
           # narration links listed on R2 are fetched here, so the audio never passes through the owner's computer
-          if [ -f "media/cache/narration/${EP}/sources.json" ]; then
+          if [ -f "media/cache/narration/${EP}/sources.json" ] && [ ! -f "media/cache/narration/${EP}/chapter-1.mp3" ]; then
             node -e 'const fs=require("fs"),{execFileSync:x}=require("child_process"),d="media/cache/narration/"+process.env.EP;for(const [n,u] of Object.entries(JSON.parse(fs.readFileSync(d+"/sources.json"))))x("curl",["-sSfL","--retry","3","-o",d+"/chapter-"+n+".mp3",u]);'
             ls -la "media/cache/narration/${EP}"
             aws s3 sync "media/cache/narration/${EP}" "s3://${R2_BUCKET}/render-input/${EP}" --endpoint-url "$E" --no-progress
@@ -100,7 +100,8 @@ jobs:
               E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
               aws s3 cp "s3://${R2_BUCKET}/render-input/narration-sources.json" narration-sources.json --endpoint-url "$E" --no-progress
               node -e 'const fs=require("fs"),{execFileSync:x}=require("child_process");const all=JSON.parse(fs.readFileSync("narration-sources.json"));let bad=0,n=0;for(const [ep,parts] of Object.entries(all))for(const [name,url] of Object.entries(parts)){const d="narration-out/"+ep;fs.mkdirSync(d,{recursive:true});const out=d+"/"+name+".mp3";x("curl",["-sSfL","--retry","3","-o",out,url]);const sec=Number(x("ffprobe",["-v","error","-show_entries","format=duration","-of","csv=p=0",out],{encoding:"utf8"}));const mb=fs.statSync(out).size/1048576;console.log(ep,name,sec.toFixed(1)+"s",mb.toFixed(1)+"MB");n++;if(!(sec>30))bad++}console.log("fetched",n,"bad",bad);if(bad)process.exit(1)'
-              aws s3 sync narration-out "s3://${R2_BUCKET}/render-input" --endpoint-url "$E" --no-progress
+              for try in 1 2 3 4 5 6; do aws s3 sync narration-out "s3://${R2_BUCKET}/render-input" --endpoint-url "$E" --no-progress && { echo "saved on try $try"; break; }; [ "$try" = 6 ] && exit 1; sleep 20; done
+              aws s3 ls "s3://${R2_BUCKET}/render-input/" --recursive --endpoint-url "$E" | grep part- | awk '{print $3, $4}'
               ;;
             review)
               E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
