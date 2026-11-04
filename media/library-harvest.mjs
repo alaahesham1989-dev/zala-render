@@ -15,6 +15,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { ff } from './lib/ff.mjs';
 import { CACHE, CONTENT } from './lib/paths.mjs';
+import { keyFor, markSpent, keyRefused } from './lib/gemini-keys.mjs';
 
 const LIB = path.join(CONTENT, 'library');
 const ITEMS = path.join(LIB, 'items.jsonl');
@@ -276,27 +277,28 @@ async function cmdHarvest(target, { limit, dry }) {
 }
 
 // ── describe: what is really in each picture ─────────────────────────────────
-const outOfQuota = new Set();   // models that used up today's free requests: no point waiting on them
 let callsLeft = Infinity;   // every call to Gemini counts, busy answers too: part of the day's free requests stays for the story and the motion checks
 async function askVision(parts) {
   for (let round = 1; round <= 5; round++) {
     for (const model of TEXT_MODELS) {
-      if (outOfQuota.has(model)) continue;
+      const key = keyFor(model);   // models that used up today's free requests on every key: no point waiting on them
+      if (!key) continue;
       if (callsLeft <= 0) return null;
       callsLeft--;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
           body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } }), signal: AbortSignal.timeout(180000),
         });
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text;
         if (res.ok && text) return JSON.parse(text);
-        if (JSON.stringify(data.error || '').includes('PerDay')) { outOfQuota.add(model); log(`  ${model}: today's free Gemini requests are used up`); }
+        if (JSON.stringify(data.error || '').includes('PerDay')) log(`  ${model}: today's free Gemini requests are used up on key ${markSpent(model, key)}`);
+        else if (keyRefused(res.status, data.error)) log(`  ${model}: Google refused key ${markSpent(model, key)}`);
         else log(`  ${model}: answered ${res.status} ${String(data.error?.status || '')}`);
       } catch (e) { log(`  ${model}: ${e.name}`); }
     }
-    if (outOfQuota.size === TEXT_MODELS.length) return null;
+    if (TEXT_MODELS.every((m) => !keyFor(m))) return null;
     await sleep(20000 * round);
   }
   return null;
