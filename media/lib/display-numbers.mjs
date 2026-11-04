@@ -20,7 +20,7 @@ function asYear(ws) {
   }
   for (let cut = 1; cut <= 2 && cut < ws.length; cut++) {
     const head = tensValue(ws.slice(0, cut)), tail = tensValue(ws.slice(cut));
-    if (head >= 10 && head <= 20 && tail !== undefined && tail >= 1 && tail <= 99) return head * 100 + tail;
+    if (head >= 10 && head <= 20 && tail !== undefined && tail >= 1 && tail <= 99 && (tail >= 10 || ws[cut] === 'oh')) return head * 100 + tail;
     if (head >= 21 && head <= 29 && tail >= 10 && tail <= 99) return head * 100 + tail;
   }
   return undefined;
