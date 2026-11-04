@@ -19,6 +19,10 @@ on:
         default: full-episode
         type: choice
         options: [full-episode, describe-library, meta-test]
+      voice_model:
+        description: "Gemini voice model for the whole episode (empty = the usual one)"
+        required: false
+        type: string
 
 concurrency:
   group: zala-episode
@@ -42,6 +46,7 @@ jobs:
       AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      GEMINI_TTS_MODEL: ${{ inputs.voice_model }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
       SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
