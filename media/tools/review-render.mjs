@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { FFMPEG, ff, durationOf } from '../lib/ff.mjs';
 import { keyFor, markSpent } from '../lib/gemini-keys.mjs';
+import { numerals } from '../lib/display-numbers.mjs';
 
 const [publish, scriptFile, out] = process.argv.slice(2);
 if (!process.env.CI) throw new Error('This review runs on the cloud server only.');
@@ -59,7 +60,7 @@ function sheet(frames, columns, rows, target) {
   ff(['-framerate', '1', '-i', path.join(dir, '%03d.jpg'), '-vf', `tile=${columns}x${rows}:padding=4:color=black`, '-frames:v', '1', '-q:v', '6', target]);
 }
 
-const words = (s) => String(s).toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').split(/\s+/).filter(Boolean);
+const words = (s) => numerals(String(s)).toLowerCase().replace(/(\d),(\d)/g, '$1$2').replace(/[^a-z0-9' ]+/g, ' ').split(/\s+/).filter(Boolean);
 function compare(expected, heard) {
   const a = words(expected), b = words(heard);
   const have = new Map();
@@ -118,7 +119,7 @@ for (let i = 0; i < srt.length; i += 5) {
 console.log('Pictures against words');
 for (let i = 0; i < srt.length; i += 6) {
   const group = srt.slice(i, i + 6);
-  const parts = [{ text: `These frames come from a true-history video about Cleopatra's final years and the search for her tomb. For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","shows":"what is really visible, short","problem":""}]}.` }];
+  const parts = [{ text: `These frames come from a true-history video about Cleopatra's final years and the search for her tomb. For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Set nudity true if bare breasts, genitals or a naked body are visible, even in art. Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","nudity":false,"shows":"what is really visible, short","problem":""}]}.` }];
   group.forEach((s, k) => {
     const f = path.join(tmp, `check${s.n}.jpg`);
     frameOf(video, (s.start + s.end) / 2, 'scale=640:-2', f);
@@ -126,7 +127,7 @@ for (let i = 0; i < srt.length; i += 6) {
     parts.push({ inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } });
   });
   const a = await ask(parts);
-  (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) Object.assign(s, { fits: r.fits, shows: r.shows, pictureProblem: r.problem || '' }); });
+  (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) Object.assign(s, { fits: r.fits, nudity: !!r.nudity, shows: r.shows, pictureProblem: r.problem || '' }); });
   console.log(`  ${Math.min(i + 6, srt.length)}/${srt.length}`);
   await sleep(5000);
 }
@@ -165,5 +166,29 @@ for (const name of fs.readdirSync(publish).filter((f) => /(_thumbnail|_cover)\.j
 
 fs.rmSync(tmp, { recursive: true, force: true });
 fs.writeFileSync(path.join(out, 'review.json'), JSON.stringify(report, null, 1));
+
+// the verdict: a video that fails is held and never published
+const fail = [];
+const pkgFile = path.join(publish, `${id}.youtube.json`);
+const pkg = fs.existsSync(pkgFile) ? JSON.parse(fs.readFileSync(pkgFile, 'utf8')) : {};
+const lastSpeech = srt[srt.length - 1].end;
+if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, the script ${lines.length}`);
+for (const l of report.lines) {
+  if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
+  else if ((l.missing || []).length >= 3 && (l.extra || []).length >= 3) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
+  if (l.fits === 'no') fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
+}
+const loose = report.lines.filter((l) => l.fits === 'loosely').length;
+if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.length} pictures only loosely fit`);
+for (const [a, b] of report.audio.black) if (b < lastSpeech) fail.push(`black screen at ${a.toFixed(1)}s`);
+for (const x of report.audio.silence) if (x.end - x.seconds < lastSpeech - 0.5 && x.seconds > 2.5) fail.push(`${x.seconds.toFixed(1)}s of silence before ${x.end.toFixed(1)}s`);
+if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds > 3)) fail.push('the ending is silent');
+for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
+const blob = [pkg.title, pkg.description].join(' ');
+for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
+const verdict = { id, pass: fail.length === 0, reasons: fail, checkedAt: new Date().toISOString() };
+fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify(verdict, null, 1));
+console.log(verdict.pass ? 'QUALITY: PASSED' : `QUALITY: HELD\n${fail.map((x) => `  - ${x}`).join('\n')}`);
 const unheard = report.lines.filter((l) => l.heard === undefined).length;
 console.log(`Review done: ${report.lines.length} lines, ${unheard} not heard, ${fs.readdirSync(out).length} files.`);
