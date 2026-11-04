@@ -1,0 +1,169 @@
+#!/usr/bin/env node
+// media/tools/review-render.mjs — checks a finished episode on the cloud server and writes small review files.
+// Picture sheets, what is really heard in each line, whether the picture fits the line, black frames, silences and reels.
+// Usage: node media/tools/review-render.mjs <publish dir> <script.json> <out dir>
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { FFMPEG, ff, durationOf } from '../lib/ff.mjs';
+import { keyFor, markSpent } from '../lib/gemini-keys.mjs';
+
+const [publish, scriptFile, out] = process.argv.slice(2);
+if (!process.env.CI) throw new Error('This review runs on the cloud server only.');
+const script = JSON.parse(fs.readFileSync(scriptFile, 'utf8'));
+const id = script.id;
+const video = path.join(publish, `${id}.mp4`);
+const tmp = path.join(out, '_tmp');
+fs.mkdirSync(tmp, { recursive: true });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+const FONT = '/usr/share/fonts/truncated/noto/NotoSans-Bold.ttf';
+const label = (text, size) => `drawtext=${fs.existsSync(FONT) ? `fontfile=${FONT}:` : ''}text='${text}':x=6:y=6:fontsize=${size}:fontcolor=yellow:box=1:boxcolor=black@0.75`;
+
+function readSrt(file) {
+  const clock = (t) => { const [h, m, s] = t.replace(',', '.').split(':'); return Number(h) * 3600 + Number(m) * 60 + Number(s); };
+  return fs.readFileSync(file, 'utf8').trim().split(/\r?\n\r?\n/).map((block) => {
+    const rows = block.split(/\r?\n/);
+    const [a, b] = rows[1].split(' --> ');
+    return { n: Number(rows[0]), start: clock(a), end: clock(b), text: rows.slice(2).join(' ') };
+  });
+}
+
+async function ask(parts) {
+  for (let round = 1; round <= 5; round++) {
+    for (const model of MODELS) {
+      const key = keyFor(model);
+      if (!key) continue;
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } }), signal: AbortSignal.timeout(180000),
+        });
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.find((p) => p.text)?.text;
+        if (res.ok && text) return JSON.parse(text);
+        if (JSON.stringify(data.error || '').includes('PerDay')) markSpent(model, key);
+        console.log(`  ${model}: answered ${res.status}`);
+      } catch (e) { console.log(`  ${model}: ${e.name}`); }
+    }
+    await sleep(15000 * round);
+  }
+  return null;
+}
+
+const frameOf = (file, t, filter, target) => ff(['-ss', t.toFixed(2), '-i', file, '-frames:v', '1', '-vf', filter, '-q:v', '5', target]);
+
+function sheet(frames, columns, rows, target) {
+  const dir = fs.mkdtempSync(path.join(tmp, 'sheet-'));
+  frames.forEach((f, i) => fs.copyFileSync(f, path.join(dir, `${String(i + 1).padStart(3, '0')}.jpg`)));
+  ff(['-framerate', '1', '-i', path.join(dir, '%03d.jpg'), '-vf', `tile=${columns}x${rows}:padding=4:color=black`, '-frames:v', '1', '-q:v', '6', target]);
+}
+
+const words = (s) => String(s).toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').split(/\s+/).filter(Boolean);
+function compare(expected, heard) {
+  const a = words(expected), b = words(heard);
+  const have = new Map();
+  b.forEach((w) => have.set(w, (have.get(w) || 0) + 1));
+  const missing = a.filter((w) => { const n = have.get(w) || 0; if (n) have.set(w, n - 1); return !n; });
+  const extra = [...have.entries()].flatMap(([w, n]) => Array(n).fill(w));
+  return { missing, extra, firstOk: a[0] === b[0], lastOk: a[a.length - 1] === b[b.length - 1] };
+}
+
+function detect(filter) {
+  return String(spawnSync(FFMPEG, ['-hide_banner', '-nostats', '-i', video, ...filter, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1 << 27 }).stderr);
+}
+
+const srt = readSrt(path.join(publish, `${id}.en.srt`));
+const lines = script.chapters.flatMap((c, ci) => c.lines.map((l, li) => ({ label: `c${ci + 1}.${li + 1}`, ...l })));
+const report = { id, seconds: durationOf(video), srtLines: srt.length, scriptLines: lines.length, lines: [], audio: {}, reels: [] };
+
+// picture sheets: two moments of every line
+console.log('Sheets: main video');
+const main = [];
+for (const s of srt) {
+  for (const [part, at] of [['a', 0.25], ['b', 0.75]]) {
+    const f = path.join(tmp, `L${String(s.n).padStart(2, '0')}${part}.jpg`);
+    frameOf(video, s.start + (s.end - s.start) * at, `scale=384:216,${label(`L${s.n}${part}`, 24)}`, f);
+    main.push(f);
+  }
+}
+for (let i = 0, k = 1; i < main.length; i += 20, k++) sheet(main.slice(i, i + 20), 5, 4, path.join(out, `main-${String(k).padStart(2, '0')}.jpg`));
+const outro = [];
+for (let i = 0; i < 5; i++) {
+  const f = path.join(tmp, `outro${i}.jpg`);
+  frameOf(video, srt[srt.length - 1].end + 0.5 + i * ((report.seconds - srt[srt.length - 1].end - 1) / 4), `scale=384:216,${label(`END${i + 1}`, 24)}`, f);
+  outro.push(f);
+}
+sheet(outro, 5, 1, path.join(out, 'outro.jpg'));
+
+// what is really heard, in the finished mix
+console.log('Hearing every line');
+for (const s of srt) {
+  s.seconds = s.end - s.start;
+  s.secPerWord = s.seconds / words(s.text).length;
+  s.clip = path.join(tmp, `say${s.n}.mp3`);
+  ff(['-ss', Math.max(0, s.start - 0.25).toFixed(2), '-to', (s.end + 0.25).toFixed(2), '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k', s.clip]);
+}
+for (let i = 0; i < srt.length; i += 5) {
+  const group = srt.slice(i, i + 5);
+  const parts = [{ text: 'Each audio clip below is a line from a narrated video with quiet music. Write exactly the words spoken in each clip, including cut-off words. Also say if the voice sounds cut, glitched, or if two voices appear. Return only JSON {"items":[{"n":0,"heard":"","problem":""}]} where n is the clip number and problem is empty when there is none.' }];
+  group.forEach((s, k) => { parts.push({ text: `Clip ${k}` }); parts.push({ inlineData: { mimeType: 'audio/mpeg', data: fs.readFileSync(s.clip).toString('base64') } }); });
+  const a = await ask(parts);
+  (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) { s.heard = r.heard; s.heardProblem = r.problem || ''; Object.assign(s, compare(s.text, r.heard)); } });
+  console.log(`  ${Math.min(i + 5, srt.length)}/${srt.length}`);
+  await sleep(5000);
+}
+
+// does the picture fit the words
+console.log('Pictures against words');
+for (let i = 0; i < srt.length; i += 6) {
+  const group = srt.slice(i, i + 6);
+  const parts = [{ text: `These frames come from a true-history video about Cleopatra's final years and the search for her tomb. For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","shows":"what is really visible, short","problem":""}]}.` }];
+  group.forEach((s, k) => {
+    const f = path.join(tmp, `check${s.n}.jpg`);
+    frameOf(video, (s.start + s.end) / 2, 'scale=640:-2', f);
+    parts.push({ text: `Frame ${k}. Spoken: ${s.text}` });
+    parts.push({ inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } });
+  });
+  const a = await ask(parts);
+  (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) Object.assign(s, { fits: r.fits, shows: r.shows, pictureProblem: r.problem || '' }); });
+  console.log(`  ${Math.min(i + 6, srt.length)}/${srt.length}`);
+  await sleep(5000);
+}
+
+report.lines = srt.map(({ clip, ...s }, i) => ({ ...s, label: lines[i]?.label, pictures: lines[i]?.pictures, same: lines[i] ? words(lines[i].en).join(' ') === words(s.text).join(' ') : false }));
+
+// black frames, silences, loudness, frozen picture
+console.log('Black frames and silences');
+const black = detect(['-vf', 'blackdetect=d=0.4:pix_th=0.1', '-an']);
+report.audio.black = [...black.matchAll(/black_start:([\d.]+) black_end:([\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+const silent = detect(['-af', 'silencedetect=noise=-45dB:d=1.2', '-vn']);
+report.audio.silence = [...silent.matchAll(/silence_end: ([\d.]+) \| silence_duration: ([\d.]+)/g)].map((m) => ({ end: Number(m[1]), seconds: Number(m[2]) }));
+const frozen = detect(['-vf', 'scale=320:-2,freezedetect=n=0.0005:d=8', '-an']);
+report.audio.frozen = [...frozen.matchAll(/freeze_start: ([\d.]+)[\s\S]*?freeze_duration: ([\d.]+)/g)].map((m) => ({ start: Number(m[1]), seconds: Number(m[2]) }));
+
+// reels
+for (const name of fs.readdirSync(publish).filter((f) => /-R\d+\.mp4$/.test(f)).sort()) {
+  const file = path.join(publish, name);
+  const seconds = durationOf(file);
+  const frames = [];
+  for (let i = 0; i < 12; i++) {
+    const f = path.join(tmp, `${name}-${i}.jpg`);
+    frameOf(file, Math.min(seconds - 0.2, 0.2 + i * (seconds / 12)), `scale=240:-2,${label(String(Math.round(i * (seconds / 12))), 22)}`, f);
+    frames.push(f);
+  }
+  sheet(frames, 6, 2, path.join(out, `reel-${name.replace(/.*-(R\d+)\.mp4/, '$1')}.jpg`));
+  const clip = path.join(tmp, `${name}.mp3`);
+  ff(['-i', file, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k', clip]);
+  const a = await ask([{ text: 'Write exactly the words spoken in this short vertical video, in order, and say if the speech starts or ends cut off. Return only JSON {"heard":"","problem":""}.' }, { inlineData: { mimeType: 'audio/mpeg', data: fs.readFileSync(clip).toString('base64') } }]);
+  report.reels.push({ name, seconds, heard: a?.heard, problem: a?.problem });
+  await sleep(4000);
+}
+
+// the finished thumbnail and covers, small
+for (const name of fs.readdirSync(publish).filter((f) => /(_thumbnail|_cover)\.jpg$/.test(f))) ff(['-i', path.join(publish, name), '-vf', 'scale=480:-2', '-q:v', '6', path.join(out, `small-${name}`)]);
+
+fs.rmSync(tmp, { recursive: true, force: true });
+fs.writeFileSync(path.join(out, 'review.json'), JSON.stringify(report, null, 1));
+const unheard = report.lines.filter((l) => l.heard === undefined).length;
+console.log(`Review done: ${report.lines.length} lines, ${unheard} not heard, ${fs.readdirSync(out).length} files.`);
