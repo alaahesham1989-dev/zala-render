@@ -25,6 +25,7 @@ import { FFMPEG, ff, durationOf, dimensionsOf, filterPath } from './lib/ff.mjs';
 import { buildAss as buildReelAss } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
 import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
+import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
 
 const W = 1920, H = 1080, FPS = 30;
 const VW = 1080, VH = 1920;
@@ -36,6 +37,8 @@ const DEFAULT_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-tts';
 const DEFAULT_VOICE = 'Orus';
 const DEFAULT_STYLE = 'A gripping storyteller telling a true story to a friend: warm, confident and full of suspense, lively pace, natural pauses before the big reveals.';
 const AUDIO_TOKENS_PER_SEC = 25;   // measured on gemini-3.8-flash-tts
+const VOICE_WORDS_PER_REQUEST = 190;   // the free plan allows 10 voice requests a day: a 12-minute episode fits in them
+const VOICE_REQUEST_GAP = 21000;   // and 3 a minute
 const GOLD = '&H0037AFD4&', WHITE = '&H00FFFFFF&';
 const TEXT_MODELS = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash'];
 const MUSIC_MODEL = 'lyria-3-pro-preview';
@@ -191,7 +194,7 @@ async function speakLine(text, vp, file) {
     let res, data;
     try {
       res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(120000),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(300000),
       });
       data = await res.json();
     } catch (e) {
@@ -233,21 +236,41 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
   log(`Voice: ${vp.voice} on ${vp.model}`);
   const todo = flat.filter((f) => !fs.existsSync(voiceFileOf(script, f, vp)));
   let made = 0;
-  const queue = [...todo];
-  while (queue.length) {
-    const f = queue.shift();
-    const file = voiceFileOf(script, f, vp);
+  const pending = [];
+  for (const f of todo) {
     const legacy = voiceFrom && path.join(voiceFrom, `${f.label}_line.mp3`);
     if (legacy && fs.existsSync(legacy)) {
+      const file = voiceFileOf(script, f, vp);
       fs.mkdirSync(path.dirname(file), { recursive: true });
       ff(['-i', legacy, '-ar', '48000', file]);
-      continue;
-    }
+    } else pending.push(f);
+  }
+  const queue = groupLines(pending, flat, VOICE_WORDS_PER_REQUEST);
+  log(`Voice: ${pending.length} lines in ${queue.length} requests`);
+  while (queue.length) {
+    const group = queue.shift();
+    const files = group.map((f) => voiceFileOf(script, f, vp));
+    const chunk = path.join(CACHE, 'voice', script.id, `chunk-${hash([...group.map((f) => f.say), vp.model, vp.voice, vp.style, vp.tempo].join('|'))}.wav`);
     try {
-      await speakLine(f.say, vp, file);
-      made++;
-      log(`  [${f.label}] ${durationOf(file).toFixed(1)}s`);
-      await sleep(700);
+      if (group.length === 1) {
+        await speakLine(group[0].say, vp, files[0]);
+        made++;
+        log(`  [${group[0].label}] ${durationOf(files[0]).toFixed(1)}s`);
+        await sleep(VOICE_REQUEST_GAP);
+      } else {
+        // a narration already made is never paid for twice: the file stays until its lines are cut
+        const fresh = !fs.existsSync(chunk);
+        if (fresh) { await speakLine(group.map((f) => f.say).join('\n\n'), vp, chunk); made++; }
+        try {
+          splitChunk(chunk, group.map((f) => pronounce(f.say)), files);
+          log(`  [${group[0].label} to ${group[group.length - 1].label}] ${durationOf(chunk).toFixed(1)}s, ${group.length} lines`);
+        } catch (e) {
+          log(`  [${group[0].label}] could not cut this narration at its pauses (${e.message}), asking for these lines one by one`);
+          files.forEach((x) => fs.rmSync(x, { force: true }));
+          queue.unshift(...group.map((f) => [f]));
+        }
+        if (fresh) await sleep(VOICE_REQUEST_GAP);
+      }
     } catch (e) {
       if (!(e instanceof QuotaError)) throw e;
       const left = flat.filter((x) => !fs.existsSync(voiceFileOf(script, x, vp))).length;
@@ -258,7 +281,7 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
       log(`If this computer is turned off, run the same command again and it continues from here.`);
       await sleep(wait);
       clearSpent();
-      queue.unshift(f);
+      queue.unshift(group);
     }
   }
   log(`Voice ready: ${flat.length} lines (${made} new requests, ${flat.length - todo.length} already saved).`);
@@ -1265,7 +1288,7 @@ function stageCheck(script, flat, { voiceFrom } = {}) {
   log(`${script.id}: ${script.title}`);
   log(`Chapters ${script.chapters.length}, lines ${flat.length}`);
   log(`Voice: ${vp.voice} on ${vp.model}, ${geminiKeys.length} Gemini keys`);
-  log(`Voice still needed: ${need.length} requests, about ${Math.round(secs)}s of speech, about ${Math.round(secs * AUDIO_TOKENS_PER_SEC + needChars / 4)} tokens`);
+  log(`Voice still needed: ${need.length} lines, about ${Math.round(secs)}s of speech, about ${Math.round(secs * AUDIO_TOKENS_PER_SEC + needChars / 4)} tokens`);
   notes.forEach((n) => log(`Note: ${n}`));
   problems.forEach((n) => log(`PROBLEM: ${n}`));
   if (!geminiKeys.length) problems.push('GEMINI_API_KEY missing');
