@@ -61,9 +61,21 @@ kind: one of ancient-object, ancient-site, ancient-art, later-painting, later-en
 
 const catalogRow = (p) => [p.id, p.seen.check?.kind, p.seen.check?.modern ? 'MODERN' : '', p.seen.subject, p.seen.what, p.seen.period, p.seen.place].join(' | ');
 
+const MODERN_LINE = /\b(nineteen|two thousand|twenty (ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)|eighteen|today|modern|now)\b/i;
+const isModernPicture = (p) => p.seen.check?.modern || /^modern/.test(p.seen.check?.kind || '');
+
+/** A photo of a named place belongs only to lines about that place. A modern picture belongs only to modern lines. */
+function allowedForLine(p, line, places) {
+  if (isModernPicture(p) && !MODERN_LINE.test(line)) return false;
+  if (!/site|photo|building|satellite/.test(p.seen.check?.kind || '')) return true;
+  const about = [p.title, p.seen.subject, p.seen.what, p.seen.place].join(' ');
+  const shows = places.filter((x) => new RegExp(x.match).test(about));
+  return !shows.length || shows.some((x) => new RegExp(x.match).test(line));
+}
+
 /** Chooses pictures per chapter and checks them by eye. Returns nothing: fills line.pictures and line.card in the script. */
 export async function directEpisode(script, pics, tools) {
-  const { thumb, log, sleep } = tools;
+  const { thumb, log, sleep, places = [] } = tools;
   const byId = new Map(pics.map((p) => [p.id, p]));
   const uses = new Map();
   for (const chapter of script.chapters) {
@@ -77,7 +89,9 @@ RULES:
 - later-painting is fine for dramatic scenes from the story, but not for a claim about evidence or a specific object.
 - Give 1 to 2 pictures per line. Prefer variety and never repeat a picture within this chapter.
 - A line telling the story of a person may show that person's portrait, coin, or a painting of the scene. The opening line of the episode must always have a striking picture of its main subject.
-- If no picture truly fits, give an empty list and write "card": up to 7 words stating the key fact of the line, using only words from the line.
+- A photo of a named place only for a line about that place.
+- If no picture truly fits, give an empty list.
+- Write "card" for every line: one complete, striking fact of up to 6 words, keeping apostrophes, never starting with a filler like However or Furthermore.
 Always include "card" for every line, even when pictures fit.
 Return only JSON {"items":[{"n":0,"pictures":["id"],"card":""}]}.
 
@@ -91,7 +105,7 @@ ${free.map(catalogRow).join('\n')}` }], tools);
       const line = chapter.lines[r.n];
       if (!line) continue;
       line.card = String(r.card || '').trim();
-      line.pictures = (r.pictures || []).filter((id) => byId.has(id) && (uses.get(id) || 0) < MAX_USES).slice(0, 2);
+      line.pictures = (r.pictures || []).filter((id) => byId.has(id) && (uses.get(id) || 0) < MAX_USES && allowedForLine(byId.get(id), line.en, places)).slice(0, 2);
       line.pictures.forEach((id) => uses.set(id, (uses.get(id) || 0) + 1));
     }
     await sleep(4000);
@@ -113,6 +127,7 @@ ${free.map(catalogRow).join('\n')}` }], tools);
         const c = ok[r.n];
         if (c && r.fits === false) {
           c.l.pictures = c.l.pictures.filter((x) => x !== c.id);
+          (c.l.rejected ||= []).push(c.id);
           uses.set(c.id, Math.max(0, (uses.get(c.id) || 1) - 1));
           log(`  rejected a picture for: ${c.l.en.slice(0, 60)} (${String(r.why).slice(0, 70)})`);
         }
@@ -121,8 +136,21 @@ ${free.map(catalogRow).join('\n')}` }], tools);
     }
   }
   const lines = script.chapters.flatMap((c) => c.lines);
+  // never more than two cards in a row: give back the nearest picture the eye test was unsure of, then one from the same chapter
+  const chapterOf = new Map(script.chapters.flatMap((c) => c.lines.map((l) => [l, c])));
+  let run = 0;
+  for (const l of lines) {
+    if (l.pictures.length) { run = 0; continue; }
+    run++;
+    if (run <= 2) continue;
+    const back = (l.rejected || []).find((id) => byId.has(id) && (uses.get(id) || 0) < MAX_USES && allowedForLine(byId.get(id), l.en, places));
+    const near = chapterOf.get(l).lines.flatMap((x) => x.pictures).find((id) => (uses.get(id) || 0) < MAX_USES + 1 && allowedForLine(byId.get(id), l.en, places));
+    const pick = back || near;
+    if (pick) { l.pictures = [pick]; uses.set(pick, (uses.get(pick) || 0) + 1); run = 0; }
+  }
+  lines.forEach((l) => { delete l.rejected; });
   const cards = lines.filter((l) => !l.pictures.length);
   cards.forEach((l) => { if (!l.card) l.card = l.en.split(/[,.]/)[0].split(/\s+/).slice(0, 7).join(' '); });
-  script.directed = 4;
+  script.directed = 5;
   log(`Director: ${lines.length - cards.length} lines with pictures, ${cards.length} with a text card`);
 }
