@@ -36,9 +36,9 @@ export function syllables(text) {
  * @param {string} file narration audio
  * @param {{ text: string, paragraphBreakAfter?: boolean }[]} lines  in spoken order
  */
-export function alignLines(file, lines) {
+export function alignLines(file, lines, { noise, minDur } = {}) {
   const D = durationOf(file);
-  const sil = detectSilences(file);
+  const sil = detectSilences(file, noise, minDur);
   let speechStart = 0, speechEnd = D;
   if (sil.length && sil[0].s < 0.05) speechStart = sil[0].e;
   const tail = sil[sil.length - 1];
