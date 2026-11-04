@@ -81,6 +81,12 @@ jobs:
           aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
           for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
           aws s3 sync "s3://${R2_BUCKET}/render-input/${EP}" "media/cache/narration/${EP}" --endpoint-url "$E" --no-progress
+          # narration links listed on R2 are fetched here, so the audio never passes through the owner's computer
+          if [ -f "media/cache/narration/${EP}/sources.json" ]; then
+            node -e 'const fs=require("fs"),{execFileSync:x}=require("child_process"),d="media/cache/narration/"+process.env.EP;for(const [n,u] of Object.entries(JSON.parse(fs.readFileSync(d+"/sources.json"))))x("curl",["-sSfL","--retry","3","-o",d+"/chapter-"+n+".mp3",u]);'
+            ls -la "media/cache/narration/${EP}"
+            aws s3 sync "media/cache/narration/${EP}" "s3://${R2_BUCKET}/render-input/${EP}" --endpoint-url "$E" --no-progress
+          fi
 
       - name: Run
         run: |
