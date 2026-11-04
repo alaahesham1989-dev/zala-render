@@ -50,7 +50,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   const lines = [];
   const groups = chunk(words, short ? 3 : 9, short ? 20 : 60);
   for (const g of groups) {
-    const end = g[g.length - 1].t1 + 0.05;
+    const end = g[g.length - 1].t1;   // never past the next group's start, or two captions print over each other
     if (!short) {
       lines.push(`Dialogue: 0,${ts(g[0].t0)},${ts(end)},Cap,,0,0,0,,${esc(g.map((x) => x.w).join(' '))}`);
       continue;
