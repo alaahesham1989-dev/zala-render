@@ -1494,9 +1494,14 @@ function uploadPackage(script, tl, data, reels, dir, masterFile, extra = {}) {
   const body = String(script.description || tl.flat.slice(0, 2).map((f) => f.en).join(' '));
   let description = `${body}\n\nPlan your Egypt trip with ZALA VIP: ${SITE(script.id, 'video')}\n\nChapters:\n${marks.join('\n')}`;
   if (sources.length) description += `\n\nSources:\n${sources.map((u) => `• ${u}`).join('\n')}`;
-  if (credits.length) description += `\n\nImage credits:\n${credits.map((c) => `• ${c}`).join('\n')}`;
   if (extra.licensedMusic) description += `\n\nMusic:\n${script.music.map((m) => m.track).filter((x, i, all) => all.indexOf(x) === i).map((t) => `• "${t}" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 http://creativecommons.org/licenses/by/4.0/`).join('\n')}`;
   description += animated ? '\n\nNarration voice and the shots marked as artistic reconstruction are AI-generated.' : '\n\nNarration voice is AI-generated.';
+  if (credits.length) {
+    const short = credits.map((c) => `• ${c.replace(/^"(.{0,44}).*?" by /, '"$1" by ').replace(/, via (Wikimedia Commons|Europeana)$/, '').replace(/\s+/g, ' ').slice(0, 110)}`);
+    description += `\n\nImage and video credits:\n${short.join('\n')}`;
+  }
+  fs.writeFileSync(path.join(dir, `${script.id}.credits.txt`), credits.join('\n'), 'utf8');
+  if (description.length > 4900) log(`Note: the description is ${description.length} characters, the last credits are cut; the full list is in ${script.id}.credits.txt`);
   const pkg = {
     id: script.id, title: script.title, description: description.slice(0, 4900),
     tags: script.tags || [script.series, 'Egypt', 'Ancient Egypt', 'Egypt history', 'Egypt travel'].filter(Boolean),
@@ -1570,7 +1575,7 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
     engagement = {
       longestStill: Math.round(Math.max(...pictures.filter((x) => !x.isVideo).map((x) => x.span)) * 10) / 10,
       longestClip: Math.round(Math.max(0, ...pictures.filter((x) => x.isVideo).map((x) => x.span)) * 10) / 10,
-      shots: pictures.length, clips: pictures.filter((x) => x.isVideo).length, maps: pictures.filter((x) => x.asset?.map).length, cards: pictures.filter((x) => x.asset?.card).length,
+      shots: pictures.length, clips: pictures.filter((x) => x.isVideo).length, maps: pictures.filter((x) => x.asset?.map).length, cards: new Set(pictures.filter((x) => x.asset?.card).map((x) => x.asset.card)).size,
       teasers: (script.teasers || []).length, minutes: Math.round((tl.mainEnd / 60) * 10) / 10, wordTimed: tl.flat.filter((f) => heardOf(f.voice)?.length).length, lines: tl.flat.length, licensedMusic: !!score,
     };
     log(`Keeping people watching: ${JSON.stringify(engagement)}`);
