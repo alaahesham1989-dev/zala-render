@@ -167,7 +167,7 @@ for (const name of fs.readdirSync(publish).filter((f) => /-R\d+\.mp4$/.test(f)).
 }
 
 // the finished thumbnail and covers, small
-for (const name of fs.readdirSync(publish).filter((f) => /(_thumbnail|_cover)\.jpg$/.test(f))) ff(['-i', path.join(publish, name), '-vf', 'scale=480:-2', '-q:v', '6', path.join(out, `small-${name}`)]);
+for (const name of fs.readdirSync(publish).filter((f) => /(_thumbnail(-\d)?|_cover)\.jpg$/.test(f))) ff(['-i', path.join(publish, name), '-vf', 'scale=480:-2', '-q:v', '6', path.join(out, `small-${name}`)]);
 
 fs.rmSync(tmp, { recursive: true, force: true });
 fs.writeFileSync(path.join(out, 'review.json'), JSON.stringify(report, null, 1));
@@ -193,6 +193,15 @@ for (const x of report.audio.silence) if (x.end - x.seconds < lastSpeech - 0.5 &
 if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds > 3)) fail.push('the ending is silent');
 for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) console.log(`Note: ${x.name}: ${String(x.note).slice(0, 100)}`); }
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
+// what keeps a viewer watching
+const eng = pkg.engagement || {};
+if (eng.longestStill > 7) fail.push(`one picture stays ${eng.longestStill}s without a cut`);
+if (eng.longestClip > 14) fail.push(`one moving clip runs ${eng.longestClip}s`);
+if (!(eng.teasers >= eng.minutes * 1.5)) fail.push(`only ${eng.teasers} lines at the top for ${eng.minutes} minutes`);
+if (!(eng.wordTimed >= eng.lines * 0.95)) fail.push(`captions follow the spoken words on only ${eng.wordTimed} of ${eng.lines} lines`);
+if (!eng.licensedMusic) fail.push('no licensed music: the built-in bed was used');
+if (eng.cards > 7) fail.push(`${eng.cards} text cards, too many`);
+if ((pkg.thumbnails || []).length < 3) fail.push(`only ${(pkg.thumbnails || []).length} thumbnails`);
 const blob = [pkg.title, pkg.description].join(' ');
 for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
 // cards in a row, reused from the director's rule, and pictures showing nudity are removed for the next run
