@@ -249,12 +249,25 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
   }
   // a finished narration for a chapter (media/cache/narration/<id>/chapter-N.mp3) is cut into its lines and needs no voice requests
   const narrated = path.join(CACHE, 'narration', script.id);
+  // fixes.json: [{ file, lines: [text] }] lists sentences the voice service skipped, made again in their own short files
+  let repairs = [];
+  try { repairs = JSON.parse(fs.readFileSync(path.join(narrated, 'fixes.json'), 'utf8')); } catch {}
+  const repaired = new Set(repairs.flatMap((r) => r.lines));
+  for (const r of repairs) {
+    const group = r.lines.map((text) => flat.find((x) => x.say === text)).filter(Boolean);
+    if (group.length !== r.lines.length) throw new Error(`${r.file}: a repaired sentence is not in the script`);
+    const files = group.map((x) => voiceFileOf(script, x, vp));
+    fs.mkdirSync(path.dirname(files[0]), { recursive: true });
+    splitChunk(path.join(narrated, r.file), r.lines, files);
+    for (const x of group) { const at = pending.indexOf(x); if (at >= 0) pending.splice(at, 1); }
+    log(`  ${r.file}: ${group.length} repaired lines`);
+  }
   for (const name of fs.existsSync(narrated) ? fs.readdirSync(narrated) : []) {
     const number = Number(name.match(/^chapter-(\d+)\./)?.[1]);
     if (!number) continue;
-    const group = flat.filter((f) => Number(f.label.match(/^c(\d+)_/)?.[1]) === number);
+    const group = flat.filter((f) => Number(f.label.match(/^c(\d+)_/)?.[1]) === number && !repaired.has(f.say));
     const files = group.map((f) => voiceFileOf(script, f, vp));
-    const cutMark = path.join(CACHE, 'voice', script.id, `cut-v2-chapter-${number}.txt`);
+    const cutMark = path.join(CACHE, 'voice', script.id, `cut-v3-chapter-${number}.txt`);
     if (!group.length || (fs.existsSync(cutMark) && files.every((x) => fs.existsSync(x)))) continue;
     fs.mkdirSync(path.dirname(files[0]), { recursive: true });
     splitChunk(path.join(narrated, name), group.map((f) => f.say), files);
@@ -509,18 +522,20 @@ const loadPlaces = () => { try { return JSON.parse(fs.readFileSync(path.join(CON
 
 /** The director's pass: runs once per story, and again whenever its rules change. */
 async function stageDirector(script) {
-  if (script.directed === 5) return;
+  if (script.directed === 6) return;
   const id = script.id;
   const all = loadLibrary();
   const pics = usablePictures(id);
   const byId = new Map(all.map((i) => [i.id, i]));
   const live = pics.map((p) => byId.get(p.id)).filter(Boolean);
   const thumb = async (p) => { const file = await downloadImage(p.url); try { return file ? smallJpeg(file) : null; } catch { return null; } };
-  const tools = { thumb, log, sleep, keyFor, markSpent, places: loadPlaces() };
+  const thumbLarge = async (p) => { const file = await downloadImage(p.url); try { return file ? ff(['-i', file, '-frames:v', '1', '-vf', 'scale=1024:-2', '-f', 'image2pipe', '-c:v', 'mjpeg', '-q:v', '4', 'pipe:1']).toString('base64') : null; } catch { return null; } };
+  const tools = { thumb, thumbLarge, log, sleep, keyFor, markSpent, places: loadPlaces() };
   const clean = await screenPictures(live, tools);
   fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
   if (clean.length < 20) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
   await directEpisode(script, clean, tools);
+  fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
   // the first time a place is named, the viewer sees where it is
   const seenPlaces = new Set();
   for (const l of script.chapters.flatMap((c) => c.lines)) {
