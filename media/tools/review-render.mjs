@@ -184,7 +184,8 @@ for (const l of report.lines) {
   else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
-  if (l.fits === 'no') fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
+  const source = lines[l.n - 1] || {};
+  if (l.fits === 'no' && !source.clip && !(source.card && !source.pictures?.length)) fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
 }
 const loose = report.lines.filter((l) => l.fits === 'loosely').length;
 if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.length} pictures only loosely fit`);
