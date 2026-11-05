@@ -99,7 +99,7 @@ function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
     ci, li, key: `${ci}.${li}`, label: `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
-    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip,
+    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip, extra: l.extra,
   })));
   return limit ? flat.slice(0, limit) : flat;
 }
@@ -164,7 +164,7 @@ function pronounce(text) {
 const voiceParams = (script) => ({
   model: DEFAULT_MODEL, voice: script.voice || DEFAULT_VOICE, style: script.voiceStyle || DEFAULT_STYLE, tempo: Number(script.voiceTempo) || 1,
 });
-const voiceFileOf = (script, f, vp = voiceParams(script)) =>
+const voiceFileOf = (script, f, vp = voiceParams(script)) => f.extra ? extraVoice(script, f.say) :
   path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo].join('|'))}.wav`);
 
 const extraVoice = (script, text) => path.join(CACHE, 'voice', script.id, `x-${hash(text)}.wav`);
@@ -283,12 +283,13 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
   }
   // lines spoken only in the reels: their hooks and the closing line
   const extras = script.reelLines || [];
-  const extraSource = path.join(narrated, 'reel-lines.mp3');
+  const extraSource = ['reel-lines.mp3', 'hooks.mp3'].map((x) => path.join(narrated, x)).find((x) => fs.existsSync(x)) || '';
   if (extras.length && fs.existsSync(extraSource) && !extras.every((x) => fs.existsSync(extraVoice(script, x)))) {
     fs.mkdirSync(path.join(CACHE, 'voice', script.id), { recursive: true });
     splitChunk(extraSource, extras, extras.map((x) => extraVoice(script, x)));
     log(`  reel lines: ${extras.length} cut`);
   }
+  for (const f of [...pending]) if (fs.existsSync(voiceFileOf(script, f, vp))) pending.splice(pending.indexOf(f), 1);
   const queue = groupLines(pending, flat, VOICE_WORDS_PER_REQUEST);
   log(`Voice: ${pending.length} lines in ${queue.length} requests`);
   while (queue.length) {
