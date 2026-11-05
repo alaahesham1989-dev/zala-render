@@ -8,7 +8,7 @@ on:
         description: "token or upload"
         required: true
         type: choice
-        options: [upload, token, schedule]
+        options: [upload, token, schedule, telegram-menu]
       episode:
         description: "Episode id"
         required: false
@@ -105,3 +105,12 @@ jobs:
           args=("$VIDEO_ID" --privacy "$PRIVACY")
           if [ -n "$PUBLISH_AT" ]; then args+=(--publish-at "$PUBLISH_AT"); fi
           node media/tools/youtube-status.mjs "${args[@]}"
+
+      - name: Telegram button that opens the dashboard
+        if: inputs.action == 'telegram-menu'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setChatMenuButton" -H 'Content-Type: application/json' -d "{\"chat_id\":\"${TELEGRAM_CHAT_ID}\",\"menu_button\":{\"type\":\"web_app\",\"text\":\"Dashboard\",\"web_app\":{\"url\":\"https://www.zalavip.com/dashboard\"}}}" | grep -o '"ok":[a-z]*'
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setChatMenuButton" -H 'Content-Type: application/json' -d '{"menu_button":{"type":"web_app","text":"Dashboard","web_app":{"url":"https://www.zalavip.com/dashboard"}}}' | grep -o '"ok":[a-z]*'
