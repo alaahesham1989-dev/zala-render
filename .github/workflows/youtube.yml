@@ -8,7 +8,7 @@ on:
         description: "token or upload"
         required: true
         type: choice
-        options: [upload, token]
+        options: [upload, token, schedule]
       episode:
         description: "Episode id"
         required: false
@@ -26,6 +26,10 @@ on:
         type: string
       publish_at:
         description: "Optional schedule, ISO time"
+        required: false
+        type: string
+      video_id:
+        description: "Video already on YouTube, for schedule"
         required: false
         type: string
       code:
@@ -90,3 +94,14 @@ jobs:
           args=(publish "$EP" "$WHICH" --privacy "$PRIVACY")
           if [ -n "$PUBLISH_AT" ]; then args+=(--publish-at "$PUBLISH_AT"); fi
           node media/tools/youtube-upload.mjs "${args[@]}"
+      - name: Change a video's schedule
+        if: inputs.action == 'schedule'
+        env:
+          VIDEO_ID: ${{ inputs.video_id }}
+          PRIVACY: ${{ inputs.privacy }}
+          PUBLISH_AT: ${{ inputs.publish_at }}
+        run: |
+          set -euo pipefail
+          args=("$VIDEO_ID" --privacy "$PRIVACY")
+          if [ -n "$PUBLISH_AT" ]; then args+=(--publish-at "$PUBLISH_AT"); fi
+          node media/tools/youtube-status.mjs "${args[@]}"
