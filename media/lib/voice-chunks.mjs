@@ -109,9 +109,10 @@ function cutByPauses(chunk, texts) {
 
 /** Cuts one narration into line files, by the words heard when that is possible. Throws rather than cut a line wrongly. */
 export function splitChunk(chunk, texts, files) {
-  if (texts.length === 1) { ff(['-i', chunk, '-ar', '48000', files[0]]); return; }
-  let lines = null;
+  const saveWords = (i, t0, t1, heard) => fs.writeFileSync(`${files[i]}.words.json`, JSON.stringify(heard.filter((w) => w.end > t0 && w.start < t1).map((w) => ({ w: w.w, start: Math.max(0, w.start - t0), end: Math.min(t1 - t0, w.end - t0) }))));
   const heard = heardWords(chunk);
+  if (texts.length === 1) { ff(['-i', chunk, '-ar', '48000', files[0]]); if (heard?.length) saveWords(0, 0, durationOf(chunk), heard); return; }
+  let lines = null;
   if (heard?.length) {
     const silences = detectSilences(chunk, '-34dB', 0.07);
     const cut = cutsFromWords(texts, heard, silences, durationOf(chunk));
@@ -123,5 +124,6 @@ export function splitChunk(chunk, texts, files) {
   }
   lines.forEach((l, i) => {
     ff(['-ss', l.t0.toFixed(3), '-to', l.t1.toFixed(3), '-i', chunk, '-af', 'afade=t=in:d=0.015,areverse,afade=t=in:d=0.015,areverse', '-ar', '48000', files[i]]);
+    if (heard?.length) saveWords(i, l.t0, l.t1, heard);
   });
 }
