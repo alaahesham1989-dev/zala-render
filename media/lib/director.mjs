@@ -140,15 +140,26 @@ async function findMissingPictures(script, tools, byId, uses, topicId) {
   }
 }
 
+const MAX_CARDS = 5;
+
+/** The short line at the top of the screen, about every 25 seconds. It only points at what is coming, it never adds a fact. */
+async function writeTeasers(lines, tools) {
+  const a = await askVision([{ text: `These numbered lines are a true-history video. Write a short line for the top of the screen about every 6 lines that makes the viewer keep watching, like "STAY UNTIL THE END", "WATCH WHAT HAPPENS NEXT", or a question the coming lines answer. Up to 5 words. Use only names from the lines. Never state a new fact, a number or a date. Return only JSON {"items":[{"line":0,"text":""}]}.\n\n${lines.map((l, n) => `${n}. ${l.en}`).join('\n')}` }], tools);
+  const known = new Set(lines.flatMap((l) => l.en.toLowerCase().match(/[a-z']+/g) || []));
+  const plain = new Set('stay watch what happens next until the end keep did you know how why who where when is was it this that will wait for see comes and not a an of to in on at her his their she he they'.split(' '));
+  return (a?.items || []).filter((x) => lines[x.line] && !/\d/.test(x.text) && (String(x.text).toLowerCase().match(/[a-z']+/g) || []).every((w) => known.has(w) || plain.has(w))).map((x) => ({ line: x.line, text: String(x.text).trim() })).filter((x) => x.text);
+}
+
 /** Card words come straight from the sentence, so a card can never say more than the story says. */
 function cardFromLine(line, proposed) {
   const clean = (t) => t.toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').trim();
   const words = line.split(/\s+/);
+  const clauses = line.split(/[,.;:?!]/).map((x) => x.trim()).filter((x) => x.split(/\s+/).length >= 2);
+  const fits = (x) => x.split(/\s+/).length <= 7;
   const asked = String(proposed || '').replace(/[.,!?]+$/, '');
-  if (asked && clean(line).includes(clean(asked))) return asked;
-  const clauses = line.split(/[,.;?!]/).map((x) => x.trim()).filter((x) => x.split(/\s+/).length >= 2);
-  const short = clauses.find((x) => x.split(/\s+/).length <= 7);
-  return short || words.slice(0, 6).join(' ');
+  // a card is always a whole clause, so it can never stop in the middle of a thought
+  if (asked && clauses.some((x) => clean(x) === clean(asked)) && fits(asked)) return asked;
+  return clauses.find(fits) || (words.length <= 7 ? line.replace(/[.,!?]+$/, '') : '');
 }
 
 /** Chooses pictures per chapter and checks them by eye. Returns nothing: fills line.pictures and line.card in the script. */
@@ -255,6 +266,14 @@ ${free.map(catalogRow).join('\n')}` }], tools);
   lines.forEach((l) => { delete l.rejected; });
   const cards = lines.filter((l) => !l.pictures.length);
   lines.forEach((l) => { l.card = cardFromLine(l.en, l.card); });
-  script.directed = 7;
-  log(`Director: ${lines.length - cards.length} lines with pictures, ${cards.length} with a text card`);
+  // few cards, far apart: any other line without a picture shows the nearest one again with a new camera move
+  let sinceCard = 99, shown = 0;
+  for (const l of lines) {
+    sinceCard++;
+    if (l.pictures.length) continue;
+    if (l.card && shown < MAX_CARDS && sinceCard >= 8) { shown++; sinceCard = 0; } else l.card = '';
+  }
+  if (!script.teasers?.length) script.teasers = await writeTeasers(lines, tools);
+  script.directed = 8;
+  log(`Director: ${lines.length - cards.length} lines with pictures, ${shown} text cards, ${(script.teasers || []).length} lines at the top`);
 }
