@@ -522,7 +522,7 @@ const loadPlaces = () => { try { return JSON.parse(fs.readFileSync(path.join(CON
 
 /** The director's pass: runs once per story, and again whenever its rules change. */
 async function stageDirector(script) {
-  if (script.directed === 6) return;
+  if (script.directed === 7) return;
   const id = script.id;
   const all = loadLibrary();
   const pics = usablePictures(id);
@@ -530,7 +530,8 @@ async function stageDirector(script) {
   const live = pics.map((p) => byId.get(p.id)).filter(Boolean);
   const thumb = async (p) => { const file = await downloadImage(p.url); try { return file ? smallJpeg(file) : null; } catch { return null; } };
   const thumbLarge = async (p) => { const file = await downloadImage(p.url); try { return file ? ff(['-i', file, '-frames:v', '1', '-vf', 'scale=1024:-2', '-f', 'image2pipe', '-c:v', 'mjpeg', '-q:v', '4', 'pipe:1']).toString('base64') : null; } catch { return null; } };
-  const tools = { thumb, thumbLarge, log, sleep, keyFor, markSpent, places: loadPlaces() };
+  const addPicture = (p) => { const item = { id: hash(p.source_url).slice(0, 14), ...p }; all.push(item); return item; };
+  const tools = { thumb, thumbLarge, addPicture, log, sleep, keyFor, markSpent, places: loadPlaces() };
   const clean = await screenPictures(live, tools);
   fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
   if (clean.length < 20) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
