@@ -415,6 +415,8 @@ async function stageStory(id) {
   const file = path.join(CONTENT, 'youtube', `${id}.json`);
   let old = null;
   try { old = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
+  // a story written and voiced by hand is final: never replace it with a generated one
+  if (old?.handWritten) { log(`Story: ${id} is hand written, keeping it`); return; }
   const topics = JSON.parse(fs.readFileSync(LIB_TOPICS, 'utf8'));
   const topic = topics[id];
   if (!topic) throw new Error(`${id} is not in content/library/topics.json`);
