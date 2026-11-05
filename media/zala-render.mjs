@@ -604,7 +604,7 @@ async function stageImages(script, flat) {
       if (file) beats.push({ need: f.clip.what || f.en, picture: null, animate: false, motion: '', asset: { kind: 'video', file: rel(file), url: f.clip.url, page: f.clip.page, attribution: f.clip.credit, license: f.clip.license, recon: !!f.clip.recon } });
     }
     // a line that opens with a map or a clip keeps at most one more picture, so its shots stay long enough to see
-    for (const pid of (beats.length ? (f.en.length > 90 ? (f.pictures || []).slice(0, 1) : []) : f.pictures || [])) {
+    for (const pid of (beats.length ? (f.en.length > 70 ? (f.pictures || []).slice(0, 1) : []) : f.pictures || [])) {
       const p = byId.get(pid);
       const file = p && await downloadImage(p.url);
       if (!file) continue;
@@ -1182,9 +1182,9 @@ function chunkText(s, max = 64) {
 function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   const head = `[Script Info]\nScriptType: v4.00+\nPlayResX: ${W}\nPlayResY: ${H}\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n` + [
     style('En', 'Lato', 60, WHITE, { bold: -1, out: 3, sh: 1.5, an: 2, mv: arabic ? 128 : 56, ml: 160 }),
-    style('Cap', 'Anton', 88, WHITE, { sp: 1, out: 6, sh: 3, an: 2, mv: 74, ml: 110 }),
+    style('Cap', 'Anton', 112, WHITE, { sp: 1, out: 7, sh: 3, an: 2, mv: 64, ml: 90 }),
     style('Fx', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
-    style('Tease', 'Anton', 54, '&H00000000', { sp: 1, out: 0, sh: 0, an: 5 }),
+    style('Tease', 'Anton', 64, '&H00000000', { sp: 1, out: 0, sh: 0, an: 5 }),
     style('Plate', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
     style('Recon', 'Lato', 24, WHITE, { bold: -1, sp: 2, out: 2, sh: 1, an: 9 }),
     style('Ar', 'Segoe UI', 44, GOLD, { bold: -1, out: 3, sh: 1.2, an: 2, mv: 40, ml: 160 }),
@@ -1255,7 +1255,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   // the short lines at the top wait for any chapter card or call-out to clear
   if (!arabic && script.teasers?.length) {
     const busy = [...cards.map(({ t0 }) => [t0, t0 + 4.2]), ...callouts.map((f) => [f.T0 + 0.25, f.T0 + 3.85])].sort((a, b) => a[0] - b[0]);
-    ev.push(...teaserEvents(script.teasers.map((x) => ({ t: (tl.flat[x.line]?.T0 ?? 0) + 0.1, text: x.text })).filter((x) => x.t < tl.mainEnd - 6), { W, busy }));
+    ev.push(...teaserEvents(script.teasers.map((x) => ({ t: (tl.flat[x.line]?.T0 ?? 0) + 0.1, text: x.text })).filter((x) => x.t < tl.mainEnd - 6), { W, busy, size: 64 }));
   }
   if (arabic) dl(9, 0, tl.total, 'Stamp', '{\\an7\\pos(620,18)}INTERNAL REVIEW - DO NOT PUBLISH');
 
@@ -1328,8 +1328,8 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   const base = buildReelAss(words, { W: VW, H: VH, mode: 'short' });
   const styles = [
     style('Badge', 'Lato', 34, GOLD, { bold: -1, sp: 4, out: 3, sh: 1 }),
-    style('Hook', 'Anton', 128, GOLD, { sp: 1, out: 7, sh: 3 }),
-    style('HookSub', 'Lato', 40, GOLD, { bold: -1, out: 3, sh: 1 }),
+    style('Hook', 'Anton', 176, '&H0000D7FF&', { sp: 1, out: 9, sh: 4 }),
+    style('HookSub', 'Lato', 52, WHITE, { bold: -1, out: 4, sh: 2 }),
     style('End1', 'Anton', 84, GOLD, { sp: 1, out: 4, sh: 2, an: 8 }),
     style('End2', 'Lato', 46, WHITE, { bold: -1, out: 3, sh: 1, an: 8 }),
     style('Fx', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
@@ -1343,10 +1343,10 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   const rows = [];
   for (const w of words2) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 14) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
   lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${aesc(rows.join('\n'))}`));
-  if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${276 + rows.length * 156})\\fad(200,250)}${aesc(reel.sub)}`));
+  if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${290 + rows.length * 216})\\fad(200,250)}${aesc(reel.sub)}`));
   const e0 = total - outro + 0.2;
-  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},980)\\fad(250,0)}ZALA VIP CONCIERGE`));
-  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1090)\\fad(250,0)}FULL STORY ON YOUTUBE  ·  zalavip.com`));
+  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}ZALA VIP CONCIERGE`));
+  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}FULL STORY ON YOUTUBE  ·  zalavip.com`));
   return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';
 }
 
@@ -1398,7 +1398,6 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   if (ctaVoice && fs.existsSync(ctaVoice)) {
     const d = durationOf(ctaVoice);
     voices.push({ file: ctaVoice, t: speechEnd + 0.15 });
-    words.push(...timedWords(numerals(script.reelCta).replace(/zalavip dot com/i, 'zalavip.com'), heardOf(ctaVoice), d).map((w) => ({ w: w.w, t0: w.t0 + speechEnd + 0.15, t1: w.t1 + speechEnd + 0.15 })));
     outro = Math.max(REEL_OUTRO, d + 0.9);
   }
   events.push({ name: 'shimmer', t: speechEnd, g: 0.6 });
