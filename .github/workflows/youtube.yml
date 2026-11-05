@@ -1,0 +1,91 @@
+name: ZALA YouTube
+
+# Publishing through the official YouTube API, on the server. Uploads are private unless asked otherwise.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "token or upload"
+        required: true
+        type: choice
+        options: [upload, token]
+      episode:
+        description: "Episode id"
+        required: false
+        default: ZV-L01
+        type: string
+      which:
+        description: "main, R1, R2 or R3"
+        required: false
+        default: R1
+        type: string
+      privacy:
+        description: "private, unlisted or public"
+        required: false
+        default: private
+        type: string
+      publish_at:
+        description: "Optional schedule, ISO time"
+        required: false
+        type: string
+      code:
+        description: "One-time consent code"
+        required: false
+        type: string
+      redirect:
+        description: "Redirect address of the consent"
+        required: false
+        type: string
+      key:
+        description: "Public key that seals the token"
+        required: false
+        type: string
+
+concurrency:
+  group: zala-youtube
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Turn the consent into a sealed token
+        if: inputs.action == 'token'
+        env:
+          AUTH_CODE: ${{ inputs.code }}
+          REDIRECT_URI: ${{ inputs.redirect }}
+          PUBLIC_KEY_B64: ${{ inputs.key }}
+        run: node media/tools/youtube-token.mjs
+      - name: Bring the finished package from R2
+        if: inputs.action == 'upload'
+        env:
+          EP: ${{ inputs.episode }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: aws s3 sync "s3://${R2_BUCKET}/renders/${EP}/publish" publish --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
+      - name: Upload
+        if: inputs.action == 'upload'
+        env:
+          EP: ${{ inputs.episode }}
+          WHICH: ${{ inputs.which }}
+          PRIVACY: ${{ inputs.privacy }}
+          PUBLISH_AT: ${{ inputs.publish_at }}
+        run: |
+          set -euo pipefail
+          args=(publish "$EP" "$WHICH" --privacy "$PRIVACY")
+          if [ -n "$PUBLISH_AT" ]; then args+=(--publish-at "$PUBLISH_AT"); fi
+          node media/tools/youtube-upload.mjs "${args[@]}"
