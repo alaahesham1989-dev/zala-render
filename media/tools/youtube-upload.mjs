@@ -31,6 +31,11 @@ async function accessToken() {
 const token = await accessToken();
 const auth = { Authorization: `Bearer ${token}` };
 
+const mine = await (await fetch(`${API}/youtube/v3/channels?part=snippet&mine=true`, { headers: auth })).json();
+const channel = mine.items?.[0];
+console.log(`Channel: ${channel?.snippet?.title || 'unknown'} ${channel?.snippet?.customUrl || ''}`);
+if (process.env.EXPECT_CHANNEL && channel?.snippet?.customUrl?.toLowerCase() !== process.env.EXPECT_CHANNEL.toLowerCase()) throw new Error(`Wrong channel: ${channel?.snippet?.customUrl}`);
+
 const isMain = which === 'main';
 const reel = isMain ? null : pkg.reels.find((r) => r.id === `${id}-${which}`);
 if (!isMain && !reel) throw new Error(`No reel ${which} in the package`);
