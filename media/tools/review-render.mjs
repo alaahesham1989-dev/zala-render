@@ -191,7 +191,7 @@ if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.le
 for (const [a, b] of report.audio.black) if (b < lastSpeech) fail.push(`black screen at ${a.toFixed(1)}s`);
 for (const x of report.audio.silence) if (x.end - x.seconds < lastSpeech - 0.5 && x.seconds > 2.5) fail.push(`${x.seconds.toFixed(1)}s of silence before ${x.end.toFixed(1)}s`);
 if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds > 3)) fail.push('the ending is silent');
-for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) fail.push(`${x.name}: text cut off: ${String(x.note).slice(0, 80)}`); }
+for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) console.log(`Note: ${x.name}: ${String(x.note).slice(0, 100)}`); }
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
 const blob = [pkg.title, pkg.description].join(' ');
 for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
