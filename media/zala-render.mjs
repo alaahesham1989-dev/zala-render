@@ -28,11 +28,13 @@ import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gem
 import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
 import { numerals } from './lib/display-numbers.mjs';
 import { screenPictures, directEpisode } from './lib/director.mjs';
+import { timedWords, heardOf, captionEvents, dustEvents, sweepEvent, flashEvent, teaserEvents } from './lib/punch.mjs';
 
 const W = 1920, H = 1080, FPS = 30;
 const VW = 1080, VH = 1920;
 const SW = 2880, SH = 1620;   // working size of stills for smooth camera moves
-const LEAD = 0.5, LINE_GAP = 0.35, CHAPTER_GAP = 1.2, STING = 3.4, OUTRO = 10, TAIL = 1.0;
+const LEAD = 0.5, LINE_GAP = 0.2, CHAPTER_GAP = 0.7, STING = 2.2, OUTRO = 10, TAIL = 1.0;
+const SHOT_MAX = 4;   // a still never sits longer than this before the camera cuts to a new move
 const REEL_MAX = 58, REEL_OUTRO = 3.2;
 const X264 = ['-c:v', 'libx264', '-preset', 'fast', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', String(FPS)];
 const DEFAULT_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-tts';
@@ -97,7 +99,7 @@ function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
     ci, li, key: `${ci}.${li}`, label: `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
-    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout,
+    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip,
   })));
   return limit ? flat.slice(0, limit) : flat;
 }
@@ -164,6 +166,8 @@ const voiceParams = (script) => ({
 });
 const voiceFileOf = (script, f, vp = voiceParams(script)) =>
   path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo].join('|'))}.wav`);
+
+const extraVoice = (script, text) => path.join(CACHE, 'voice', script.id, `x-${hash(text)}.wav`);
 
 function findAudio(node) {
   if (!node || typeof node !== 'object') return null;
@@ -262,18 +266,28 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
     for (const x of group) { const at = pending.indexOf(x); if (at >= 0) pending.splice(at, 1); }
     log(`  ${r.file}: ${group.length} repaired lines`);
   }
+  // a script whose lines say which part of the narration holds them is cut part by part; older chapter files are then ignored
+  const byParts = flat.some((f) => f.part);
   for (const name of fs.existsSync(narrated) ? fs.readdirSync(narrated) : []) {
-    const number = Number(name.match(/^chapter-(\d+)\./)?.[1]);
+    const number = Number(name.match(byParts ? /^part-(\d+)\./ : /^chapter-(\d+)\./)?.[1]);
     if (!number) continue;
-    const group = flat.filter((f) => Number(f.label.match(/^c(\d+)_/)?.[1]) === number && !repaired.has(f.say));
+    const group = flat.filter((f) => (byParts ? f.part === number : Number(f.label.match(/^c(\d+)_/)?.[1]) === number) && !repaired.has(f.say));
     const files = group.map((f) => voiceFileOf(script, f, vp));
-    const cutMark = path.join(CACHE, 'voice', script.id, `cut-v3-chapter-${number}.txt`);
+    const cutMark = path.join(CACHE, 'voice', script.id, byParts ? `cut-v4-part-${number}.txt` : `cut-v3-chapter-${number}.txt`);
     if (!group.length || (fs.existsSync(cutMark) && files.every((x) => fs.existsSync(x)))) continue;
     fs.mkdirSync(path.dirname(files[0]), { recursive: true });
     splitChunk(path.join(narrated, name), group.map((f) => f.say), files);
     fs.writeFileSync(cutMark, 'words');
     log(`  chapter ${number}: narration cut into ${group.length} lines, ${durationOf(path.join(narrated, name)).toFixed(1)}s`);
     for (const f of group) { const at = pending.indexOf(f); if (at >= 0) pending.splice(at, 1); }
+  }
+  // lines spoken only in the reels: their hooks and the closing line
+  const extras = script.reelLines || [];
+  const extraSource = path.join(narrated, 'reel-lines.mp3');
+  if (extras.length && fs.existsSync(extraSource) && !extras.every((x) => fs.existsSync(extraVoice(script, x)))) {
+    fs.mkdirSync(path.join(CACHE, 'voice', script.id), { recursive: true });
+    splitChunk(extraSource, extras, extras.map((x) => extraVoice(script, x)));
+    log(`  reel lines: ${extras.length} cut`);
   }
   const queue = groupLines(pending, flat, VOICE_WORDS_PER_REQUEST);
   log(`Voice: ${pending.length} lines in ${queue.length} requests`);
@@ -468,6 +482,23 @@ async function downloadImage(url) {
   }
   return null;
 }
+/** A moving clip from an open library, kept with its own extension so it is always read as video. */
+async function downloadClip(url) {
+  const dir = path.join(CACHE, 'clips');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${hash(url)}.mp4`);
+  if (fs.existsSync(file) && fs.statSync(file).size > 50000) return file;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(180000) });
+      if (res.ok) { fs.writeFileSync(file, Buffer.from(await res.arrayBuffer())); return file; }
+      log(`  clip answered ${res.status}`);
+    } catch (e) { log(`  clip: ${e.name}`); }
+    await sleep(8000 * attempt);
+  }
+  return null;
+}
+const lineSig = (f) => hash(f.en + (f.pictures || []).join() + (f.card || '') + (f.map || '') + (f.clip?.url || '') + 'v8');
 const smallJpeg = (file) => ff(['-i', file, '-frames:v', '1', '-vf', 'scale=512:-2', '-f', 'image2pipe', '-c:v', 'mjpeg', '-q:v', '5', 'pipe:1']).toString('base64');
 
 /** A text card over a darkened picture, one version for wide video and one for reels. */
@@ -522,7 +553,7 @@ const loadPlaces = () => { try { return JSON.parse(fs.readFileSync(path.join(CON
 
 /** The director's pass: runs once per story, and again whenever its rules change. */
 async function stageDirector(script) {
-  if (script.directed === 7) return;
+  if (script.directed === 8) return;
   const id = script.id;
   const all = loadLibrary();
   const pics = usablePictures(id);
@@ -541,7 +572,7 @@ async function stageDirector(script) {
   const seenPlaces = new Set();
   for (const l of script.chapters.flatMap((c) => c.lines)) {
     delete l.map;
-    const place = loadPlaces().find((p) => !seenPlaces.has(p.name) && new RegExp(p.match).test(l.en));
+    const place = !l.noMap && loadPlaces().find((p) => !seenPlaces.has(p.name) && new RegExp(p.match).test(l.en));
     if (place) { seenPlaces.add(place.name); l.map = place.name; }
   }
   fs.writeFileSync(path.join(CONTENT, 'youtube', `${id}.json`), JSON.stringify(script, null, 2) + '\n', 'utf8');
@@ -553,18 +584,25 @@ async function stageImages(script, flat) {
   const data = loadShots(id);
   const byId = new Map(loadLibrary().map((i) => [i.id, i]));
   for (const f of flat) {
-    if (data.lines[f.key]?.sig === hash(f.en + (f.pictures || []).join() + (f.card || '') + (f.map || ''))) {
+    if (data.lines[f.key]?.sig === lineSig(f)) {
       // the plan is in git; fetch any picture this computer doesn't have yet
-      for (const b of data.lines[f.key].beats) if (!fs.existsSync(abs(b.asset.file))) { if (b.asset.card) continue; const place = b.asset.map && loadPlaces().find((p) => p.name === b.asset.map); const file = place ? await mapStill(place) : await downloadImage(b.asset.url); if (file) b.asset.file = rel(file); }
+      for (const b of data.lines[f.key].beats) if (!fs.existsSync(abs(b.asset.file))) { if (b.asset.card) continue; const place = b.asset.map && loadPlaces().find((p) => p.name === b.asset.map); const file = place ? await mapStill(b.asset.wide ? { ...place, zoom: Math.max(3, place.zoom - 5) } : place) : b.asset.kind === 'video' ? await downloadClip(b.asset.url) : await downloadImage(b.asset.url); if (file) b.asset.file = rel(file); }
       continue;
     }
     const beats = [];
     if (f.map) {
       const place = loadPlaces().find((p) => p.name === f.map);
+      const wide = place && await mapStill({ ...place, zoom: Math.max(3, place.zoom - 5) });
+      if (wide) beats.push({ need: place.name, picture: null, animate: false, motion: '', asset: { kind: 'image', map: place.name, wide: true, file: rel(wide), url: '', page: '', attribution: 'Maps: Mapbox, OpenStreetMap' } });
       const file = place && await mapStill(place);
       if (file) beats.push({ need: place.name, picture: null, animate: false, motion: '', asset: { kind: 'image', map: place.name, file: rel(file), url: '', page: '', attribution: 'Maps: Mapbox, OpenStreetMap' } });
     }
-    for (const pid of f.pictures || []) {
+    if (f.clip) {
+      const file = await downloadClip(f.clip.url);
+      if (file) beats.push({ need: f.clip.what || f.en, picture: null, animate: false, motion: '', asset: { kind: 'video', file: rel(file), url: f.clip.url, page: f.clip.page, attribution: f.clip.credit, license: f.clip.license, recon: !!f.clip.recon } });
+    }
+    // a line that opens with a map or a clip keeps at most one more picture, so its shots stay long enough to see
+    for (const pid of (beats.length ? (f.en.length > 90 ? (f.pictures || []).slice(0, 1) : []) : f.pictures || [])) {
       const p = byId.get(pid);
       const file = p && await downloadImage(p.url);
       if (!file) continue;
@@ -574,7 +612,7 @@ async function stageImages(script, flat) {
       });
     }
     if (!beats.length && f.card) beats.push({ need: f.card, picture: null, animate: false, motion: '', asset: { kind: 'image', card: f.card, file: '', url: '', page: '', attribution: '' } });
-    data.lines[f.key] = { sig: hash(f.en + (f.pictures || []).join() + (f.card || '') + (f.map || '')), en: f.en, beats };
+    data.lines[f.key] = { sig: lineSig(f), en: f.en, beats };
   }
   // cards sit on the last real picture shown, darkened
   const isPicture = (b) => b.asset && !b.asset.card && !b.asset.map && b.asset.file;
@@ -844,19 +882,21 @@ function buildTimeline(script, flat) {
 }
 
 // ── pictures ─────────────────────────────────────────────────────────────────
-const MOTIONS = ['pushin', 'panright', 'pullout', 'diagin', 'tiltup', 'panleft', 'diagout', 'tiltdown'];
+const MOTIONS = ['pushin', 'panright', 'pullout', 'diagin', 'punchin', 'tiltup', 'panleft', 'diagout', 'tiltdown'];
 function motionExpr(name, FR) {
   const E = `((1-cos(PI*on/${FR}))/2)`;
   const cx = `x='iw/2-(iw/zoom/2)'`, cy = `y='ih/2-(ih/zoom/2)'`;
   switch (name) {
-    case 'pullout': return `z='1.16-0.16*${E}':${cx}:${cy}`;
-    case 'panright': return `z='1.12':x='(iw-iw/zoom)*${E}':${cy}`;
-    case 'panleft': return `z='1.12':x='(iw-iw/zoom)*(1-${E})':${cy}`;
-    case 'tiltup': return `z='1.12':${cx}:y='(ih-ih/zoom)*(1-${E})'`;
-    case 'tiltdown': return `z='1.12':${cx}:y='(ih-ih/zoom)*${E}'`;
-    case 'diagin': return `z='1+0.2*${E}':x='(iw-iw/zoom)*(0.15+0.5*${E})':y='(ih-ih/zoom)*(0.1+0.4*${E})'`;
-    case 'diagout': return `z='1.2-0.2*${E}':x='(iw-iw/zoom)*(0.75-0.5*${E})':y='(ih-ih/zoom)*(0.6-0.4*${E})'`;
-    default: return `z='1+0.16*${E}':${cx}:${cy}`;
+    case 'mapzoom': return `z='1+0.5*${E}':${cx}:${cy}`;
+    case 'punchin': return `z='1.06+0.26*${E}':x='(iw-iw/zoom)*0.5':y='(ih-ih/zoom)*0.42'`;
+    case 'pullout': return `z='1.26-0.26*${E}':${cx}:${cy}`;
+    case 'panright': return `z='1.2':x='(iw-iw/zoom)*${E}':${cy}`;
+    case 'panleft': return `z='1.2':x='(iw-iw/zoom)*(1-${E})':${cy}`;
+    case 'tiltup': return `z='1.2':${cx}:y='(ih-ih/zoom)*(1-${E})'`;
+    case 'tiltdown': return `z='1.2':${cx}:y='(ih-ih/zoom)*${E}'`;
+    case 'diagin': return `z='1+0.28*${E}':x='(iw-iw/zoom)*(0.15+0.5*${E})':y='(ih-ih/zoom)*(0.1+0.4*${E})'`;
+    case 'diagout': return `z='1.28-0.28*${E}':x='(iw-iw/zoom)*(0.75-0.5*${E})':y='(ih-ih/zoom)*(0.6-0.4*${E})'`;
+    default: return `z='1+0.24*${E}':${cx}:${cy}`;
   }
 }
 
@@ -896,7 +936,7 @@ function planScenes(tl, data) {
   const items = [];
   tl.flat.forEach((f, i) => {
     const start = i === 0 ? 0 : (tl.stingAt != null && f.ci === 1 && f.li === 0) ? tl.stingAt + STING : f.T0 - 0.28;
-    items.push({ type: 'img', start, key: f.key, ci: f.ci, li: f.li, motion: f.shot?.m, line: i });
+    items.push({ type: 'img', start, key: f.key, ci: f.ci, li: f.li, motion: f.shot?.m, line: i, flash: f.sfx === 'impact' });
   });
   if (tl.stingAt != null) items.push({ type: 'sting', start: tl.stingAt });
   items.push({ type: 'outro', start: tl.mainEnd });
@@ -914,8 +954,8 @@ function planScenes(tl, data) {
     const beatSpan = it.span / list.length;
     list.forEach((asset, b) => {
       last = asset;
-      const parts = asset.kind === 'video' ? 1 : Math.max(1, Math.ceil(beatSpan / 6.5));
-      let motion = (b === 0 && it.motion) || MOTIONS[moveIdx % MOTIONS.length];
+      const parts = asset.kind === 'video' ? 1 : Math.max(1, Math.ceil(beatSpan / SHOT_MAX));
+      let motion = asset.map ? 'mapzoom' : (b === 0 && it.motion) || MOTIONS[moveIdx % MOTIONS.length];
       for (let p = 0; p < parts; p++) {
         const span = beatSpan / parts;
         scenes.push({ ...it, asset, motion, start: it.start + b * beatSpan + p * span, span, part: b + p });
@@ -930,8 +970,10 @@ function planScenes(tl, data) {
     const prev = scenes[i - 1];
     const chapterStart = s.type === 'img' && s.part === 0 && s.li === 0 && s.ci > 0;
     s.tr = s.type === 'outro' ? { name: 'fadeblack', d: 0.9 }
-      : (s.type === 'sting' || prev.type === 'sting' || chapterStart) ? { name: 'fadeblack', d: 0.6 }
-      : { name: 'fade', d: 0.5 };
+      : (s.type === 'sting' || prev.type === 'sting' || chapterStart) ? { name: 'fadeblack', d: 0.45 }
+      : s.flash && s.part === 0 ? { name: 'fadewhite', d: 0.3 }
+      : prev.line === s.line ? { name: 'fade', d: 0.12 }   // inside one sentence: a quick cut
+      : { name: 'fade', d: 0.28 };
     s.tr.d = Math.min(s.tr.d, prev.span * 0.45, s.span * 0.45);
   });
   scenes.forEach((s, i) => { s.dur = s.span + (scenes[i + 1]?.tr.d || 0); });
@@ -1049,6 +1091,33 @@ function musicBed(work, T, marks) {
   return { file: out, loop: false };
 }
 
+/** Licensed tracks, one per stretch of the story, all brought to one level so the voice always sits on top. */
+async function licensedScore(script, tl, work) {
+  if (!script.music?.length) return null;
+  const dir = path.join(CACHE, 'music', 'tracks');
+  fs.mkdirSync(dir, { recursive: true });
+  const starts = script.music.map((m, i) => (i === 0 ? 0 : tl.flat.find((f) => f.ci === m.chapter)?.T0 ?? tl.mainEnd));
+  const parts = [];
+  for (let i = 0; i < script.music.length; i++) {
+    const m = script.music[i];
+    const src = path.join(dir, `${m.track.replace(/\W+/g, '-')}.mp3`);
+    if (!fs.existsSync(src) || fs.statSync(src).size < 100000) {
+      const res = await fetch(`https://incompetech.com/music/royalty-free/mp3-royaltyfree/${encodeURIComponent(m.track)}.mp3`, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(180000) }).catch(() => null);
+      if (!res?.ok) { log(`  music: ${m.track} could not be fetched, using the built-in bed`); return null; }
+      fs.writeFileSync(src, Buffer.from(await res.arrayBuffer()));
+    }
+    const len = ((starts[i + 1] ?? tl.total) - starts[i]) + 1.5;
+    const out = path.join(work, `score-${i}.wav`);
+    ff(['-stream_loop', '-1', '-ss', String(m.from || 0), '-i', src, '-t', len.toFixed(2), '-af', `loudnorm=I=-19:TP=-2:LRA=11,aresample=48000,aformat=channel_layouts=stereo,afade=t=in:d=1.5,afade=t=out:st=${(len - 2).toFixed(2)}:d=2`, out]);
+    parts.push({ out, at: starts[i] });
+  }
+  const score = path.join(work, 'score.wav');
+  const gr = parts.map((p, i) => `[${i}:a]adelay=${Math.round(p.at * 1000)}|${Math.round(p.at * 1000)}[p${i}]`).join(';') + `;${parts.map((_, i) => `[p${i}]`).join('')}amix=inputs=${parts.length}:normalize=0:dropout_transition=0,alimiter=limit=0.9[o]`;
+  ff([...parts.flatMap((p) => ['-i', p.out]), '-filter_complex', gr, '-map', '[o]', '-t', tl.total.toFixed(2), score]);
+  log(`Sound: score of ${parts.length} licensed tracks`);
+  return { file: score, loop: false, licensed: true };
+}
+
 /** voices: [{file, t}], events: [{name, t, g}] → loudness-managed mix at YouTube's -14 LUFS, music ducking under the voice. */
 async function mixAudio({ voices, events, music, musicFrom = 0, total, out, work, tag }) {
   const sfx = synthSfx(path.join(TMP, 'render', '_sfx'));
@@ -1065,7 +1134,7 @@ async function mixAudio({ voices, events, music, musicFrom = 0, total, out, work
   const mIdx = nV;
   const fadeOut = Math.max(0, total - 2).toFixed(2);
   fc.push(`[${mIdx}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:${total.toFixed(2)},asetpts=PTS-STARTPTS,afade=t=in:d=0.6,afade=t=out:st=${fadeOut}:d=2[mraw]`);
-  fc.push(`[mraw][vsc]sidechaincompress=threshold=0.018:ratio=9:attack=18:release=520:makeup=1[md]`);
+  fc.push(`[mraw][vsc]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=420:makeup=1[md]`);
   const labels = [];
   events.forEach((e, i) => {
     args.push('-i', sfx(e.name));
@@ -1075,9 +1144,9 @@ async function mixAudio({ voices, events, music, musicFrom = 0, total, out, work
   });
   if (labels.length) {
     fc.push(`${labels.join('')}amix=inputs=${labels.length}:normalize=0:dropout_transition=0,volume=0.9[sfxbus]`);
-    fc.push(`[vo][md][sfxbus]amix=inputs=3:normalize=0:weights='1 0.55 0.75':duration=first,loudnorm=I=-14:LRA=9:TP=-1.5,aresample=48000[out]`);
+    fc.push(`[vo][md][sfxbus]amix=inputs=3:normalize=0:weights='1 0.85 0.8':duration=first,loudnorm=I=-14:LRA=9:TP=-1.5,aresample=48000[out]`);
   } else {
-    fc.push(`[vo][md]amix=inputs=2:normalize=0:weights='1 0.55':duration=first,loudnorm=I=-14:LRA=9:TP=-1.5,aresample=48000[out]`);
+    fc.push(`[vo][md]amix=inputs=2:normalize=0:weights='1 0.85':duration=first,loudnorm=I=-14:LRA=9:TP=-1.5,aresample=48000[out]`);
   }
   const gf = path.join(work, `mix-${tag}.filter`);
   fs.writeFileSync(gf, fc.join(';\n'));
@@ -1108,9 +1177,14 @@ function chunkText(s, max = 64) {
   return [...chunkText(s.slice(0, best).trim(), max), ...chunkText(s.slice(best).trim(), max)];
 }
 
-function masterAss(tl, script, { arabic }) {
+function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   const head = `[Script Info]\nScriptType: v4.00+\nPlayResX: ${W}\nPlayResY: ${H}\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n` + [
     style('En', 'Lato', 60, WHITE, { bold: -1, out: 3, sh: 1.5, an: 2, mv: arabic ? 128 : 56, ml: 160 }),
+    style('Cap', 'Anton', 88, WHITE, { sp: 1, out: 6, sh: 3, an: 2, mv: 74, ml: 110 }),
+    style('Fx', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
+    style('Tease', 'Anton', 54, '&H00000000', { sp: 1, out: 0, sh: 0, an: 5 }),
+    style('Plate', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
+    style('Recon', 'Lato', 24, WHITE, { bold: -1, sp: 2, out: 2, sh: 1, an: 9 }),
     style('Ar', 'Segoe UI', 44, GOLD, { bold: -1, out: 3, sh: 1.2, an: 2, mv: 40, ml: 160 }),
     style('Big', 'Anton', 92, GOLD, { sp: 1, out: 3, sh: 2 }),
     style('Sub', 'Lato', 28, WHITE, { bold: -1, sp: 2, out: 2 }),
@@ -1126,7 +1200,18 @@ function masterAss(tl, script, { arabic }) {
   const ev = [];
   const dl = (layer, a, b, st, text) => ev.push(`Dialogue: ${layer},${ass_t(a)},${ass_t(b)},${st},,0,0,0,,${text}`);
 
-  tl.flat.forEach((f, i) => {
+  // big captions timed to the words really spoken; the Arabic review copy keeps its calm two lines
+  if (!arabic) {
+    const said = tl.flat.flatMap((f) => timedWords(f.cap, heardOf(f.voice), f.dur).map((w) => ({ w: w.w, t0: w.t0 + f.T0, t1: w.t1 + f.T0 })));
+    ev.push(...captionEvents(said, { style: 'Cap' }));
+    ev.push(...dustEvents(0, tl.mainEnd, W, H));
+    tl.flat.forEach((f) => {
+      if (f.sfx === 'impact') ev.push(flashEvent(f.T0 + 0.3, W, H));
+      if (f.li === 0 && f.ci > 0) ev.push(sweepEvent(f.T0 + 0.1, W, H));
+      if (lineAssets(data, f.key).some((a) => a.recon)) dl(4, f.T0, f.T1, 'Recon', `{\\an9\\pos(${W - 40},${H - 44})\\fad(200,200)}ARTISTIC RECONSTRUCTION`);
+    });
+  }
+  (arabic ? tl.flat : []).forEach((f, i) => {
     const next = tl.flat[i + 1];
     const end = Math.min(f.T1 + 0.25, next ? next.T0 - 0.03 : f.T1 + 0.5);
     const parts = chunkText(f.cap);
@@ -1165,6 +1250,11 @@ function masterAss(tl, script, { arabic }) {
     if (small) dl(5, a + 0.1, b, 'Sub', `{\\pos(100,${y + 130})\\fad(320,300)}${small}`);
   });
 
+  // the short lines at the top wait for any chapter card or call-out to clear
+  if (!arabic && script.teasers?.length) {
+    const busy = [...cards.map(({ t0 }) => [t0, t0 + 4.2]), ...callouts.map((f) => [f.T0 + 0.25, f.T0 + 3.85])].sort((a, b) => a[0] - b[0]);
+    ev.push(...teaserEvents(script.teasers.map((x) => ({ t: (tl.flat[x.line]?.T0 ?? 0) + 0.1, text: x.text })).filter((x) => x.t < tl.mainEnd - 6), { W, busy }));
+  }
   if (arabic) dl(9, 0, tl.total, 'Stamp', '{\\an7\\pos(620,18)}INTERNAL REVIEW - DO NOT PUBLISH');
 
   // end card: the right half stays free for YouTube's end-screen elements
@@ -1185,7 +1275,7 @@ function fontsRun() {
   return dir;
 }
 const subsFilter = (ass) => `subtitles='${filterPath(ass)}':fontsdir='${filterPath(fontsRun())}'`;
-const GRADE = 'eq=contrast=1.05:saturation=1.07:gamma=0.98,colorbalance=rs=0.02:bs=-0.025:rm=0.02:bm=-0.02,vignette=angle=PI/6';
+const GRADE = 'eq=contrast=1.09:saturation=1.14:gamma=0.97,colorbalance=rs=0.03:bs=-0.04:rm=0.025:bm=-0.03,vignette=angle=PI/5,noise=alls=4:allf=t';
 
 async function finalPass({ chain, mix, ass, out, tl, crf = 19 }) {
   const a = (tl.stingAt != null ? tl.stingAt + STING + 0.8 : 0.5), b = tl.mainEnd - 0.3;
@@ -1206,7 +1296,8 @@ function pickReels(script, flat) {
     let t = 0;
     for (const f of flat.filter((x) => x.ci === r.chapter - 1).slice(r.from || 0)) {
       const d = durationOf(voiceFileOf(script, f));
-      if (lines.length && t + d + 0.25 > REEL_MAX - REEL_OUTRO) break;
+      const said = [r.say, script.reelCta].filter(Boolean).map((x) => extraVoice(script, x)).filter((x) => fs.existsSync(x)).reduce((a, x) => a + durationOf(x) + 0.25, 0);
+      if (lines.length && t + d + 0.25 > REEL_MAX - Math.max(REEL_OUTRO, said)) break;
       lines.push(f);
       t += d + 0.25;
     }
@@ -1231,7 +1322,7 @@ function reelScene(s, out) {
   return ['-i', src, '-vf', `scale=${cropW}:${tall}:force_original_aspect_ratio=increase:flags=lanczos,crop=${cropW}:${tall},zoompan=${motionExpr(s.idx % 2 ? 'pullout' : 'pushin', FR)}:d=${FR}:s=${VW}x${VH}:fps=${FPS},setsar=1,format=yuv420p`, '-frames:v', String(FR), ...X264, out];
 }
 
-function reelAss(reel, words, total) {
+function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   const base = buildReelAss(words, { W: VW, H: VH, mode: 'short' });
   const styles = [
     style('Badge', 'Lato', 34, GOLD, { bold: -1, sp: 4, out: 3, sh: 1 }),
@@ -1239,6 +1330,7 @@ function reelAss(reel, words, total) {
     style('HookSub', 'Lato', 40, GOLD, { bold: -1, out: 3, sh: 1 }),
     style('End1', 'Anton', 84, GOLD, { sp: 1, out: 4, sh: 2, an: 8 }),
     style('End2', 'Lato', 46, WHITE, { bold: -1, out: 3, sh: 1, an: 8 }),
+    style('Fx', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
   ].join('\n');
   const dl = (a, b, st, text) => `Dialogue: 3,${ass_t(a)},${ass_t(b)},${st},,0,0,0,,${text}`;
   const lines = [];
@@ -1250,10 +1342,10 @@ function reelAss(reel, words, total) {
   for (const w of words2) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 14) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
   lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${aesc(rows.join('\n'))}`));
   if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${276 + rows.length * 156})\\fad(200,250)}${aesc(reel.sub)}`));
-  const e0 = total - REEL_OUTRO + 0.3;
-  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1230)\\fad(250,0)}FULL STORY ON YOUTUBE`));
-  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1340)\\fad(250,0)}@zalavip  ·  zalavip.com`));
-  return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + lines.join('\n') + '\n';
+  const e0 = total - outro + 0.2;
+  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},980)\\fad(250,0)}ZALA VIP CONCIERGE`));
+  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1090)\\fad(250,0)}FULL STORY ON YOUTUBE  ·  zalavip.com`));
+  return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';
 }
 
 function spreadWords(text, t0, dur) {
@@ -1270,6 +1362,15 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   let t = 0.25;
   const scenes = [], voices = [], words = [], events = [];
   let lastAsset = null;
+  // the spoken hook runs over the first picture
+  const hookVoice = reel.say && extraVoice(script, reel.say);
+  if (hookVoice && fs.existsSync(hookVoice)) {
+    const d = durationOf(hookVoice);
+    voices.push({ file: hookVoice, t });
+    words.push(...timedWords(numerals(reel.say), heardOf(hookVoice), d).map((w) => ({ w: w.w, t0: w.t0 + t, t1: w.t1 + t })));
+    events.push({ name: 'hit', t, g: 0.8 });
+    t += d + 0.25;
+  }
   reel.lines.forEach((f, i) => {
     const d = durationOf(voiceFileOf(script, f));
     const start = i === 0 ? 0 : t - 0.1;
@@ -1278,7 +1379,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     const assets = list.length ? list : [lastAsset || anyPicture()];
     const lineSpan = d + 0.35;
     voices.push({ file: voiceFileOf(script, f), t });
-    words.push(...spreadWords(f.cap, t, d));
+    words.push(...timedWords(f.cap, heardOf(voiceFileOf(script, f)), d).map((w) => ({ w: w.w, t0: w.t0 + t, t1: w.t1 + t })));
     assets.forEach((asset, b) => {
       lastAsset = asset;
       scenes.push({ asset, start: start + (b * lineSpan) / assets.length, idx: scenes.length, sfx: f.sfx });
@@ -1289,7 +1390,17 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     t += d + 0.25;
   });
   const speechEnd = t;
-  const total = speechEnd + REEL_OUTRO;
+  // the close is spoken over the end card, naming the brand
+  const ctaVoice = script.reelCta && extraVoice(script, script.reelCta);
+  let outro = REEL_OUTRO;
+  if (ctaVoice && fs.existsSync(ctaVoice)) {
+    const d = durationOf(ctaVoice);
+    voices.push({ file: ctaVoice, t: speechEnd + 0.15 });
+    words.push(...timedWords(numerals(script.reelCta).replace(/zalavip dot com/i, 'zalavip.com'), heardOf(ctaVoice), d).map((w) => ({ w: w.w, t0: w.t0 + speechEnd + 0.15, t1: w.t1 + speechEnd + 0.15 })));
+    outro = Math.max(REEL_OUTRO, d + 0.9);
+  }
+  events.push({ name: 'shimmer', t: speechEnd, g: 0.6 });
+  const total = speechEnd + outro;
   scenes.forEach((s, i) => { s.span = (scenes[i + 1]?.start ?? speechEnd) - s.start; });
   const fade = 0.25;
   scenes.forEach((s, i) => { s.dur = s.span + (i < scenes.length - 1 ? fade : 0); });
@@ -1303,9 +1414,9 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
 
   // end card: dark gold glow + crest
   const endStill = brandStill(path.join(rw, 'end.png'), { crestW: 620, x: 650, y: 140, glow: { x: 960, y: 440, r: 460 } });
-  const endClip = path.join(rw, 'end.mp4');
+  const endClip = path.join(rw, `end-${outro.toFixed(2)}.mp4`);
   if (!okClip(endClip)) {
-    await encodeTo(endClip, (part) => ['-loop', '1', '-framerate', String(FPS), '-i', endStill, '-frames:v', String(Math.round(REEL_OUTRO * FPS)), '-vf',
+    await encodeTo(endClip, (part) => ['-loop', '1', '-framerate', String(FPS), '-i', endStill, '-frames:v', String(Math.round(outro * FPS)), '-vf',
       `crop=608:1080:656:0,scale=${VW}:${VH}:flags=lanczos,fade=t=in:st=0:d=0.3,setsar=1,format=yuv420p`, ...X264, part]);
   }
 
@@ -1320,7 +1431,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   g += `${last}trim=0:${speechEnd.toFixed(3)},setpts=PTS-STARTPTS[pic];[${n}:v]setpts=PTS-STARTPTS[end];[pic][end]concat=n=2:v=1:a=0[all]`;
 
   const assFile = path.join(rw, 'captions.ass');
-  fs.writeFileSync(assFile, reelAss(reel, words, total), 'utf8');
+  fs.writeFileSync(assFile, reelAss(reel, words, total, outro, speechEnd), 'utf8');
   g += `;[all]${GRADE}[gr];[${n + 1}:v]scale=-2:100,format=rgba,colorchannelmixer=aa=0.85[wm];[gr][wm]overlay=W-w-40:60:enable='lt(t,${(speechEnd).toFixed(2)})'[o];[o]${subsFilter(assFile)}[v]`;
   const gf = path.join(rw, 'graph.filter');
   fs.writeFileSync(gf, g);
@@ -1339,21 +1450,28 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
 // ── thumbnail + upload package ───────────────────────────────────────────────
 function thumbnail(script, tl, data, dir, work) {
   const tW = 1280, tH = 720;
-  const key = script.thumbnailShot ? script.thumbnailShot.split('.').map((n) => Number(n) - 1).join('.') : tl.flat[0].key;
-  const real = (b) => b.asset && !b.asset.card && !b.asset.map;
-  const src = data.lines[key]?.beats?.find(real)?.asset || tl.flat.flatMap((f) => data.lines[f.key]?.beats || []).find(real)?.asset || lineAssets(data, tl.flat[0].key)[0];
-  const words = String(script.thumbnailText || script.title).toUpperCase().split(/\s+/);
-  const rows = [];
-  for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 10) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
-  const size = rows.length > 3 ? 100 : 128;
-  const ass = path.join(work, 'thumb.ass');
-  fs.writeFileSync(ass, `[Script Info]\nScriptType: v4.00+\nPlayResX: ${tW}\nPlayResY: ${tH}\nWrapStyle: 2\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n${style('T', 'Anton', size, GOLD, { sp: 1, out: 6, sh: 4, an: 4 })}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,T,,0,0,0,,{\\an4\\pos(52,${tH / 2})}${aesc(rows.join('\n'))}\n`, 'utf8');
-  const file = path.join(dir, `${script.id}_thumbnail.jpg`);
-  ff(['-i', abs(src.file), '-i', path.join(BRAND, 'mark.png'), '-filter_complex',
-    `[0:v]split[a][b];[a]scale=${tW}:${tH}:force_original_aspect_ratio=increase,crop=${tW}:${tH},gblur=sigma=30,eq=brightness=-0.3:saturation=0.8[bg];` +
-    `[b]scale=${Math.round(tW * 0.56)}:${tH}:force_original_aspect_ratio=decrease:flags=lanczos,eq=contrast=1.12:saturation=1.15[fg];[bg][fg]overlay=W-w:(H-h)/2[c];` +
-    `[1:v]scale=-2:84,format=rgba[m];[c][m]overlay=W-w-24:20[o];[o]${subsFilter(ass)}[v]`, '-map', '[v]', '-frames:v', '1', '-q:v', '2', file]);
-  return file;
+  const beats = tl.flat.flatMap((f) => (data.lines[f.key]?.beats || []).map((x) => ({ ...x, en: f.en }))).filter((x) => x.asset && !x.asset.card && !x.asset.map && x.asset.kind !== 'video' && x.asset.file);
+  const variants = script.thumbnails?.length ? script.thumbnails : [{ text: script.thumbnailText || script.title }];
+  const used = new Set(), made = [];
+  variants.forEach((v, i) => {
+    const re = v.match ? new RegExp(v.match, 'i') : null;
+    const pick = (re && beats.find((x) => !used.has(x.asset.file) && re.test(`${x.need} ${x.en}`))) || beats.find((x) => !used.has(x.asset.file)) || beats[0];
+    used.add(pick.asset.file);
+    const words = String(v.text).toUpperCase().split(/\s+/);
+    const rows = [];
+    for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 11) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
+    const size = rows.length > 3 ? 112 : 150;
+    const ass = path.join(work, `thumb-${i}.ass`);
+    const body = rows.map((r, n) => (n === rows.length - 1 ? `{\\c&H0000D7FF&}${aesc(r)}` : `{\\c&H00FFFFFF&}${aesc(r)}`)).join('\\N');
+    fs.writeFileSync(ass, `[Script Info]\nScriptType: v4.00+\nPlayResX: ${tW}\nPlayResY: ${tH}\nWrapStyle: 2\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n${style('T', 'Anton', size, WHITE, { sp: 1, out: 8, sh: 5, an: 4 })}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,T,,0,0,0,,{\\an4\\pos(44,${tH / 2})}${body}\n`, 'utf8');
+    const file = path.join(dir, i === 0 ? `${script.id}_thumbnail.jpg` : `${script.id}_thumbnail-${i + 1}.jpg`);
+    ff(['-i', abs(pick.asset.file), '-f', 'lavfi', '-i', `color=c=black:s=${tW}x${tH}`, '-i', path.join(BRAND, 'mark.png'), '-filter_complex',
+      `[0:v]scale=${tW}:${tH}:force_original_aspect_ratio=increase:flags=lanczos,crop=${tW}:${tH},eq=contrast=1.2:saturation=1.3:brightness=0.02,unsharp=5:5:0.8[pic];` +
+      `[1:v]format=rgba,geq=r=0:g=0:b=0:a='235*pow(max(0\\,1-X/(W*0.72))\\,0.8)'[shade];[pic][shade]overlay=0:0:shortest=1[c];` +
+      `[2:v]scale=-2:76,format=rgba[m];[c][m]overlay=W-w-22:18[o];[o]${subsFilter(ass)}[v]`, '-map', '[v]', '-frames:v', '1', '-q:v', '2', file]);
+    made.push(path.basename(file));
+  });
+  return made;
 }
 
 function srt(tl, field) {
@@ -1365,22 +1483,23 @@ function srt(tl, field) {
   return tl.flat.filter((f) => f[field]).map((f, i) => `${i + 1}\n${time(f.T0)} --> ${time(f.T1 + 0.2)}\n${f[field]}\n`).join('\n');
 }
 
-function uploadPackage(script, tl, data, reels, dir, masterFile) {
+function uploadPackage(script, tl, data, reels, dir, masterFile, extra = {}) {
   const firstOf = new Map();
   tl.flat.forEach((f) => { if (!firstOf.has(f.ci)) firstOf.set(f.ci, f.T0); });
   const marks = [...firstOf.entries()].map(([ci, t]) => `${fmtTime(ci === 0 ? 0 : t)} ${script.chapters[ci].title}`);
   const credits = [...new Set(tl.flat.flatMap((f) => lineAssets(data, f.key)).map((a) => a.attribution).filter(Boolean))];
-  const animated = tl.flat.some((f) => lineAssets(data, f.key).some((a) => a.kind === 'video'));
+  const animated = tl.flat.some((f) => lineAssets(data, f.key).some((a) => a.recon || (a.kind === 'video' && !a.page)));
   const sources = [...new Set((script.sources || []).map((s) => s.url || s).filter(Boolean))];
   const body = String(script.description || tl.flat.slice(0, 2).map((f) => f.en).join(' '));
   let description = `${body}\n\nPlan your Egypt trip with ZALA VIP: ${SITE(script.id, 'video')}\n\nChapters:\n${marks.join('\n')}`;
   if (sources.length) description += `\n\nSources:\n${sources.map((u) => `• ${u}`).join('\n')}`;
   if (credits.length) description += `\n\nImage credits:\n${credits.map((c) => `• ${c}`).join('\n')}`;
-  description += animated ? '\n\nNarration voice and some motion shots are AI-generated.' : '\n\nNarration voice is AI-generated.';
+  if (extra.licensedMusic) description += `\n\nMusic:\n${script.music.map((m) => m.track).filter((x, i, all) => all.indexOf(x) === i).map((t) => `• "${t}" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 http://creativecommons.org/licenses/by/4.0/`).join('\n')}`;
+  description += animated ? '\n\nNarration voice and the shots marked as artistic reconstruction are AI-generated.' : '\n\nNarration voice is AI-generated.';
   const pkg = {
     id: script.id, title: script.title, description: description.slice(0, 4900),
     tags: script.tags || [script.series, 'Egypt', 'Ancient Egypt', 'Egypt history', 'Egypt travel'].filter(Boolean),
-    file: path.basename(masterFile), thumbnail: `${script.id}_thumbnail.jpg`, captions: { en: `${script.id}.en.srt` },
+    file: path.basename(masterFile), thumbnail: `${script.id}_thumbnail.jpg`, thumbnails: extra.thumbnails || [], engagement: extra.engagement || {}, captions: { en: `${script.id}.en.srt` },
     duration: Math.round(tl.total * 10) / 10, voice: script.voiceNote || `${voiceParams(script).voice} / ${voiceParams(script).model}`,
     altered_content: animated, reels, renderedAt: new Date().toISOString(),
   };
@@ -1435,8 +1554,10 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
   const tl = buildTimeline(script, flat);
   log(`Timeline: ${flat.length} lines, ${fmtTime(tl.total)} total`);
   const chapterStart = (ci) => tl.flat.find((x) => x.ci === ci)?.T0 ?? tl.mainEnd;
-  const generated = await generateMusic(script);
-  const music = musicBed(work, tl.total + 1, { generated, lift: chapterStart(Math.min(3, script.chapters.length - 1)), end: tl.mainEnd });
+  const score = await licensedScore(script, tl, work);
+  const generated = score || script.music?.length ? null : await generateMusic(script);
+  const music = score || musicBed(work, tl.total + 1, { generated, lift: chapterStart(Math.min(3, script.chapters.length - 1)), end: tl.mainEnd });
+  let thumbs = [], engagement = {};
   const master = path.join(dir, `${id}.mp4`);
   const results = [];
 
@@ -1444,6 +1565,14 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
     const scenes = planScenes(tl, data);
     log(`Shots: ${scenes.filter((s) => s.type === 'img').length} pictures, one every ${(tl.mainEnd / scenes.length).toFixed(1)}s`);
     const chain = await renderPicture(scenes, work);
+    const pictures = scenes.filter((x) => x.type === 'img');
+    engagement = {
+      longestStill: Math.round(Math.max(...pictures.filter((x) => !x.isVideo).map((x) => x.span)) * 10) / 10,
+      longestClip: Math.round(Math.max(0, ...pictures.filter((x) => x.isVideo).map((x) => x.span)) * 10) / 10,
+      shots: pictures.length, clips: pictures.filter((x) => x.isVideo).length, maps: pictures.filter((x) => x.asset?.map).length, cards: pictures.filter((x) => x.asset?.card).length,
+      teasers: (script.teasers || []).length, minutes: Math.round((tl.mainEnd / 60) * 10) / 10, wordTimed: tl.flat.filter((f) => heardOf(f.voice)?.length).length, lines: tl.flat.length, licensedMusic: !!score,
+    };
+    log(`Keeping people watching: ${JSON.stringify(engagement)}`);
 
     log('Sound: mixing voice, music and effects');
     const events = [];
@@ -1457,14 +1586,16 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
       if (f.sfx === 'riser') add('riser', f.T1 - 2.6, 0.7);
       if (f.sfx === 'shimmer') add('shimmer', f.T0, 0.7);
       if (f.callout) add('pop', f.T0 + 0.3, 0.55);
+      if (!f.sfx && f.li % 4 === 3) add('whoosh', f.T0 - 0.2, 0.28);
     });
+    (script.teasers || []).forEach((x) => { const f = tl.flat[x.line]; if (f) add('pop', f.T0 + 0.1, 0.4); });
     script.chapters.forEach((_, ci) => { if (ci > 0 && !(ci === 1 && tl.stingAt != null)) add('whoosh', chapterStart(ci) - 0.2, 0.55); });
     const mix = path.join(work, 'mix.m4a');
     await mixAudio({ voices: tl.flat.map((f) => ({ file: f.voice, t: f.T0 })), events, music, total: tl.total, out: mix, work, tag: 'master' });
 
     log('Final: master');
     const assEn = path.join(work, 'captions-en.ass');
-    fs.writeFileSync(assEn, masterAss(tl, script, { arabic: false }), 'utf8');
+    fs.writeFileSync(assEn, masterAss(tl, script, { arabic: false, data }), 'utf8');
     await finalPass({ chain, mix, ass: assEn, out: master, tl });
     results.push(inspect(master));
     if (tl.flat.some((f) => f.ar)) {
@@ -1476,7 +1607,7 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
       fs.writeFileSync(path.join(review, `${id}.ar.srt`), srt(tl, 'ar'), 'utf8');
       results.push(inspect(reviewFile));
     }
-    thumbnail(script, tl, data, dir, work);
+    thumbs = thumbnail(script, tl, data, dir, work);
   }
 
   const reelMeta = [];
@@ -1488,7 +1619,7 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
       results.push(inspect(path.join(dir, meta.file)));
     }
   }
-  if (!script.verticalOnly && !reelsOnly) uploadPackage(script, tl, data, reelMeta, dir, master);
+  if (!script.verticalOnly && !reelsOnly) uploadPackage(script, tl, data, reelMeta, dir, master, { thumbnails: thumbs, engagement, licensedMusic: !!score });
 
   const arabic = /[\u0600-\u06FF]/;
   const leaks = fs.readdirSync(dir).filter((f) => /\.(json|srt)$/.test(f) && arabic.test(fs.readFileSync(path.join(dir, f), 'utf8')));
