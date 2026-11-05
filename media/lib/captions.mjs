@@ -1,7 +1,7 @@
 // media/lib/captions.mjs — burned-in captions as an ASS subtitle file.
 //   short: 2–4 words on screen, the spoken word lights up in gold (Shorts/Reels style)
 //   long:  one calm subtitle line at the bottom
-const GOLD = '&H0037AFD4&';   // #D4AF37 in ASS (&HAABBGGRR)
+const GOLD = '&H0000D7FF&';   // #D4AF37 in ASS (&HAABBGGRR)
 const WHITE = '&H00FFFFFF&';
 
 const esc = (s) => String(s).replace(/[{}]/g, '').replace(/\\/g, '');
@@ -30,7 +30,7 @@ function chunk(words, maxWords, maxChars) {
  */
 export function buildAss(words, { W, H, mode }) {
   const short = mode === 'short';
-  const size = short ? Math.round(W * 0.12) : Math.round(H * 0.05);
+  const size = short ? Math.round(W * 0.15) : Math.round(H * 0.05);
   const marginV = short ? Math.round(H * 0.27) : Math.round(H * 0.07);
   const font = short ? 'Anton' : 'Lato';
   const header = `[Script Info]
