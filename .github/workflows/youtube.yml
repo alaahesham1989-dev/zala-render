@@ -84,6 +84,7 @@ jobs:
           WHICH: ${{ inputs.which }}
           PRIVACY: ${{ inputs.privacy }}
           PUBLISH_AT: ${{ inputs.publish_at }}
+          EXPECT_CHANNEL: "@zalavip"
         run: |
           set -euo pipefail
           args=(publish "$EP" "$WHICH" --privacy "$PRIVACY")
