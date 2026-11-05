@@ -53,6 +53,8 @@ jobs:
       SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
       VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
       META_COOKIES: ${{ secrets.META_COOKIES }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       FFMPEG_PATH: /usr/bin/ffmpeg
       FFPROBE_PATH: /usr/bin/ffprobe
       CHROME_PATH: /usr/bin/google-chrome
@@ -80,6 +82,17 @@ jobs:
           python3 -m venv /tmp/whisper
           /tmp/whisper/bin/pip install --quiet faster-whisper
           echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+
+      - name: Monday and Thursday take the next episode
+        if: github.event_name == 'schedule'
+        run: |
+          day=$(date -u +%u)
+          if [ "$day" = 1 ] || [ "$day" = 4 ]; then
+            E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+            for id in ZV-L08 ZV-L11 ZV-L09 ZV-L05 ZV-L06 ZV-L02; do
+              if ! aws s3 ls "s3://${R2_BUCKET}/renders/$id/publish/$id.mp4" --endpoint-url "$E" >/dev/null 2>&1; then echo "EP=$id" >> "$GITHUB_ENV"; echo "Next: $id"; break; fi
+            done
+          fi
 
       - name: Bring scripts, picture index, facts and finished work from R2
         run: |
@@ -123,6 +136,7 @@ jobs:
               aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress
               ;;
             full-episode)
+              [ -f "content/youtube/narration/$EP.txt" ] && node media/tools/build-episode.mjs "$EP"
               node media/library-harvest.mjs upload
               node media/library-harvest.mjs describe "$EP" --limit 400 --requests 5
               node media/library-harvest.mjs coverage
@@ -154,3 +168,12 @@ jobs:
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -d "media/out/$EP" ] && aws s3 sync "media/out/$EP" "s3://${R2_BUCKET}/renders/$EP" --endpoint-url "$E" --no-progress
           echo "Finished files are in R2 under renders/$EP/" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update the preview page and tell the owner
+        if: always()
+        run: |
+          E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          node media/tools/preview-board.mjs preview.html && aws s3 cp preview.html "s3://${R2_BUCKET}/preview/index.html" --endpoint-url "$E" --content-type "text/html; charset=utf-8" --no-progress || true
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] && [ "$EP" != ZV-L01 ]; then
+            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA: $EP خلص التشغيل (${{ job.status }}). المعاينة: ${VITE_MEDIA_BASE_URL%/}/preview/index.html" >/dev/null || true
+          fi
