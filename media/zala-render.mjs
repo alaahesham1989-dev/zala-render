@@ -1310,7 +1310,7 @@ function pickReels(script, flat) {
 function reelScene(s, out) {
   const FR = Math.max(2, Math.round(s.dur * FPS));
   const src = abs(s.asset.vfile || s.asset.file);
-  if (s.asset.kind === 'video') return clipArgs(src, VW, VH, FR, out);
+  if (s.asset.kind === 'video') return ['-i', src, '-vf', `fps=${FPS},tpad=stop_mode=clone:stop_duration=30,scale=${VW}:${VH}:force_original_aspect_ratio=increase:flags=lanczos,crop=${VW}:${VH},setsar=1,format=yuv420p`, '-frames:v', String(FR), '-an', ...X264, out];
   const { width, height } = dimensionsOf(src);
   const tall = 2880, cropW = Math.round((tall * VW) / VH);
   const fullW = Math.round((width / height) * tall);
@@ -1376,8 +1376,8 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   reel.lines.forEach((f, i) => {
     const d = durationOf(voiceFileOf(script, f));
     const start = i === 0 ? 0 : t - 0.1;
-    const list = lineAssets(data, f.key).filter((a) => !a.card);
-    const anyPicture = () => reel.lines.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card) || tl.flat.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card);
+    const list = lineAssets(data, f.key).filter((a) => !a.card && !a.map);
+    const anyPicture = () => reel.lines.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card && !a.map) || tl.flat.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card && !a.map);
     const assets = list.length ? list : [lastAsset || anyPicture()];
     const lineSpan = d + 0.35;
     voices.push({ file: voiceFileOf(script, f), t });
@@ -1497,7 +1497,7 @@ function uploadPackage(script, tl, data, reels, dir, masterFile, extra = {}) {
   if (extra.licensedMusic) description += `\n\nMusic:\n${script.music.map((m) => m.track).filter((x, i, all) => all.indexOf(x) === i).map((t) => `• "${t}" Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0 http://creativecommons.org/licenses/by/4.0/`).join('\n')}`;
   description += animated ? '\n\nNarration voice and the shots marked as artistic reconstruction are AI-generated.' : '\n\nNarration voice is AI-generated.';
   if (credits.length) {
-    const short = credits.map((c) => `• ${c.replace(/^"(.{0,44}).*?" by /, '"$1" by ').replace(/, via (Wikimedia Commons|Europeana)$/, '').replace(/\s+/g, ' ').slice(0, 110)}`);
+    const short = credits.map((c) => `• ${c.replace(/^"(.{0,44}).*?" by /, '"$1" by ').replace(/, via (Wikimedia Commons|Europeana)$/, '').replace(/ \(https?:[^)]*\)/, '').replace(/\s+/g, ' ').slice(0, 72)}`);
     description += `\n\nImage and video credits:\n${short.join('\n')}`;
   }
   fs.writeFileSync(path.join(dir, `${script.id}.credits.txt`), credits.join('\n'), 'utf8');
