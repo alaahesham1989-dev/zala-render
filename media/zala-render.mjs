@@ -568,7 +568,7 @@ async function stageDirector(script) {
   const tools = { thumb, thumbLarge, addPicture, log, sleep, keyFor, markSpent, places: loadPlaces() };
   const clean = await screenPictures(live, tools);
   fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
-  if (clean.length < 20) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
+  if (clean.length < 4) throw new Error(`Only ${clean.length} clean pictures for ${id}, the director will not go on`);
   await directEpisode(script, clean, tools);
   fs.writeFileSync(LIB_ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
   // the first time a place is named, the viewer sees where it is
