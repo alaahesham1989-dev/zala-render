@@ -135,6 +135,31 @@ ${free.map(catalogRow).join('\n')}` }], tools);
       await sleep(4000);
     }
   }
+  // a last, closer look for nudity at everything chosen, so it is caught before an hour of rendering
+  const chosen = [...new Set(script.chapters.flatMap((c) => c.lines.flatMap((l) => l.pictures)))];
+  for (let i = 0; i < chosen.length; i += 6) {
+    const group = chosen.slice(i, i + 6);
+    const parts = [{ text: 'A family-friendly channel may not show any bare breast, exposed nipple, deep open neckline showing the breast, genitals or naked body, even in classical art. For each numbered picture return only JSON {"items":[{"n":0,"nudity":false}]}. When unsure, answer true.' }];
+    const ok = [];
+    for (const id of group) {
+      const data = await (tools.thumbLarge || thumb)(byId.get(id));
+      if (!data) continue;
+      parts.push({ text: `Picture ${ok.length}` });
+      parts.push({ inlineData: { mimeType: 'image/jpeg', data } });
+      ok.push(id);
+    }
+    const v = ok.length ? await askVision(parts, tools) : null;
+    for (const r of v?.items || []) {
+      const id = ok[r.n];
+      if (id && r.nudity) {
+        byId.get(id).seen.check = { ...(byId.get(id).seen.check || {}), nudity: true, note: 'closer look' };
+        script.chapters.forEach((c) => c.lines.forEach((l) => { l.pictures = l.pictures.filter((x) => x !== id); if (l.rejected) l.rejected = l.rejected.filter((x) => x !== id); }));
+        byId.delete(id);
+        log('  removed one picture on a closer look');
+      }
+    }
+    await sleep(3000);
+  }
   const lines = script.chapters.flatMap((c) => c.lines);
   // never more than two cards in a row: give back the nearest picture the eye test was unsure of, then one from the same chapter
   const chapterOf = new Map(script.chapters.flatMap((c) => c.lines.map((l) => [l, c])));
@@ -144,13 +169,13 @@ ${free.map(catalogRow).join('\n')}` }], tools);
     run++;
     if (run <= 2) continue;
     const back = (l.rejected || []).find((id) => byId.has(id) && (uses.get(id) || 0) < MAX_USES && allowedForLine(byId.get(id), l.en, places));
-    const near = chapterOf.get(l).lines.flatMap((x) => x.pictures).find((id) => (uses.get(id) || 0) < MAX_USES + 1 && allowedForLine(byId.get(id), l.en, places));
+    const near = chapterOf.get(l).lines.flatMap((x) => x.pictures).find((id) => byId.has(id) && (uses.get(id) || 0) < MAX_USES + 1 && allowedForLine(byId.get(id), l.en, places));
     const pick = back || near;
     if (pick) { l.pictures = [pick]; uses.set(pick, (uses.get(pick) || 0) + 1); run = 0; }
   }
   lines.forEach((l) => { delete l.rejected; });
   const cards = lines.filter((l) => !l.pictures.length);
   cards.forEach((l) => { if (!l.card) l.card = l.en.split(/[,.]/)[0].split(/\s+/).slice(0, 7).join(' '); });
-  script.directed = 5;
+  script.directed = 6;
   log(`Director: ${lines.length - cards.length} lines with pictures, ${cards.length} with a text card`);
 }
