@@ -73,6 +73,84 @@ function allowedForLine(p, line, places) {
   return !shows.length || shows.some((x) => new RegExp(x.match).test(line));
 }
 
+const OPEN_LICENSE = /^(cc0|cc by(-sa)?( [\d.]+)?|public domain|pd\b)/i;
+const stripHtml = (x) => String(x || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+/** Open-license pictures for a search, from Wikimedia Commons. */
+async function searchCommons(query, log) {
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=1600`;
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'ZalaRender/1.0 (https://www.zalavip.com)' }, signal: AbortSignal.timeout(30000) });
+    const data = await res.json();
+    return Object.values(data?.query?.pages || {}).flatMap((p) => {
+      const i = p.imageinfo?.[0], m = i?.extmetadata || {};
+      const license = stripHtml(m.LicenseShortName?.value);
+      if (!i || i.width < 800 || !OPEN_LICENSE.test(license) || /nc|nd/i.test(license.replace(/^public domain/i, ''))) return [];
+      return [{ title: p.title.replace(/^File:/, '').replace(/\.\w+$/, ''), url: i.thumburl || i.url, source_url: i.descriptionurl, license, author: stripHtml(m.Artist?.value).slice(0, 80) || 'Wikimedia Commons' }];
+    });
+  } catch (e) { log(`  search failed: ${e.name}`); return []; }
+}
+
+/** Lines with no picture get a real search: each find must pass the eye test, and only then joins the library. */
+async function findMissingPictures(script, tools, byId, uses, topicId) {
+  const { log, sleep, thumb, addPicture, places = [] } = tools;
+  const lines = script.chapters.flatMap((c) => c.lines).filter((l) => !l.pictures.length);
+  if (!lines.length) return;
+  log(`Director: searching for pictures for ${lines.length} lines`);
+  const seen = new Set([...byId.values()].map((p) => p.source_url));
+  let tried = 0;
+  for (let i = 0; i < lines.length; i += 12) {
+    const group = lines.slice(i, i + 12);
+    const a = await askVision([{ text: `For each sentence from a true-history video about ancient Egypt, write 2 short Wikimedia Commons search terms for a real photograph, ancient artwork or map that would show it. Use concrete names of people, places and objects. Return only JSON {"items":[{"n":0,"queries":["",""]}]}.\n\n${group.map((l, n) => `${n}. ${l.en}`).join('\n')}` }], tools);
+    for (const r of a?.items || []) {
+      const line = group[r.n];
+      if (!line || line.pictures.length || tried > 60) continue;
+      for (const q of (r.queries || []).slice(0, 2)) {
+        if (line.pictures.length) break;
+        const found = (await searchCommons(q, log)).filter((c) => !seen.has(c.source_url)).slice(0, 5);
+        const parts = [{ text: `The sentence is spoken in a family-friendly true-history video: "${line.en}". For each numbered picture answer: does it really show the person, place, object or event of the sentence? A generic object, a different person, or a modern object for an ancient event does not fit. Also report nudity: any bare breast, genitals or naked body, even in art. Return only JSON {"items":[{"n":0,"fits":false,"nudity":false,"kind":"ancient-object|ancient-site|ancient-art|later-painting|later-engraving|map|modern-photo|other","what":"short description","subject":"","place":"","period":""}]}.` }];
+        const ok = [];
+        for (const c of found) {
+          const data = await thumb(c);
+          if (!data) continue;
+          seen.add(c.source_url);
+          parts.push({ text: `Picture ${ok.length}. Label: ${c.title.slice(0, 110)}` });
+          parts.push({ inlineData: { mimeType: 'image/jpeg', data } });
+          ok.push(c);
+          tried++;
+        }
+        if (!ok.length) continue;
+        const v = await askVision(parts, tools);
+        const hit = (v?.items || []).find((x) => ok[x.n] && x.fits === true && !x.nudity);
+        if (hit) {
+          const c = ok[hit.n];
+          const p = { ...c, kind: 'image', source: 'Wikimedia Commons', topics: [topicId], seen: { usable: true, what: hit.what, subject: hit.subject, place: hit.place, period: hit.period, check: { nudity: false, modern: /^modern/.test(hit.kind), poor: false, kind: hit.kind } } };
+          if (allowedForLine(p, line.en, places)) {
+            const item = addPicture(p);
+            byId.set(item.id, item);
+            line.pictures = [item.id];
+            uses.set(item.id, 1);
+            log(`  found: ${c.title.slice(0, 60)} -> ${line.en.slice(0, 50)}`);
+          }
+        }
+        await sleep(3000);
+      }
+    }
+    await sleep(3000);
+  }
+}
+
+/** Card words come straight from the sentence, so a card can never say more than the story says. */
+function cardFromLine(line, proposed) {
+  const clean = (t) => t.toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').trim();
+  const words = line.split(/\s+/);
+  const asked = String(proposed || '').replace(/[.,!?]+$/, '');
+  if (asked && clean(line).includes(clean(asked))) return asked;
+  const clauses = line.split(/[,.;?!]/).map((x) => x.trim()).filter((x) => x.split(/\s+/).length >= 2);
+  const short = clauses.find((x) => x.split(/\s+/).length <= 7);
+  return short || words.slice(0, 6).join(' ');
+}
+
 /** Chooses pictures per chapter and checks them by eye. Returns nothing: fills line.pictures and line.card in the script. */
 export async function directEpisode(script, pics, tools) {
   const { thumb, log, sleep, places = [] } = tools;
@@ -91,7 +169,7 @@ RULES:
 - A line telling the story of a person may show that person's portrait, coin, or a painting of the scene. The opening line of the episode must always have a striking picture of its main subject.
 - A photo of a named place only for a line about that place.
 - If no picture truly fits, give an empty list.
-- Write "card" for every line: one complete, striking fact of up to 6 words, keeping apostrophes, never starting with a filler like However or Furthermore.
+- Write "card" for every line: up to 6 words copied exactly, in order, from the line itself, the most striking part. Do not rephrase and do not add anything.
 Always include "card" for every line, even when pictures fit.
 Return only JSON {"items":[{"n":0,"pictures":["id"],"card":""}]}.
 
@@ -160,6 +238,7 @@ ${free.map(catalogRow).join('\n')}` }], tools);
     }
     await sleep(3000);
   }
+  await findMissingPictures(script, tools, byId, uses, script.id);
   const lines = script.chapters.flatMap((c) => c.lines);
   // never more than two cards in a row: give back the nearest picture the eye test was unsure of, then one from the same chapter
   const chapterOf = new Map(script.chapters.flatMap((c) => c.lines.map((l) => [l, c])));
@@ -175,7 +254,7 @@ ${free.map(catalogRow).join('\n')}` }], tools);
   }
   lines.forEach((l) => { delete l.rejected; });
   const cards = lines.filter((l) => !l.pictures.length);
-  cards.forEach((l) => { if (!l.card) l.card = l.en.split(/[,.]/)[0].split(/\s+/).slice(0, 7).join(' '); });
-  script.directed = 6;
+  lines.forEach((l) => { l.card = cardFromLine(l.en, l.card); });
+  script.directed = 7;
   log(`Director: ${lines.length - cards.length} lines with pictures, ${cards.length} with a text card`);
 }
