@@ -104,7 +104,7 @@ async function findMissingPictures(script, tools, byId, uses, topicId) {
     const a = await askVision([{ text: `For each sentence from a true-history video about ancient Egypt, write 2 short Wikimedia Commons search terms for a real photograph, ancient artwork or map that would show it. Use concrete names of people, places and objects. Return only JSON {"items":[{"n":0,"queries":["",""]}]}.\n\n${group.map((l, n) => `${n}. ${l.en}`).join('\n')}` }], tools);
     for (const r of a?.items || []) {
       const line = group[r.n];
-      if (!line || line.pictures.length || tried > 60) continue;
+      if (!line || line.pictures.length || tried > 180) continue;
       for (const q of (r.queries || []).slice(0, 2)) {
         if (line.pictures.length) break;
         const found = (await searchCommons(q, log)).filter((c) => !seen.has(c.source_url)).slice(0, 5);
