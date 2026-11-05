@@ -48,7 +48,7 @@ Style: Cap,${font},${size},${WHITE},${WHITE},&H00000000&,&H80000000&,${short ? 0
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
   const lines = [];
-  const groups = chunk(words, short ? 3 : 9, short ? 20 : 60);
+  const groups = chunk(words, short ? 3 : 9, short ? 16 : 60);
   for (const g of groups) {
     const end = g[g.length - 1].t1;   // never past the next group's start, or two captions print over each other
     if (!short) {
