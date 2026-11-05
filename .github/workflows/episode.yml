@@ -149,7 +149,8 @@ jobs:
         if: always()
         run: |
           E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-          aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress --exclude "*" --include "library/*" --include "youtube/*"
+          # only a run that really changed the story or the library may write them back; a stale copy must never replace a newer plan
+          case "$ACTION" in fetch-narration|check-narrations|review) ;; *) if [ "$STATUS_OK" != no ]; then aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress --exclude "*" --include "library/*" --include "youtube/*"; fi ;; esac
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -d "media/out/$EP" ] && aws s3 sync "media/out/$EP" "s3://${R2_BUCKET}/renders/$EP" --endpoint-url "$E" --no-progress
           echo "Finished files are in R2 under renders/$EP/" >> "$GITHUB_STEP_SUMMARY"
