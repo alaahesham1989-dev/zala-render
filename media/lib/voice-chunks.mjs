@@ -109,6 +109,7 @@ function cutByPauses(chunk, texts) {
 
 /** Cuts one narration into line files, by the words heard when that is possible. Throws rather than cut a line wrongly. */
 export function splitChunk(chunk, texts, files) {
+  if (texts.length === 1) { ff(['-i', chunk, '-ar', '48000', files[0]]); return; }
   let lines = null;
   const heard = heardWords(chunk);
   if (heard?.length) {
