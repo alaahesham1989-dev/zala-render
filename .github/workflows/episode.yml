@@ -104,7 +104,7 @@ jobs:
           case "$ACTION" in
             check-narrations)
               E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-              aws s3 sync "s3://${R2_BUCKET}/render-input" narration-in --endpoint-url "$E" --no-progress --exclude "*" --include "ZV-L*/*.mp3"
+              aws s3 sync "s3://${R2_BUCKET}/render-input" narration-in --endpoint-url "$E" --no-progress --exclude "*" --include "${EP}/*.mp3"
               node media/tools/check-narrations.mjs narration-in narration-check.json
               aws s3 cp narration-check.json "s3://${R2_BUCKET}/render-input/narration-check.json" --endpoint-url "$E" --no-progress
               ;;
