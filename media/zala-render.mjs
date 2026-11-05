@@ -290,6 +290,7 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
     log(`  reel lines: ${extras.length} cut`);
   }
   for (const f of [...pending]) if (fs.existsSync(voiceFileOf(script, f, vp))) pending.splice(pending.indexOf(f), 1);
+  if (pending.length && script.handWritten) throw new Error(`${pending.length} lines have no narration, for example: ${pending[0].say.slice(0, 80)}`);
   const queue = groupLines(pending, flat, VOICE_WORDS_PER_REQUEST);
   log(`Voice: ${pending.length} lines in ${queue.length} requests`);
   while (queue.length) {
