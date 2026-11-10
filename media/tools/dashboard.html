@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة مصنع ZALA</title>
+<style>
+:root{--bg:#0b0b0d;--card:#16161a;--line:#2a2a30;--gold:#d4af37;--ok:#4ade80;--no:#f87171;--wait:#fbbf24;--text:#ece8e0;--mute:#9a968e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif;padding:16px}
+h1{color:var(--gold);margin:0 0 4px;font-size:24px}h2{font-size:18px;margin:26px 0 10px;color:var(--gold)}
+.sub{color:var(--mute);font-size:13px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.row:last-child{border:0}
+.ok{color:var(--ok)}.no{color:var(--no)}.wait{color:var(--wait)}.mute{color:var(--mute)}
+a{color:var(--gold)}img.thumb{width:100%;border-radius:8px;margin-top:8px;aspect-ratio:16/9;object-fit:cover;background:#000}
+.reels{display:flex;gap:6px;margin-top:6px}.reels img{width:32%;border-radius:6px;aspect-ratio:9/16;object-fit:cover;background:#000}
+ul{margin:6px 0;padding-inline-start:18px;color:var(--no);font-size:13px}
+</style>
+</head>
+<body>
+<h1>لوحة مصنع ZALA</h1>
+<div class="sub">بتتحدث لوحدها كل ما تفتحها. <span id="now"></span></div>
+
+<h2>الجدول الجاي</h2>
+<div class="card" id="plan">بيحمّل...</div>
+
+<h2>الحلقات</h2>
+<div class="grid" id="episodes">بيحمّل...</div>
+
+<h2>آخر تشغيلات السيرفر</h2>
+<div class="card" id="runs">بيحمّل...</div>
+
+<script>
+const REPO = 'alaahesham1989-dev/zala-render';
+const MEDIA = location.origin;
+const get = async (u) => { try { const r = await fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now()); return r.ok ? r.json() : null; } catch { return null; } };
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const cairo = (t) => new Date(t).toLocaleString('ar-EG', { timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const NAMES = { main: 'الحلقة', R1: 'ريل 1', R2: 'ريل 2', R3: 'ريل 3' };
+const PLACES = { fb: 'فيسبوك', ig: 'إنستجرام' };
+document.getElementById('now').textContent = 'آخر تحديث: ' + cairo(Date.now());
+
+(async () => {
+  const [queue, plan] = await Promise.all([
+    get(`https://raw.githubusercontent.com/${REPO}/main/content/meta-queue.json`),
+    get(`${MEDIA}/render-state/content/schedule.json`),
+  ]);
+  const rows = [];
+  for (const q of queue || []) rows.push({ at: q.at, ep: q.episode, which: q.which, where: q.to.map((x) => PLACES[x]).join(' + '), done: q.done, err: (q.results || []).some((r) => r.error) });
+  for (const p of plan || []) rows.push({ at: p.at, ep: p.episode, which: p.which, where: 'يوتيوب', link: p.youtube, done: Date.parse(p.at) < Date.now() });
+  rows.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const upcoming = rows.filter((r) => Date.parse(r.at) > Date.now() - 2 * 86400000);
+  document.getElementById('plan').innerHTML = upcoming.length ? upcoming.map((r) => `<div class="row"><span>${cairo(r.at)}</span><span>${esc(r.ep)} · ${NAMES[r.which] || r.which}</span><span>${r.where}</span><span class="${r.err ? 'no' : r.done ? 'ok' : 'wait'}">${r.err ? 'وقع' : r.done ? 'اتنشر' : 'متجدول'}${r.link ? ` · <a href="${r.link}" target="_blank">فتح</a>` : ''}</span></div>`).join('') : '<span class="mute">مفيش حاجة متجدولة</span>';
+
+  const known = new Set(['ZV-L01', 'ZV-L08', 'ZV-L11']);
+  const t = await get(`${MEDIA}/render-state/content/library/treasures.json`);
+  Object.keys(t || {}).forEach((k) => known.add(k));
+  const cards = [];
+  for (const id of known) {
+    const root = `${MEDIA}/renders/${id}`;
+    const [pkg, v] = await Promise.all([get(`${root}/publish/${id}.youtube.json`), get(`${root}/review/verdict.json`)]);
+    const state = !pkg ? '<b class="wait">لسه في الطريق</b>' : v?.pass ? '<b class="ok">عدّى المراجعة</b>' : '<b class="no">المراجع وقفه</b>';
+    const sched = (plan || []).filter((p) => p.episode === id).length ? ' · <b class="ok">متجدول</b>' : '';
+    cards.push(`<div class="card"><b>${esc(pkg?.title || (t || {})[id]?.title || id)}</b><div class="mute">${id} · ${state}${sched}</div>
+      ${v && !v.pass ? `<ul>${(v.reasons || []).slice(0, 4).map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
+      ${pkg ? `<a href="${root}/publish/${esc(pkg.file)}" target="_blank"><img class="thumb" loading="lazy" src="${root}/publish/${esc(pkg.thumbnail)}?t=${Date.now()}" alt=""></a>
+      <div class="reels">${(pkg.reels || []).map((r) => `<a href="${root}/publish/${esc(r.file)}" target="_blank" style="width:32%"><img loading="lazy" src="${root}/publish/${esc(r.file.replace('.mp4', '_cover.jpg'))}?t=${Date.now()}" alt="" style="width:100%"></a>`).join('')}</div>` : ''}</div>`);
+  }
+  document.getElementById('episodes').innerHTML = cards.join('');
+
+  const runs = await get(`https://api.github.com/repos/${REPO}/actions/runs?per_page=12`);
+  const label = (r) => r.status !== 'completed' ? '<span class="wait">شغال دلوقتي</span>' : r.conclusion === 'success' ? '<span class="ok">نجح</span>' : r.conclusion === 'cancelled' ? '<span class="mute">اتلغى</span>' : '<span class="no">وقع</span>';
+  document.getElementById('runs').innerHTML = (runs?.workflow_runs || []).map((r) => `<div class="row"><span>${cairo(r.created_at)}</span><span>${esc(r.name)}</span><span>${label(r)} · <a href="${r.html_url}" target="_blank">تفاصيل</a></span></div>`).join('') || '<span class="mute">مش قادر أقرا التشغيلات</span>';
+})();
+</script>
+</body>
+</html>
