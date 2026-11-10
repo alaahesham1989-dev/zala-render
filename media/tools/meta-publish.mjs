@@ -63,8 +63,23 @@ async function toFacebook(pkg, id, which) {
 
 async function toInstagram(pkg, id, which) {
   const t = texts(pkg, id, which, 'instagram');
-  const url = signedUrl(id, t.file);
-  const box = await call(`${G}/${IG}/media`, { method: 'POST', params: { media_type: 'REELS', video_url: url, caption: t.ig, share_to_feed: 'true' } });
+  let box;
+  if (t.isMain) {
+    // Instagram refuses the full-size episode by link, so the server makes a lighter copy and sends the file itself.
+    const { R2_BUCKET, R2_ACCOUNT_ID } = process.env;
+    execFileSync('aws', ['s3', 'cp', `s3://${R2_BUCKET}/renders/${id}/publish/${t.file}`, '/tmp/src.mp4', '--no-progress',
+      '--endpoint-url', `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`], { stdio: 'inherit' });
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', '/tmp/src.mp4', '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', '4500k',
+      '-maxrate', '5000k', '-bufsize', '10000k', '-pix_fmt', 'yuv420p', '-r', '30', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000',
+      '-movflags', '+faststart', '/tmp/ig.mp4'], { stdio: 'inherit' });
+    const size = fs.statSync('/tmp/ig.mp4').size;
+    console.log(`Instagram copy: ${(size / 1e6).toFixed(1)} MB`);
+    box = await call(`${G}/${IG}/media`, { method: 'POST', params: { media_type: 'REELS', upload_type: 'resumable', caption: t.ig, share_to_feed: 'true' } });
+    const up = await fetch(box.uri, { method: 'POST', headers: { Authorization: `OAuth ${TOKEN}`, offset: '0', file_size: String(size) }, body: fs.readFileSync('/tmp/ig.mp4') });
+    if (!up.ok) throw new Error(`Instagram upload failed: ${up.status} ${(await up.text()).slice(0, 200)}`);
+  } else {
+    box = await call(`${G}/${IG}/media`, { method: 'POST', params: { media_type: 'REELS', video_url: signedUrl(id, t.file), caption: t.ig, share_to_feed: 'true' } });
+  }
   for (let i = 0; i < 90; i++) {
     const s = await call(`${G}/${box.id}?fields=status_code,status`);
     if (s.status_code === 'FINISHED') break;
