@@ -79,7 +79,8 @@ jobs:
         run: |
           set -euo pipefail
           exec > >(tee -a run.log) 2>&1
-          node media/tools/gapfill.mjs "$EP"
+          aws s3 cp "s3://${R2_BUCKET}/renders/${EP}/review/review.json" last-review.json --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress || true
+          node media/tools/gapfill.mjs "$EP" --review last-review.json
           if [ "${{ inputs.meta }}" = "yes" ]; then node media/zala-render.mjs all "$EP"; else node media/zala-render.mjs all "$EP" --no-meta; fi
           node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
           aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
