@@ -1,0 +1,15 @@
+{
+  "ZV-T01": {
+    "title": "Tutankhamun's Gold: Inside the Richest Tomb Ever Found",
+    "hook": "In 1922 a candle flickered in the dark, and one man saw gold everywhere.",
+    "seconds": 480,
+    "match": "tutankhamun|tutankhamen|king tut|carter|carnarvon|kv62|valley of the kings",
+    "archive": "Tutankhamun treasure gold",
+    "queries": [
+      "Tutankhamun mask", "Tutankhamun gold coffin", "Tutankhamun throne", "Tutankhamun dagger", "Tutankhamun pectoral",
+      "Tutankhamun jewelry", "Tutankhamun canopic", "Tutankhamun shrine", "Tutankhamun treasure Egyptian Museum",
+      "Howard Carter Tutankhamun tomb", "KV62", "Tutankhamun chariot", "Tutankhamun sandals gold", "Egyptian gold jewelry New Kingdom",
+      "ancient Egyptian gold"
+    ]
+  }
+}
