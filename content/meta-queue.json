@@ -1,4 +1,61 @@
 [
-  { "episode": "ZV-L01", "which": "R2", "to": ["fb", "ig"], "at": "2026-11-11T16:00:00Z", "done": false },
-  { "episode": "ZV-L01", "which": "R3", "to": ["fb", "ig"], "at": "2026-11-12T16:00:00Z", "done": false }
+  {
+    "episode": "ZV-L01",
+    "which": "R2",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-11T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L01",
+    "which": "R3",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-12T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
+    "which": "main",
+    "to": [
+      "fb"
+    ],
+    "at": "2026-11-12T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-13T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
+    "which": "R2",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-14T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
+    "which": "R3",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-15T16:00:00Z",
+    "done": false
+  }
 ]
