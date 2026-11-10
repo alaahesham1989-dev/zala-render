@@ -11,6 +11,11 @@ on:
         required: true
         default: ZV-L08
         type: string
+      meta:
+        description: "Animate wide pictures with Meta AI in the background browser (yes or no)"
+        required: false
+        default: "yes"
+        type: string
 
 concurrency:
   group: zala-episode
@@ -36,6 +41,8 @@ jobs:
       MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      META_COOKIES: ${{ secrets.META_COOKIES }}
+      CHROME_PATH: /usr/bin/google-chrome
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       FFMPEG_PATH: /usr/bin/ffmpeg
@@ -73,7 +80,7 @@ jobs:
           set -euo pipefail
           exec > >(tee -a run.log) 2>&1
           node media/tools/gapfill.mjs "$EP"
-          node media/zala-render.mjs all "$EP" --no-meta
+          if [ "${{ inputs.meta }}" = "yes" ]; then node media/zala-render.mjs all "$EP"; else node media/zala-render.mjs all "$EP" --no-meta; fi
           node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
           aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
       - name: Save work back to R2, even after a failure
