@@ -8,7 +8,7 @@
 //   3. an animated title scene drawn by Manim in the channel style: a year, a number, or the key words of the line
 // It also tops up the short lines at the top of the screen to what the quality check asks for.
 //
-// Usage: node media/tools/gapfill.mjs ZV-L08 [--dry]
+// Usage: node media/tools/gapfill.mjs ZV-L08 [--dry] [--review review.json]
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -106,11 +106,14 @@ async function cropOf(p, n) {
 
 // ── 2. free landscape video ───────────────────────────────────────────
 const ATMOSPHERE = [
-  [/\b(sun|sunrise|sunlight|dawn|light|beam|ray)\b/i, 'sunrise desert'],
-  [/\b(sand|dune|dunes|desert|buried|swallowed)\b/i, 'sand dunes desert wind'],
+  [/\b(sun|sunrise|sunlight|dawn|beam|ray)\b/i, 'sahara desert sunrise'],
+  [/\b(sand|dune|dunes|desert|buried|swallowed)\b/i, 'sahara sand dunes wind'],
   [/\b(nile|river|lake|water|flood|flooded)\b/i, 'nile river egypt'],
-  [/\b(night|dark|darkness|stars|shadow)\b/i, 'night sky stars desert'],
+  [/\b(night|darkness|stars)\b/i, 'desert night stars'],
 ];
+// footage must look like Egypt: no animals or plants of other lands, no people, no towns, nothing made by AI
+const BAD_TAGS = /africa|savanna|savannah|giraffe|safari|elephant|lion|zebra|acacia|jungle|forest|tropical|waterfall|fantasy|\bai\b|generated|3d|render|animation|cartoon|people|person|woman|\bman\b|girl|boy|city|car|road|camel ride|tourist/i;
+const GOOD_TAGS = /desert|sand|dune|nile|egypt|river|sunrise|sunset|\bsun\b|night|stars|sky|sahara/i;
 const usedVideos = new Set();
 async function pixabayClip(line) {
   const key = dry ? '' : process.env.PIXABAY_API_KEY;
@@ -120,11 +123,11 @@ async function pixabayClip(line) {
     const res = await fetch(`https://pixabay.com/api/videos/?key=${key}&q=${encodeURIComponent(hit[1])}&safesearch=true&per_page=30`, { signal: AbortSignal.timeout(30000) });
     const j = await res.json();
     for (const v of j.hits || []) {
-      if (usedVideos.has(v.id) || v.duration < 6 || /people|person|woman|man|girl|boy|city|car|road/i.test(v.tags || '')) continue;
+      if (usedVideos.has(v.id) || v.duration < 6 || BAD_TAGS.test(v.tags || '') || !GOOD_TAGS.test(v.tags || '')) continue;
       const pick = ['large', 'medium'].map((k) => v.videos?.[k]).find((f) => f?.url && f.width >= 1280 && f.width > f.height);
       if (!pick) continue;
       usedVideos.add(v.id);
-      return { url: pick.url, page: v.pageURL, credit: `Video by ${v.user} on Pixabay`, license: 'Pixabay Content License', what: hit[1] };
+      return { url: pick.url, page: v.pageURL, credit: `Video by ${v.user} on Pixabay`, license: 'Pixabay Content License', what: hit[1], gapfill: true };
     }
   } catch (e) { log(`pixabay: ${e.name}`); }
   return null;
@@ -159,6 +162,22 @@ function sceneFor(l) {
   if (num) return { type: 'number', value: Number(num[1].replace(/,/g, '')), unit: num[2].toUpperCase(), small: '' };
   return { type: 'phrase', text: cardWords(l) };
 }
+
+// ── start over where needed ─────────────────────────────────────────
+// clips this tool made on an earlier run are planned again, so a better rule applies to them too
+let cleared = 0;
+for (const l of lines) if (l.clip && (l.clip.gapfill || ['ZALA VIP', 'Pixabay Content License'].includes(l.clip.license))) { delete l.clip; cleared++; }
+// lines the last review said show the wrong picture lose that picture
+const reviewAt = (() => { const i = process.argv.indexOf('--review'); return i > 0 ? process.argv[i + 1] : ''; })();
+let rejected = 0;
+if (reviewAt && fs.existsSync(reviewAt)) {
+  const rev = JSON.parse(fs.readFileSync(reviewAt, 'utf8'));
+  for (const r of rev.lines || []) {
+    const l = lines[r.n - 1];
+    if (l && r.fits === 'no' && (l.pictures || []).length) { l.pictures = []; rejected++; }
+  }
+}
+log(`replanned ${cleared} earlier clips, removed ${rejected} pictures the review rejected`);
 
 // ── fill ─────────────────────────────────────────────────────────────
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);
@@ -217,7 +236,7 @@ if (scenes.length) {
   for (const l of lines.filter((x) => x.clip?.scene)) {
     const file = path.join(dir, `${l.clip.scene}.mp4`);
     if (!dry && !fs.existsSync(file)) throw new Error(`scene missing: ${l.clip.scene}`);
-    l.clip = { url: upload(file, `vault/gapfill/${id}/${path.basename(file)}`, 'video/mp4'), page: '', credit: '', license: 'ZALA VIP', what: 'title scene' };
+    l.clip = { url: upload(file, `vault/gapfill/${id}/${path.basename(file)}`, 'video/mp4'), page: 'https://www.zalavip.com', credit: '', license: 'ZALA VIP', what: 'title scene', gapfill: true };
   }
 }
 
