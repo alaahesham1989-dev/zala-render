@@ -44,7 +44,9 @@ const AUDIO_TOKENS_PER_SEC = 25;   // measured on gemini-3.8-flash-tts
 const VOICE_WORDS_PER_REQUEST = 190;   // the free plan allows 10 voice requests a day: a 12-minute episode fits in them
 const VOICE_REQUEST_GAP = 21000;   // and 3 a minute
 const GOLD = '&H0037AFD4&', WHITE = '&H00FFFFFF&';
-const TEXT_MODELS = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash'];
+// the factory can add lighter models when these are all busy (GEMINI_TEXT_MODELS, comma separated)
+const TEXT_MODELS = process.env.GEMINI_TEXT_MODELS ? process.env.GEMINI_TEXT_MODELS.split(',').map((m) => m.trim()).filter(Boolean)
+  : ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash'];
 const MUSIC_MODEL = 'lyria-3-pro-preview';
 const META_URL = 'https://www.meta.ai/';
 const META_PROFILE = path.join(CACHE, 'meta-profile');
