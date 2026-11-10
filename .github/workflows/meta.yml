@@ -21,7 +21,7 @@ on:
         default: fb,ig
         type: string
   schedule:
-    - cron: "5 * * * *"
+    - cron: "*/20 * * * *"
 
 permissions:
   contents: write
@@ -68,7 +68,7 @@ jobs:
           if ! git diff --quiet content/meta-queue.json; then
             git config user.name "zala-bot"
             git config user.email "zala-bot@users.noreply.github.com"
-            git add content/meta-queue.json
+            git add -f content/meta-queue.json
             git commit -m "meta: published queued items"
             git push
           fi
