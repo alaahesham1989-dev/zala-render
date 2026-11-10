@@ -6,10 +6,108 @@
     "match": "tutankhamun|tutankhamen|king tut|carter|carnarvon|kv62|valley of the kings",
     "archive": "Tutankhamun treasure gold",
     "queries": [
-      "Tutankhamun mask", "Tutankhamun gold coffin", "Tutankhamun throne", "Tutankhamun dagger", "Tutankhamun pectoral",
-      "Tutankhamun jewelry", "Tutankhamun canopic", "Tutankhamun shrine", "Tutankhamun treasure Egyptian Museum",
-      "Howard Carter Tutankhamun tomb", "KV62", "Tutankhamun chariot", "Tutankhamun sandals gold", "Egyptian gold jewelry New Kingdom",
+      "Tutankhamun mask",
+      "Tutankhamun gold coffin",
+      "Tutankhamun throne",
+      "Tutankhamun dagger",
+      "Tutankhamun pectoral",
+      "Tutankhamun jewelry",
+      "Tutankhamun canopic",
+      "Tutankhamun shrine",
+      "Tutankhamun treasure Egyptian Museum",
+      "Howard Carter Tutankhamun tomb",
+      "KV62",
+      "Tutankhamun chariot",
+      "Tutankhamun sandals gold",
+      "Egyptian gold jewelry New Kingdom",
       "ancient Egyptian gold"
+    ]
+  },
+  "ZV-T02": {
+    "title": "The Silver Pharaohs of Tanis: The Treasure Nobody Talks About",
+    "hook": "In 1940 a gold mask was found that rivals Tutankhamun, and the world barely noticed.",
+    "seconds": 480,
+    "match": "tanis|psusennes|sheshonq|amenemope|montet|silver coffin",
+    "archive": "Tanis royal tombs treasure",
+    "queries": [
+      "Psusennes I gold mask",
+      "Psusennes silver coffin",
+      "Tanis treasure",
+      "Sheshonq II silver coffin",
+      "Tanis royal necropolis",
+      "Amenemope gold mask",
+      "Tanis Egypt ruins",
+      "Egyptian gold bracelet Third Intermediate Period"
+    ]
+  },
+  "ZV-T03": {
+    "title": "The Jewels of the Egyptian Princesses",
+    "hook": "Hidden in mud for four thousand years, the crowns of princesses were still shining.",
+    "seconds": 480,
+    "match": "sithathoriunet|sit-hathor|lahun|dahshur|mereret|khnumet|princess|pectoral",
+    "archive": "Egyptian princess jewelry Middle Kingdom",
+    "queries": [
+      "Sithathoriunet pectoral",
+      "Lahun treasure jewelry",
+      "Dahshur treasure jewelry",
+      "Mereret pectoral",
+      "Khnumet crown",
+      "Egyptian Middle Kingdom jewelry gold",
+      "Egyptian broad collar gold",
+      "Egyptian girdle gold cowrie"
+    ]
+  },
+  "ZV-T04": {
+    "title": "The Golden Flies: Egypt's Medal for Bravery",
+    "hook": "A queen was buried with golden flies, the highest honor a warrior could receive.",
+    "seconds": 420,
+    "match": "ahhotep|golden fl|ahmose|kamose|order of the golden fly",
+    "archive": "Ahhotep treasure golden flies",
+    "queries": [
+      "Ahhotep golden flies",
+      "Ahhotep treasure",
+      "Ahhotep dagger",
+      "Ahmose axe gold",
+      "Egyptian gold fly pendant",
+      "Ahhotep bracelet",
+      "Egyptian ceremonial axe",
+      "Second Intermediate Period gold jewelry"
+    ]
+  },
+  "ZV-T05": {
+    "title": "Valley of the Golden Mummies",
+    "hook": "A donkey's leg fell into a hole in the desert, and beneath it lay mummies covered in gold.",
+    "seconds": 420,
+    "match": "bahariya|golden mumm|valley of the golden|hawass",
+    "archive": "Bahariya golden mummies",
+    "queries": [
+      "Bahariya golden mummies",
+      "Bahariya oasis mummy",
+      "Roman period Egyptian gilded mummy mask",
+      "Egyptian gilded cartonnage mask",
+      "Bahariya oasis",
+      "Graeco-Roman Egyptian mummy portrait gold",
+      "gilded mummy Egypt",
+      "Egyptian mummy mask gold Roman"
+    ]
+  },
+  "ZV-T06": {
+    "title": "The 10 Most Valuable Treasures of Ancient Egypt",
+    "hook": "Some of these objects are priceless, and one of them fell from the sky.",
+    "seconds": 540,
+    "match": "treasure|gold|tutankhamun|psusennes|narmer|rosetta|nefertiti|khufu",
+    "archive": "ancient Egyptian treasures museum",
+    "queries": [
+      "Narmer Palette",
+      "Nefertiti bust",
+      "Khufu boat",
+      "Tutankhamun gold mask",
+      "Psusennes mask",
+      "Rosetta Stone",
+      "Egyptian gold pectoral",
+      "Egyptian Museum Cairo treasure",
+      "Grand Egyptian Museum",
+      "Egyptian gold diadem"
     ]
   }
 }
