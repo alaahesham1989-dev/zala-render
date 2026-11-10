@@ -98,8 +98,9 @@ jobs:
           t0=$(date +%s)
           node -e 'const fs=require("fs"),f="content/factory-state.json",s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f)):{};const e=process.env.EP;s[e]={...(s[e]||{}),days:((s[e]||{}).days||0)+1,started:new Date().toISOString()};fs.writeFileSync(f,JSON.stringify(s,null,2))'
           /tmp/lib/bin/python media/tools/library_build.py "$EP" --target 220 || exit 1
-          node media/zala-render.mjs story "$EP" || exit 1
-          node media/tools/direct.mjs "$EP" || exit 1
+          # Gemini is sometimes busy for a while: wait and try again instead of giving up the day
+          ok=no; for i in 1 2 3 4; do node media/zala-render.mjs story "$EP" && { ok=yes; break; }; echo "story: Gemini busy, waiting 10 minutes"; sleep 600; done; [ $ok = yes ] || exit 1
+          ok=no; for i in 1 2 3 4; do node media/tools/direct.mjs "$EP" && { ok=yes; break; }; echo "director: Gemini busy, waiting 10 minutes"; sleep 600; done; [ $ok = yes ] || exit 1
           pass=no; tries=0
           for attempt in 1 2 3; do
             tries=$attempt
