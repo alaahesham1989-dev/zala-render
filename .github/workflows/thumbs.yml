@@ -1,0 +1,51 @@
+name: ZALA new thumbnails
+
+# Makes new thumbnails and reel covers for a finished episode, puts them on R2, and sets the main one on YouTube.
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id"
+        required: true
+        default: ZV-L08
+        type: string
+      video_id:
+        description: "YouTube id of the long video (empty = do not change YouTube)"
+        required: false
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      EP: ${{ inputs.episode }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tools
+        run: |
+          python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          /tmp/lib/bin/pip install --quiet open_clip_torch pillow
+          mkdir -p media/brand/fonts && curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
+      - name: Bring the episode text and the picture index (no videos)
+        run: |
+          set -euo pipefail
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/${EP}.json" --include "library/items.jsonl"
+          aws s3 sync "s3://${R2_BUCKET}/renders/${EP}/publish" pub --endpoint-url "$E" --no-progress --exclude "*.mp4"
+      - name: New thumbnails
+        run: |
+          set -euo pipefail
+          /tmp/lib/bin/python media/tools/thumbs.py pub "$EP"
+          aws s3 sync pub "s3://${R2_BUCKET}/renders/${EP}/publish" --endpoint-url "$E" --no-progress --exclude "*" --include "*.jpg" --include "*.youtube.json"
+          if [ -n "${{ inputs.video_id }}" ]; then node media/tools/yt-thumb.mjs "${{ inputs.video_id }}" "pub/${EP}_thumbnail.jpg"; fi
