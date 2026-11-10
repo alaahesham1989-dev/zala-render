@@ -1,0 +1,141 @@
+name: ZALA factory (every day, from library to schedule)
+
+# Every morning at 07:00 Cairo: takes the next episode of media/tools/treasures.json that is not scheduled yet,
+# builds its picture library, writes and directs the story, fills the empty lines, renders, and reviews it.
+# When the review stops it, the factory fixes it by itself: the rejected pictures are replaced and it renders again
+# (up to 3 renders). When the review passes: new thumbnails, then the episode goes into the next free days on
+# YouTube, Facebook and Instagram, with no one asked. The owner gets the result on Telegram and on the dashboard.
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id (empty = the next one in line)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zala-episode
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      META_COOKIES: ${{ secrets.META_COOKIES }}
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+      MANIM_PY: /tmp/manim/bin/python
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bring scripts, picture index and plans from R2
+        run: |
+          set -euo pipefail
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
+          cp media/tools/treasures.json content/library/treasures.json
+          [ -f content/schedule.json ] || cp media/tools/schedule-seed.json content/schedule.json
+      - name: Which episode today
+        run: |
+          EP="${{ inputs.episode }}"
+          if [ -z "$EP" ]; then
+            EP=$(node -e '
+              const fs=require("fs");
+              const ids=Object.keys(JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")));
+              const plan=fs.existsSync("content/schedule.json")?JSON.parse(fs.readFileSync("content/schedule.json","utf8")):[];
+              const st=fs.existsSync("content/factory-state.json")?JSON.parse(fs.readFileSync("content/factory-state.json","utf8")):{};
+              const next=ids.find((id)=>!plan.some((p)=>p.episode===id)&&(st[id]?.days||0)<3);
+              console.log(next||"");')
+          fi
+          echo "EP=$EP" >> "$GITHUB_ENV"
+          echo "Today: ${EP:-nothing left}"
+      - name: Install ffmpeg, fonts, drawing libraries and picture tools
+        if: env.EP != ''
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev
+          cd media && npm ci && node tools/fetch-fonts.mjs && mkdir -p ~/.local/share/fonts && cp brand/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f && cd ..
+          python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
+          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+          python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1" "pillow==10.4.0"
+          python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
+          for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+          mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
+      - name: Make the episode, and fix it until the review passes
+        if: env.EP != ''
+        run: |
+          set -uo pipefail
+          exec > >(tee -a run.log) 2>&1
+          t0=$(date +%s)
+          node -e 'const fs=require("fs"),f="content/factory-state.json",s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f)):{};const e=process.env.EP;s[e]={...(s[e]||{}),days:((s[e]||{}).days||0)+1,started:new Date().toISOString()};fs.writeFileSync(f,JSON.stringify(s,null,2))'
+          /tmp/lib/bin/python media/tools/library_build.py "$EP" --target 220 || exit 1
+          node media/zala-render.mjs story "$EP" || exit 1
+          node media/tools/direct.mjs "$EP" || exit 1
+          pass=no; tries=0
+          for attempt in 1 2 3; do
+            tries=$attempt
+            if [ "$attempt" = 1 ]; then node media/tools/gapfill.mjs "$EP"; else node media/tools/gapfill.mjs "$EP" --review review-out/review.json; fi
+            node media/zala-render.mjs all "$EP" || continue
+            rm -rf review-out; node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
+            if node -e 'process.exit(JSON.parse(require("fs").readFileSync("review-out/verdict.json")).pass?0:1)'; then pass=yes; break; fi
+            echo "Review stopped render $attempt, fixing and trying again"
+          done
+          echo "PASS=$pass" >> "$GITHUB_ENV"; echo "TRIES=$tries" >> "$GITHUB_ENV"; echo "MINUTES=$(( ($(date +%s)-t0)/60 ))" >> "$GITHUB_ENV"
+          aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress || true
+      - name: Thumbnails and schedule
+        if: env.EP != '' && env.PASS == 'yes'
+        run: |
+          set -euo pipefail
+          /tmp/lib/bin/python media/tools/thumbs.py "media/out/${EP}/publish" "$EP"
+          node media/tools/autopublish.mjs "media/out/${EP}/publish" "$EP" content/meta-queue.json
+          node -e 'const fs=require("fs"),f="content/factory-state.json",s=JSON.parse(fs.readFileSync(f));const e=process.env.EP;s[e]={...s[e],scheduled:new Date().toISOString(),renders:Number(process.env.TRIES),minutes:Number(process.env.MINUTES)};fs.writeFileSync(f,JSON.stringify(s,null,2))'
+          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
+          git pull --rebase --autostash -q || true
+          git add -f content/meta-queue.json && git commit -qm "factory: $EP scheduled" && git push -q || echo "queue push failed"
+      - name: Save work back to R2, even after a failure
+        if: always() && env.EP != ''
+        run: |
+          aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
+          [ -d "media/out/$EP" ] && aws s3 sync "media/out/$EP" "s3://${R2_BUCKET}/renders/$EP" --endpoint-url "$E" --no-progress
+          true
+      - name: Dashboard and Telegram
+        if: always()
+        run: |
+          aws s3 cp media/tools/dashboard.html "s3://${R2_BUCKET}/preview/dashboard.html" --endpoint-url "$E" --content-type "text/html; charset=utf-8" --no-progress || true
+          if [ -z "${EP:-}" ]; then MSG="ZALA المصنع: مفيش حلقة جديدة في الطابور النهارده."
+          elif [ "${PASS:-no}" = yes ]; then MSG="ZALA المصنع: $EP خلصت في ${MINUTES:-?} دقيقة بعد ${TRIES:-?} رندر، عدّت المراجعة واتجدولت:
+          $(cat schedule-summary.txt 2>/dev/null)"
+          else MSG="ZALA المصنع: $EP ماعدتش المراجعة بعد ${TRIES:-?} رندر. هتتعاد بكرة لوحدها (لحد 3 أيام). السبب: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
+          MSG="$MSG
+          اللوحة: ${VITE_MEDIA_BASE_URL}/preview/dashboard.html"
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
