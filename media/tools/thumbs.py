@@ -136,15 +136,26 @@ def main():
     for c in script["chapters"]:
         for l in c["lines"]:
             ids += [p for p in l.get("pictures") or [] if p not in ids]
+    import re
+    topics = json.load(open(os.path.join(CONTENT, "library", "topics.json"), encoding="utf-8"))
+    about = re.compile(topics.get(ep, {}).get("match", "$^"), re.I)
+    text_of = lambda it: " ".join(str(x) for x in [it.get("title"), it.get("seen", {}).get("what"), it.get("seen", {}).get("subject"), it.get("seen", {}).get("place")])
+    first = set(script["chapters"][0]["lines"][0].get("pictures") or [])
+    # only pictures that really show the episode's subject; the opening picture, which the director picked as the most striking, counts most
+    pool = [p for p in ids if p in items and about.search(text_of(items[p]))] or ids
     clip = clip_scorer()
     ranked = []
-    for pid in ids[:60]:
+    for pid in pool[:60]:
         it = items.get(pid)
         if not it or (it.get("seen", {}).get("check") or {}).get("modern"):
             continue
         img = fetch(it["url"])
-        if img and min(img.size) >= 700:
-            ranked.append((score(img, clip), pid, img))
+        if not img or min(img.size) < 700:
+            continue
+        col, _ = colourfulness(img)
+        if col < 18:          # black and white or washed out: never on a thumbnail
+            continue
+        ranked.append((score(img, clip) + (60 if pid in first else 0), pid, img))
     ranked.sort(key=lambda x: -x[0])
     if not ranked:
         print("[thumbs] no picture to use")
@@ -152,7 +163,12 @@ def main():
     print("[thumbs] best pictures:", [(round(s), p) for s, p, _ in ranked[:5]])
     pkg_file = os.path.join(pub, f"{ep}.youtube.json")
     pkg = json.load(open(pkg_file, encoding="utf-8"))
-    texts = [script.get("thumbnailText") or script["title"]] + [r.get("hook") or r.get("title") for r in script.get("reels", [])][:2]
+    def short(t, n=3):
+        t = str(t or "").split(":")[0].strip()
+        w = t.split()
+        return " ".join(w[:n])
+    main_text = short(script.get("thumbnailText")) or short(script["title"])
+    texts = [main_text] + [short(r.get("hook") or r.get("title"), 4) for r in script.get("reels", [])][:2]
     made = []
     for n, text in enumerate(texts[:3]):
         _, pid, img = ranked[n % len(ranked)]
@@ -165,7 +181,7 @@ def main():
     for n, r in enumerate(pkg.get("reels", [])):
         _, pid, img = ranked[(n + 1) % len(ranked)]
         c = cover(img, 1080, 1920, 0.4)
-        words(ImageDraw.Draw(c), c, (script.get("reels") or [{}] * 3)[n].get("hook") or r.get("title", ""), (60, 1180, 1020, 1700), 190)
+        words(ImageDraw.Draw(c), c, short((script.get("reels") or [{}] * 3)[n].get("hook") or r.get("title", ""), 4), (60, 1180, 1020, 1700), 190)
         c.save(os.path.join(pub, r["file"].replace(".mp4", "_cover.jpg")), "JPEG", quality=92)
     pkg["thumbnail"], pkg["thumbnails"] = made[0], made
     json.dump(pkg, open(pkg_file, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
