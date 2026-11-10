@@ -118,7 +118,7 @@ if (queueFile) {
     q.done = new Date().toISOString();
     q.results = res;
   }
-  fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
+  if (due.length) fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);   // untouched when nothing was due
   console.log(`Queue: ${due.length} published, ${queue.filter((q) => !q.done).length} waiting.`);
 } else {
   const [dir, id, which] = args;
