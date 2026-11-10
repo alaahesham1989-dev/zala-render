@@ -163,25 +163,44 @@ def main():
     print("[thumbs] best pictures:", [(round(s), p) for s, p, _ in ranked[:5]])
     pkg_file = os.path.join(pub, f"{ep}.youtube.json")
     pkg = json.load(open(pkg_file, encoding="utf-8"))
-    def short(t, n=3):
-        t = str(t or "").split(":")[0].strip()
-        w = t.split()
-        return " ".join(w[:n])
-    main_text = short(script.get("thumbnailText")) or short(script["title"])
-    texts = [main_text] + [short(r.get("hook") or r.get("title"), 4) for r in script.get("reels", [])][:2]
+    # A viewer in America does not know "Abu Simbel" or "Tanis": the thumbnail never leads with a place or a name.
+    # A small line says what world this is (ANCIENT EGYPT), and the big words are the hook from the title.
+    name_words = set(re.findall(r"[a-z]{3,}", topics.get(ep, {}).get("match", "").lower()))
+
+    def hook(t, n=5):
+        t = str(t or "").strip()
+        part = t.split(":", 1)[1] if ":" in t else t
+        w = [x for x in part.replace("'s", "").split() if not any(nw in x.lower() for nw in name_words)]
+        while w and w[0].lower() in ("the", "inside", "a", "an"):
+            w = w[1:]
+        return " ".join(w[-n:]) if len(w) > n else " ".join(w)
+
+    def label(img, text, box, size):
+        d = ImageDraw.Draw(img)
+        f = ImageFont.truetype(FONT, size)
+        b = d.textbbox((0, 0), text, font=f)
+        x = box[0] + ((box[2] - box[0]) - (b[2] - b[0])) / 2
+        pad = size // 4
+        d.rectangle((x - pad, box[1] - pad // 2, x + (b[2] - b[0]) + pad, box[1] + (b[3] - b[1]) + pad), fill=(0, 0, 0))
+        d.text((x, box[1] - b[1] // 2), text, font=f, fill=GOLD)
+
+    main_text = hook(script["title"]) or hook(script.get("thumbnailText"))
+    texts = [main_text] + [hook(r.get("hook") or r.get("title"), 4) or main_text for r in script.get("reels", [])][:2]
     made = []
     for n, text in enumerate(texts[:3]):
         _, pid, img = ranked[n % len(ranked)]
         t = cover(img, 1280, 720)
         d = ImageDraw.Draw(t)
-        words(d, t, text, (40, 380, 1240, 690), 170)   # big words across the lower part, the subject stays on top
+        label(t, "ANCIENT EGYPT", (40, 360, 1240, 400), 44)
+        words(d, t, text, (40, 420, 1240, 700), 160)   # big words across the lower part, the subject stays on top
         name = f"{ep}_thumbnail.jpg" if n == 0 else f"{ep}_thumbnail-{n + 1}.jpg"
         t.save(os.path.join(pub, name), "JPEG", quality=92)
         made.append(name)
     for n, r in enumerate(pkg.get("reels", [])):
         _, pid, img = ranked[(n + 1) % len(ranked)]
         c = cover(img, 1080, 1920, 0.4)
-        words(ImageDraw.Draw(c), c, short((script.get("reels") or [{}] * 3)[n].get("hook") or r.get("title", ""), 4), (60, 1180, 1020, 1700), 190)
+        label(c, "ANCIENT EGYPT", (60, 1110, 1020, 1160), 56)
+        words(ImageDraw.Draw(c), c, hook((script.get("reels") or [{}] * 3)[n].get("hook") or r.get("title", ""), 4) or main_text, (60, 1200, 1020, 1700), 190)
         c.save(os.path.join(pub, r["file"].replace(".mp4", "_cover.jpg")), "JPEG", quality=92)
     pkg["thumbnail"], pkg["thumbnails"] = made[0], made
     json.dump(pkg, open(pkg_file, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
