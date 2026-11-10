@@ -41,7 +41,7 @@ jobs:
       - name: Bring the episode text and the picture index (no videos)
         run: |
           set -euo pipefail
-          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/${EP}.json" --include "library/items.jsonl"
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/${EP}.json" --include "library/items.jsonl" --include "library/topics.json"
           aws s3 sync "s3://${R2_BUCKET}/renders/${EP}/publish" pub --endpoint-url "$E" --no-progress --exclude "*.mp4"
       - name: New thumbnails
         run: |
