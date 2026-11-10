@@ -49,3 +49,5 @@ jobs:
           /tmp/lib/bin/python media/tools/thumbs.py pub "$EP"
           aws s3 sync pub "s3://${R2_BUCKET}/renders/${EP}/publish" --endpoint-url "$E" --no-progress --exclude "*" --include "*.jpg" --include "*.youtube.json"
           if [ -n "${{ inputs.video_id }}" ]; then node media/tools/yt-thumb.mjs "${{ inputs.video_id }}" "pub/${EP}_thumbnail.jpg"; fi
+          aws s3 cp media/tools/dashboard.html "s3://${R2_BUCKET}/preview/dashboard.html" --endpoint-url "$E" --content-type "text/html; charset=utf-8" --no-progress
+          aws s3 cp media/tools/schedule-seed.json "s3://${R2_BUCKET}/render-state/content/schedule.json" --endpoint-url "$E" --no-progress --content-type application/json || true
