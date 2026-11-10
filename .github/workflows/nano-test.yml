@@ -1,0 +1,30 @@
+name: ZALA Nano Banana test
+
+# Makes two test pictures with Nano Banana (Korean account, background browser) and puts them on R2 for review.
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: media
+        run: npm ci
+      - name: Two test pictures
+        run: |
+          node media/tools/nanobanana.mjs nano-out "Drifting sand has buried the giant seated statues of the Abu Simbel temple almost to their heads, seen at sunset." "A Swiss traveller in 1813 dressed as a local merchant looks at the top of a great stone frieze rising out of the sand."
+          ls -la nano-out
+          aws s3 sync nano-out "s3://${R2_BUCKET}/vault/gapfill/nano-test" --exclude "*.raw.png" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
