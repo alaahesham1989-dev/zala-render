@@ -46,6 +46,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Video tools for the full episode on Instagram
+        if: github.event_name == 'workflow_dispatch' && inputs.which == 'main' && contains(inputs.to, 'ig')
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Bring the package text from R2 (no video files)
         run: |
           set -euo pipefail
