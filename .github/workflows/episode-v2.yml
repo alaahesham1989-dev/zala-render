@@ -60,7 +60,7 @@ jobs:
         run: |
           python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
           echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
-          python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1"
+          python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1" "pillow==10.4.0"
       - name: Bring scripts, picture index and finished work from R2
         run: |
           set -euo pipefail
