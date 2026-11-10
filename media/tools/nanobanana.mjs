@@ -54,7 +54,7 @@ async function one(page, prompt) {
       }, src);
       return Buffer.from(b64, 'base64');
     }
-    const refused = await page.evaluate(() => /can't (create|generate)|unable to (create|generate)|I can't help/i.test(document.body.innerText.slice(-3000)));
+    const refused = i > 6 && await page.evaluate(() => { const r = [...document.querySelectorAll('model-response, .model-response-text, message-content')].pop(); return !!r && /can't (create|generate|make)|unable to (create|generate)|I can't help/i.test(r.innerText); });
     if (refused) throw new Error('Gemini refused this picture');
   }
   throw new Error('no picture after 5 minutes');
@@ -81,6 +81,11 @@ export async function makePictures(jobs, outDir, { max = 12 } = {}) {
           log(`made: ${job.name}`);
         } catch (e) {
           log(`failed: ${job.name} (${e.message})`);
+          // what the page showed, for the review
+          await page.screenshot({ path: path.join(outDir, `${job.name}.fail.jpg`), type: 'jpeg', quality: 60 }).catch(() => {});
+          const text = await page.evaluate(() => `${location.href}
+${document.body.innerText.slice(-1500)}`).catch(() => '');
+          fs.writeFileSync(path.join(outDir, `${job.name}.fail.txt`), text);
           if (/not signed in/.test(e.message) || ++failedInARow >= 3) { log('stopping, the episode carries on without these'); break; }
           continue;
         }
