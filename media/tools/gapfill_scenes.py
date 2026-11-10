@@ -27,6 +27,7 @@ SERIF = "DM Serif Display"
 SANS = "Lato"
 DISPLAY = "Anton"
 LENGTH = 7.0
+SAFE_W = 5.4   # a 9:16 reel keeps about the middle 5.6 units of the 16:9 frame
 
 config.pixel_width = 1920
 config.pixel_height = 1080
@@ -101,10 +102,10 @@ class YearScene(ZalaScene):
         value = int(self.spec["value"])
         start = value - 40 if value > 100 else 0
         tracker = ValueTracker(start)
-        num = counter(tracker, 170, GOLD, False, UP * 0.4)
-        rule = Line(LEFT * 2.6, RIGHT * 2.6, color=GOLD, stroke_width=3).next_to(num, DOWN, buff=0.35)
+        num = counter(tracker, 150, GOLD, False, UP * 0.4)
+        rule = Line(LEFT * 2.2, RIGHT * 2.2, color=GOLD, stroke_width=3).next_to(num, DOWN, buff=0.35)
         small = self.spec.get("small", "").strip()
-        label = fit(Text(small.upper(), font=SANS, weight="BOLD", color=IVORY, font_size=34), 10).next_to(rule, DOWN, buff=0.4) if small else VGroup()
+        label = fit(Text(wrap(small.upper(), 22), font=SANS, weight="BOLD", color=IVORY, font_size=32), SAFE_W).next_to(rule, DOWN, buff=0.4) if small else VGroup()
         self.play(FadeIn(num, shift=UP * 0.2), run_time=0.6)
         self.play(tracker.animate.set_value(value), Create(rule), run_time=1.6, rate_func=rate_functions.ease_out_cubic)
         if small:
@@ -117,8 +118,8 @@ class NumberScene(ZalaScene):
         self.backdrop()
         value = int(self.spec["value"])
         tracker = ValueTracker(0)
-        num = counter(tracker, 160, GOLD, value >= 10000, UP * 0.5)
-        unit = Text(self.spec.get("unit", ""), font=DISPLAY, color=IVORY, font_size=64)
+        num = counter(tracker, 140, GOLD, value >= 10000, UP * 0.5)
+        unit = fit(Text(self.spec.get("unit", ""), font=DISPLAY, color=IVORY, font_size=60), SAFE_W)
         unit.next_to(num, DOWN, buff=0.3)
         rule = Line(LEFT * 1.6, RIGHT * 1.6, color=GOLD, stroke_width=3).next_to(unit, DOWN, buff=0.35)
         self.play(FadeIn(num), run_time=0.4)
@@ -134,26 +135,25 @@ class PhraseScene(ZalaScene):
         style = int(self.spec.get("style", 0)) % 3
         if style == 0:
             # centred serif title with a gold rule drawn under it
-            title = fit(Text(wrap(text, 24), font=SERIF, color=IVORY, font_size=78, line_spacing=0.9), 12, 3.6)
+            title = fit(Text(wrap(text, 16), font=SERIF, color=IVORY, font_size=70, line_spacing=0.9), SAFE_W, 4.2)
             rule = Line(LEFT * 1.8, RIGHT * 1.8, color=GOLD, stroke_width=3).next_to(title, DOWN, buff=0.45)
             self.play(FadeIn(title, shift=UP * 0.25), run_time=1.0, rate_func=smooth)
             self.play(Create(rule), run_time=0.7)
             self.play(title.animate.scale(1.035), run_time=LENGTH - 2.2, rate_func=linear)
         elif style == 1:
-            # lower third: a gold bar slides in, the words follow it
-            title = fit(Text(wrap(text, 30), font=SERIF, color=IVORY, font_size=60, line_spacing=0.9), 10.5, 2.4)
-            title.to_corner(DOWN + LEFT, buff=1.0).shift(UP * 0.3 + RIGHT * 0.35)
-            bar = Rectangle(width=0.12, height=title.height + 0.3, stroke_width=0, fill_color=GOLD, fill_opacity=1)
-            bar.next_to(title, LEFT, buff=0.3)
-            self.play(FadeIn(bar, shift=RIGHT * 0.4), run_time=0.5)
-            self.play(FadeIn(title, shift=RIGHT * 0.5), run_time=0.9, rate_func=smooth)
-            self.wait(LENGTH - 1.4)
+            # quiet italic words between two thin gold rules
+            title = fit(Text(wrap(text, 18), font=SERIF, slant="ITALIC", color=IVORY, font_size=58, line_spacing=0.95), SAFE_W, 4.0)
+            top = Line(LEFT * 1.2, RIGHT * 1.2, color=GOLD, stroke_width=2).next_to(title, UP, buff=0.4)
+            bottom = top.copy().next_to(title, DOWN, buff=0.4)
+            self.play(Create(top), Create(bottom), run_time=0.6)
+            self.play(FadeIn(title, shift=UP * 0.15), run_time=0.9, rate_func=smooth)
+            self.play(title.animate.scale(1.03), run_time=LENGTH - 1.5, rate_func=linear)
         else:
             # one strong word large, the rest small under it
             words = text.split()
             key = max(words, key=lambda w: len(w.strip(",.!?"))).strip(",.!?")
-            big = fit(Text(key.upper(), font=DISPLAY, color=GOLD, font_size=150), 12)
-            small = fit(Text(text, font=SANS, weight="BOLD", color=IVORY, font_size=34), 11).next_to(big, DOWN, buff=0.45)
+            big = fit(Text(key.upper(), font=DISPLAY, color=GOLD, font_size=130), SAFE_W)
+            small = fit(Text(wrap(text, 24), font=SANS, weight="BOLD", color=IVORY, font_size=30), SAFE_W).next_to(big, DOWN, buff=0.45)
             self.play(FadeIn(big, scale=1.08), run_time=0.8, rate_func=smooth)
             self.play(FadeIn(small, shift=UP * 0.15), run_time=0.7)
             self.play(big.animate.scale(1.03), run_time=LENGTH - 1.5, rate_func=linear)
