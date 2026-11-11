@@ -109,5 +109,107 @@
       "Grand Egyptian Museum",
       "Egyptian gold diadem"
     ]
+  },
+  "ZV-T07": {
+    "title": "The Dagger From Space: Tutankhamun's Iron Blade",
+    "hook": "Buried with the boy king was a blade made of iron that fell from the sky.",
+    "seconds": 480,
+    "match": "tutankhamun|meteorit|iron dagger|dagger",
+    "archive": "Tutankhamun meteoritic iron dagger",
+    "queries": [
+      "Tutankhamun iron dagger",
+      "Tutankhamun gold dagger",
+      "meteoritic iron dagger Egypt",
+      "Tutankhamun dagger sheath",
+      "iron meteorite",
+      "Egyptian Museum Cairo Tutankhamun",
+      "Amarna letters",
+      "Tutankhamun treasure gold"
+    ]
+  },
+  "ZV-T08": {
+    "title": "The Queen Whose Body Vanished: Hetepheres' Golden Tomb",
+    "hook": "The mother of the Great Pyramid's king was buried in gold, but her coffin was empty.",
+    "seconds": 480,
+    "match": "hetepheres|sneferu|khufu|giza",
+    "archive": "Hetepheres I tomb furniture",
+    "queries": [
+      "Hetepheres furniture",
+      "Hetepheres bed",
+      "Hetepheres carrying chair",
+      "Hetepheres canopy",
+      "Queen Hetepheres",
+      "Hetepheres bracelets silver",
+      "Giza Great Pyramid",
+      "Sneferu Bent Pyramid"
+    ]
+  },
+  "ZV-T09": {
+    "title": "The Richest Tomb Before Tutankhamun: Yuya and Tjuyu",
+    "hook": "Seventeen years before Carter, two commoners were found buried like kings.",
+    "seconds": 480,
+    "match": "yuya|tjuyu|thuya|kv46|tiye",
+    "archive": "Yuya and Tjuyu tomb KV46",
+    "queries": [
+      "Yuya mummy mask",
+      "Tjuyu gilded coffin",
+      "Thuya mask",
+      "Yuya coffin",
+      "KV46 tomb",
+      "Queen Tiye",
+      "Yuya chair",
+      "Valley of the Kings"
+    ]
+  },
+  "ZV-T10": {
+    "title": "The Warrior Queen's Gold: Ahhotep's Treasure",
+    "hook": "A queen was buried with golden flies, the medal for bravery in battle.",
+    "seconds": 480,
+    "match": "ahhotep|ahmose|kamose|golden fl",
+    "archive": "Queen Ahhotep treasure",
+    "queries": [
+      "Ahhotep golden flies",
+      "Ahhotep dagger",
+      "Ahhotep axe",
+      "Ahhotep bracelet",
+      "Ahmose I",
+      "Ahhotep coffin",
+      "Egyptian Museum Cairo gold jewelry",
+      "Hyksos war Egypt"
+    ]
+  },
+  "ZV-T11": {
+    "title": "The Golden Falcon: Egypt's Sky God in Gold",
+    "hook": "Its eyes are a single stone that glows like the sun, after four thousand years.",
+    "seconds": 480,
+    "match": "falcon|horus|hierakonpolis|nekhen",
+    "archive": "Golden falcon head Hierakonpolis",
+    "queries": [
+      "golden falcon head Hierakonpolis",
+      "Horus falcon gold",
+      "Horus statue Edfu",
+      "Hierakonpolis",
+      "Horus falcon jewelry Egypt",
+      "Edfu temple Horus",
+      "falcon pectoral Egypt",
+      "Egyptian gold falcon"
+    ]
+  },
+  "ZV-T12": {
+    "title": "The Beetle That Pushed the Sun: Egypt's Golden Scarabs",
+    "hook": "Egyptians wore a beetle over the heart so it would not betray them in the afterlife.",
+    "seconds": 480,
+    "match": "scarab|khepri|heart scarab|pectoral",
+    "archive": "Egyptian scarab amulets and pectorals",
+    "queries": [
+      "Egyptian heart scarab",
+      "scarab pectoral gold",
+      "Tutankhamun scarab pectoral",
+      "Khepri",
+      "winged scarab Egypt",
+      "Karnak giant scarab",
+      "scarab amulet lapis",
+      "Egyptian scarab jewelry"
+    ]
   }
 }
