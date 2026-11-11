@@ -72,7 +72,7 @@ Pick the one main keyword with the clearest search intent from the real searches
 "faq": [{"q": "a question people really search (use the real searches)", "a": "a 1 to 2 sentence answer using ONLY the article's facts"}] (3 or 4 items; skip any question the facts cannot answer)}`, { temperature: 0.3 });
   if (seo?.faq?.length) {
     body.push({ h: 'Frequently asked questions' });
-    for (const f of seo.faq.slice(0, 4)) { body.push({ h: f.q }); body.push(f.a); }
+    for (const f of seo.faq.slice(0, 4)) { const q = String(f.q).trim(); body.push({ h: q[0].toUpperCase() + q.slice(1).replace(/([^?])$/, "$1?") }); body.push(f.a); }
   }
   const title = String(seo?.title || script.title).slice(0, 70);
   const excerpt = String(seo?.description || String(script.description || '').split(/(?<=[.!?])\s/).slice(0, 2).join(' ')).slice(0, 160);
