@@ -1,0 +1,40 @@
+name: ZALA short texts on YouTube
+
+# One run: gives the scheduled YouTube videos the short text about their subject (owner's order 2026-11-11).
+on:
+  workflow_dispatch:
+    inputs:
+      list:
+        description: "episode:which:videoId, space separated"
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Packages with each reel's line, then the new texts
+        run: |
+          set -uo pipefail
+          for ep in $(echo "${{ inputs.list }}" | tr ' ' '\n' | cut -d: -f1 | sort -u); do
+            mkdir -p "pub/$ep" content/youtube
+            aws s3 cp "s3://${R2_BUCKET}/renders/$ep/publish/$ep.youtube.json" "pub/$ep/" --endpoint-url "$E" --no-progress
+            aws s3 cp "s3://${R2_BUCKET}/render-state/content/youtube/$ep.json" content/youtube/ --endpoint-url "$E" --no-progress || true
+            node -e 'const fs=require("fs"),[p,s]=process.argv.slice(1);const k=JSON.parse(fs.readFileSync(p));try{const c=JSON.parse(fs.readFileSync(s));(k.reels||[]).forEach((r,n)=>{if(c.reels?.[n]?.sub)r.sub=c.reels[n].sub})}catch{};fs.writeFileSync(p,JSON.stringify(k,null,2))' "pub/$ep/$ep.youtube.json" "content/youtube/$ep.json"
+            aws s3 cp "pub/$ep/$ep.youtube.json" "s3://${R2_BUCKET}/renders/$ep/publish/$ep.youtube.json" --endpoint-url "$E" --no-progress
+          done
+          for x in ${{ inputs.list }}; do IFS=: read ep which vid <<< "$x"; node media/tools/yt-retext.mjs "pub/$ep" "$ep" "$which" "$vid" || echo "RETEXT $x failed"; done
