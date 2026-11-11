@@ -48,7 +48,7 @@ Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or pe
 "caption": "two short sentences: one surprising true fact from the text, then one simple question that makes people comment (an opinion or a guess, e.g. Would you wear it?). No hashtags, no links, no emojis except at most one.",
 "tags": ["3 to 5 hashtags without #"]}`);
 const words = String(ans?.words || 'ANCIENT TREASURE').slice(0, 40);
-const tags = ['AncientEgypt', 'Egypt', 'History', ...(ans?.tags || [])].map((t) => '#' + String(t).replace(/[^A-Za-z0-9]/g, '')).filter((t, i, a) => t.length > 2 && a.indexOf(t) === i).slice(0, 6).join(' ');
+const tags = ['AncientEgypt', 'Egypt', 'History', ...(ans?.tags || [])].map((t) => '#' + String(t).replace(/[^A-Za-z0-9]/g, '')).filter((t, i, a) => t.length > 2 && a.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i).slice(0, 6).join(' ');
 const caption = `${ans?.caption || pick.title}\n\n${tags}`;
 const credit = `Photo: ${pick.author || 'unknown'}${pick.license ? `, ${pick.license}` : ''}${pick.source_url ? ` (${pick.source_url})` : ''}`;
 console.log(`[photo] words: ${words}\n[photo] caption: ${caption}\n[photo] ${credit}`);
