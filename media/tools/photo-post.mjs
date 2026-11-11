@@ -49,9 +49,16 @@ const card = path.join(REPO, `post-${day}.jpg`);
 // ── quality control, like the reviewer for the videos: numbers first (size, colour, light, sharpness, frames),
 // then Gemini looks at the finished card and the words. Only a card that passes both is posted; up to 10 tries a day.
 let pick, ans, words, caption, credit;
-for (const cand of pool.slice(0, 10)) {
-  const m = JSON.parse(execFileSync(PY, [CARD_PY, '--check', cand.url], { encoding: 'utf8' }).trim().split('\n').pop());
+// measure up to 40 pictures, then send the best-looking ones to the eye check first
+const measured = [];
+for (const cand of pool.slice(0, 40)) {
+  let m;
+  try { m = JSON.parse(execFileSync(PY, [CARD_PY, '--check', cand.url], { encoding: 'utf8' }).trim().split('\n').pop()); } catch { continue; }
   if (!m.ok) { console.log(`[qc] ${cand.id} refused by the numbers: ${m.reasons.join(', ')}`); used.add(cand.id); continue; }
+  measured.push({ cand, score: m.colour + m.contrast * 0.5 + m.sharp * 2 + Math.min(m.w, m.h) / 100 });
+}
+measured.sort((a, b) => b.score - a.score);
+for (const { cand } of measured.slice(0, 10)) {
   const facts = [cand.title, cand.seen?.what, cand.note].filter(Boolean).join('\n');
   const a = await askJson(`You write one social media picture post for an Ancient Egypt history page (audience: Americans who love history and treasure).
 Use ONLY facts found in this text about the picture; never invent dates, names or numbers:
