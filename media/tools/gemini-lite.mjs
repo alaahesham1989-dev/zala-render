@@ -3,7 +3,7 @@ const KEYS = [...new Set([...(process.env.GEMINI_API_KEYS || '').split(','), pro
 const MODELS = (process.env.GEMINI_TEXT_MODELS || 'gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite').split(',').map((m) => m.trim()).filter(Boolean);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** One JSON answer, or null when every model and key is busy or refused. */
+/** prompt: text, or Gemini parts (text and inline_data pictures). One JSON answer, or null when every model and key is busy or refused. */
 export async function askJson(prompt, { temperature = 0.7, rounds = 3 } = {}) {
   for (let round = 1; round <= rounds; round++) {
     for (const model of MODELS) {
@@ -11,7 +11,7 @@ export async function askJson(prompt, { temperature = 0.7, rounds = 3 } = {}) {
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature } }),
+            body: JSON.stringify({ contents: [{ parts: Array.isArray(prompt) ? prompt : [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature } }),
             signal: AbortSignal.timeout(120000),
           });
           const data = await res.json();
