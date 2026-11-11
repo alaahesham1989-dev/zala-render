@@ -120,6 +120,7 @@ jobs:
         run: |
           set -euo pipefail
           node media/tools/autopublish.mjs "media/out/${EP}/publish" "$EP" content/meta-queue.json
+          node media/tools/blog-feed.mjs episode "$EP" || echo "blog article failed"   # the episode on the zalavip.com blog, from its publish day
           node -e 'const fs=require("fs"),f="content/factory-state.json",s=JSON.parse(fs.readFileSync(f));const e=process.env.EP;s[e]={...s[e],scheduled:new Date().toISOString(),renders:Number(process.env.TRIES),minutes:Number(process.env.MINUTES)};fs.writeFileSync(f,JSON.stringify(s,null,2))'
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull --rebase --autostash -q || true
