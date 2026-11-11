@@ -242,15 +242,24 @@ if (scenes.length) {
 
 // lines at the top of the screen: the quality check wants about 1.5 a minute
 const minutes = lines.reduce((n, l) => n + String(l.en).split(/\s+/).length, 0) / 150;
-const want = Math.ceil(minutes * 1.6);
+const want = Math.ceil(minutes * 1.7) + 2;   // narration is slower than 150 words a minute
 const TEASERS = ['KEEP WATCHING', 'WATCH WHAT HAPPENS NEXT', 'STAY UNTIL THE END', 'THE BEST PART IS COMING', 'WAIT FOR IT', 'DO NOT LOOK AWAY'];
 script.teasers ||= [];
-for (let i = 3, k = 0; script.teasers.length < want && i < lines.length - 3; i += 2) {
+for (let i = 3, k = 0; script.teasers.length < want && i < lines.length - 3; i += 1) {
   if (script.teasers.some((t) => Math.abs(t.line - i) < 3)) continue;
   script.teasers.push({ line: i, text: TEASERS[k++ % TEASERS.length] });
 }
 script.teasers.sort((a, b) => a.line - b.line);
 log(`lines at the top: ${script.teasers.length} (wanted ${want})`);
+
+// music: the review wants licensed tracks; a story with no list gets three Kevin MacLeod (CC BY) tracks across its chapters
+if (!script.music?.length) {
+  const SETS = [['Curse of the Scarab', 'Lightless Dawn', 'Crypto'], ['Desert City', 'Lightless Dawn', 'Curse of the Scarab'], ['Crypto', 'Curse of the Scarab', 'Lightless Dawn']];
+  const set = SETS[[...id].reduce((n, c) => n + c.charCodeAt(0), 0) % SETS.length];
+  const nCh = script.chapters.length;
+  script.music = [0, Math.floor(nCh / 2), nCh - 1].filter((c, i, a) => a.indexOf(c) === i).map((chapter, i) => ({ chapter, track: set[i] }));
+  log(`music: ${script.music.map((m) => m.track).join(', ')}`);
+}
 
 script.gapfilled = { at: new Date().toISOString(), library: fromLibrary, crops: fromCrops, video: fromVideo, scenes: scenes.length };
 if (!dry) {
