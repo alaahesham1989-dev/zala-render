@@ -48,6 +48,7 @@ jobs:
       - name: Already posted today?
         run: |
           d=$(node -e "const f='content/photo-posts.json';const s=require('fs').existsSync(f)?require('./'+f):[];console.log(s.some(x=>!x.refused&&String(x.at).slice(0,10)===new Date().toISOString().slice(0,10))?'yes':'no')")
+          if [ "${{ inputs.dry }}" = "true" ]; then d=no; fi   # a quality test runs any time
           echo "DONE_TODAY=$d" >> "$GITHUB_ENV"; echo "posted today: $d"
       - name: Tools and the picture index
         if: env.DONE_TODAY == 'no'
