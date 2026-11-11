@@ -12,6 +12,10 @@ on:
         description: "Post now instead of waiting for 15:00 UTC"
         type: boolean
         default: false
+      dry:
+        description: "Quality check only, post nothing"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -43,7 +47,7 @@ jobs:
           node-version: 22
       - name: Already posted today?
         run: |
-          d=$(node -e "const f='content/photo-posts.json';const s=require('fs').existsSync(f)?require('./'+f):[];console.log(s.some(x=>String(x.at).slice(0,10)===new Date().toISOString().slice(0,10))?'yes':'no')")
+          d=$(node -e "const f='content/photo-posts.json';const s=require('fs').existsSync(f)?require('./'+f):[];console.log(s.some(x=>!x.refused&&String(x.at).slice(0,10)===new Date().toISOString().slice(0,10))?'yes':'no')")
           echo "DONE_TODAY=$d" >> "$GITHUB_ENV"; echo "posted today: $d"
       - name: Tools and the picture index
         if: env.DONE_TODAY == 'no'
@@ -59,7 +63,7 @@ jobs:
       - name: Post
         if: env.DONE_TODAY == 'no'
         run: |
-          node media/tools/photo-post.mjs
+          node media/tools/photo-post.mjs ${{ inputs.dry && '--dry' || '' }}
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull -q --rebase --autostash || true
           git add -f content/photo-posts.json && git commit -qm "photo: daily picture post" && git push -q || echo "state push failed"
