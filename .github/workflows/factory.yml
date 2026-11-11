@@ -62,6 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
+          git checkout -- content/meta-queue.json   # the queue lives in git; the copy on R2 is old
           cp media/tools/treasures.json content/library/treasures.json
           [ -f content/schedule.json ] || cp media/tools/schedule-seed.json content/schedule.json
       - name: Which episode today
