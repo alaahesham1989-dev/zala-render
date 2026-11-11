@@ -55,7 +55,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<5*3600e3).sort((a,b)=>a-b)[0];console.log(w?Math.ceil(w/1000)+30:0)")
-          echo "waiting $s seconds"; [ "$s" -gt 0 ] && sleep "$s"; git pull -q --rebase || true
+          echo "waiting $s seconds"; if [ "$s" -gt 0 ]; then sleep "$s"; git pull -q --rebase || true; fi
       - name: Video tools for the full episode on Instagram
         if: github.event_name == 'workflow_dispatch' && inputs.which == 'main' && contains(inputs.to, 'ig')
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
