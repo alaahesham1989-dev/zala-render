@@ -1,0 +1,40 @@
+name: ZALA blog article
+
+# Puts one finished episode on the zalavip.com blog (story, pictures, YouTube video), from its publish day.
+on:
+  workflow_dispatch:
+    inputs:
+      episodes:
+        description: "Episode ids, space separated"
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Articles
+        run: |
+          E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          mkdir -p content/youtube content/library
+          aws s3 cp "s3://${R2_BUCKET}/render-state/content/library/items.jsonl" content/library/ --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/render-state/content/schedule.json" content/ --endpoint-url "$E" --no-progress || true
+          for ep in ${{ inputs.episodes }}; do
+            aws s3 cp "s3://${R2_BUCKET}/render-state/content/youtube/$ep.json" content/youtube/ --endpoint-url "$E" --no-progress
+            node media/tools/blog-feed.mjs episode "$ep" || echo "$ep failed"
+          done
