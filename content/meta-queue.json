@@ -44,12 +44,30 @@
   },
   {
     "episode": "ZV-L08",
+    "which": "main",
+    "to": [
+      "yt:24VKUQfhR_M"
+    ],
+    "at": "2026-11-12T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
     "which": "R1",
     "to": [
       "fb",
       "ig"
     ],
     "at": "2026-11-13T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
+    "which": "R1",
+    "to": [
+      "yt:jXx5dSTTLyk"
+    ],
+    "at": "2026-11-13T16:20:00.000Z",
     "done": false
   },
   {
@@ -64,6 +82,15 @@
   },
   {
     "episode": "ZV-L08",
+    "which": "R2",
+    "to": [
+      "yt:cib-zodrZCE"
+    ],
+    "at": "2026-11-14T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L08",
     "which": "R3",
     "to": [
       "fb",
@@ -73,12 +100,30 @@
     "done": false
   },
   {
+    "episode": "ZV-L08",
+    "which": "R3",
+    "to": [
+      "yt:vnNvhQBqKC8"
+    ],
+    "at": "2026-11-15T16:20:00.000Z",
+    "done": false
+  },
+  {
     "episode": "ZV-T01",
     "which": "main",
     "to": [
       "fb"
     ],
     "at": "2026-11-16T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T01",
+    "which": "main",
+    "to": [
+      "yt:jecxYugNqGM"
+    ],
+    "at": "2026-11-16T16:20:00.000Z",
     "done": false
   },
   {
@@ -93,6 +138,15 @@
   },
   {
     "episode": "ZV-T01",
+    "which": "R1",
+    "to": [
+      "yt:A9gEF8DD7Ak"
+    ],
+    "at": "2026-11-17T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T01",
     "which": "R2",
     "to": [
       "fb",
@@ -103,12 +157,30 @@
   },
   {
     "episode": "ZV-T01",
+    "which": "R2",
+    "to": [
+      "yt:LxOjSC_pg6o"
+    ],
+    "at": "2026-11-18T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T01",
     "which": "R3",
     "to": [
       "fb",
       "ig"
     ],
     "at": "2026-11-20T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T01",
+    "which": "R3",
+    "to": [
+      "yt:2kEcO8sRQ2M"
+    ],
+    "at": "2026-11-20T16:20:00.000Z",
     "done": false
   }
 ]
