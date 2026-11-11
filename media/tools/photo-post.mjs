@@ -34,17 +34,26 @@ const used = new Set(state.map((s) => s.id));
 const shiny = /gold|treasure|jewel|mask|coffin|necklace|pectoral|crown|bracelet|scarab|dagger|throne|statue|amulet|ring|collar|diadem/i;
 const textOf = (i) => `${i.title} ${i.seen?.what || ''} ${i.note || ''}`;
 // old glass slides, scans and archive photos look poor on a card: only real colour photographs of the object
-const oldScan = /ETH-BIB|Dia|lantern|slide|postcard|photograph|negative|glass plate|.tif|archive|1920s|black and white|engraving|drawing|lithograph/i;
+const oldScan = /ETH-BIB|\bDia\b|lantern|\bslide\b|postcard|photograph|negative|glass plate|\.tif\b|archive|1920s|black and white|engraving|drawing|lithograph/i;
 const pool = items.filter((i) => i.kind === 'image' && String(i.url).startsWith(BASE) && !used.has(i.id)
   && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && shiny.test(textOf(i)) && !oldScan.test(`${textOf(i)} ${i.source_url || ''}`)
   && ((i.topics || []).some((t) => /^ZV-T/.test(t)) || /\/vault\/library\/ZV-T/.test(i.url)));
 if (!pool.length) { console.log('[photo] no unused treasure picture left'); process.exit(0); }
-const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 40))];
-console.log(`[photo] ${pick.id} ${pick.title}`);
+for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
 
-// ── the words ──
-const facts = [pick.title, pick.seen?.what, pick.note].filter(Boolean).join('\n');
-const ans = await askJson(`You write one social media picture post for an Ancient Egypt history page (audience: Americans who love history and treasure).
+const PY = process.env.LIB_PY || 'python3';
+const CARD_PY = path.join(REPO, 'media', 'tools', 'photo_card.py');
+const day = new Date().toISOString().slice(0, 10);
+const card = path.join(REPO, `post-${day}.jpg`);
+
+// ── quality control, like the reviewer for the videos: numbers first (size, colour, light, sharpness, frames),
+// then Gemini looks at the finished card and the words. Only a card that passes both is posted; up to 10 tries a day.
+let pick, ans, words, caption, credit;
+for (const cand of pool.slice(0, 10)) {
+  const m = JSON.parse(execFileSync(PY, [CARD_PY, '--check', cand.url], { encoding: 'utf8' }).trim().split('\n').pop());
+  if (!m.ok) { console.log(`[qc] ${cand.id} refused by the numbers: ${m.reasons.join(', ')}`); used.add(cand.id); continue; }
+  const facts = [cand.title, cand.seen?.what, cand.note].filter(Boolean).join('\n');
+  const a = await askJson(`You write one social media picture post for an Ancient Egypt history page (audience: Americans who love history and treasure).
 Use ONLY facts found in this text about the picture; never invent dates, names or numbers:
 """${facts}"""
 Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or person names, e.g. 3,300 YEARS OF GOLD",
@@ -52,16 +61,35 @@ Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or pe
 "tags": ["3 to 5 hashtags without #"],
 "title": "a blog title of 5 to 10 words about this object",
 "story": ["2 or 3 short paragraphs for a blog post about this object, using only the facts in the text, simple words"]}`);
-const words = String(ans?.words || 'ANCIENT TREASURE').slice(0, 40);
+  if (!a?.caption || !a?.words) { console.log('[qc] Gemini gave no words, trying later'); break; }
+  const w = String(a.words).slice(0, 40);
+  execFileSync(PY, [CARD_PY, cand.url, w, card], { stdio: 'inherit' });
+  const judge = await askJson([
+    { text: `You are a strict quality controller for a premium history page. Look at this finished post card and its caption.
+The picture is supposed to show: """${facts}"""
+Caption: """${a.caption}"""
+Fail it if ANY of these is true: the picture does not clearly show that object; it is dull, washed out, yellowed, blurry, low resolution or badly cropped (the object cut off);
+it is an old slide, scan, drawing or black-and-white photo; there are watermarks, museum labels, modern people or handwriting; the big words on the card are hard to read, cover the object's face, or are wrong English;
+the caption says something the text does not support or has a mistake. Be strict: only a picture that would make people stop scrolling passes.
+Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
+    { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
+  ], { temperature: 0 });
+  console.log(`[qc] ${cand.id} ${cand.title}: ${judge ? `${judge.pass ? 'pass' : 'fail'} ${judge.score}/10 ${(judge.reasons || []).join('; ')}` : 'no answer'}`);
+  if (judge?.pass && judge.score >= 8) { pick = cand; ans = a; words = w; break; }
+  if (judge) used.add(cand.id);   // refused pictures are not tried again on another day
+}
+const refused = pool.filter((c) => used.has(c.id) && !state.some((s) => s.id === c.id)).map((c) => c.id);
+if (refused.length && !dry) state.push(...refused.map((id) => ({ id, refused: true, at: new Date().toISOString() })));
+if (!pick) {
+  if (!dry) fs.writeFileSync(stateFile, JSON.stringify(state, null, 2) + '\n');
+  console.log('[photo] no picture passed quality control today, nothing posted');
+  process.exit(0);
+}
 const tags = ['AncientEgypt', 'Egypt', 'History', ...(ans?.tags || [])].map((t) => '#' + String(t).replace(/[^A-Za-z0-9]/g, '')).filter((t, i, a) => t.length > 2 && a.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i).slice(0, 6).join(' ');
-const caption = `${ans?.caption || pick.title}\n\n${tags}`;
-const credit = `Photo: ${pick.author || 'unknown'}${pick.license ? `, ${pick.license}` : ''}${pick.source_url ? ` (${pick.source_url})` : ''}`;
-console.log(`[photo] words: ${words}\n[photo] caption: ${caption}\n[photo] ${credit}`);
+caption = `${ans.caption}\n\n${tags}`;
+credit = `Photo: ${pick.author || 'unknown'}${pick.license ? `, ${pick.license}` : ''}${pick.source_url ? ` (${pick.source_url})` : ''}`;
+console.log(`[photo] ${pick.id} ${pick.title}\n[photo] words: ${words}\n[photo] caption: ${caption}\n[photo] ${credit}`);
 
-// ── the card, on R2 so Meta can fetch it ──
-const day = new Date().toISOString().slice(0, 10);
-const card = path.join(REPO, `post-${day}.jpg`);
-execFileSync(process.env.LIB_PY || 'python3', [path.join(REPO, 'media', 'tools', 'photo_card.py'), pick.url, words, card], { stdio: 'inherit' });
 const key = `posts/${day}-${pick.id}.jpg`;
 if (dry) { console.log('[photo] dry run, nothing posted'); process.exit(0); }
 execFileSync('aws', ['s3', 'cp', card, `s3://${process.env.R2_BUCKET}/${key}`, '--endpoint-url', `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, '--content-type', 'image/jpeg', '--no-progress'], { stdio: 'inherit' });
