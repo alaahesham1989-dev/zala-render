@@ -33,14 +33,16 @@ function texts(pkg, id, which, source) {
   const isMain = which === 'main';
   const reel = isMain ? null : pkg.reels.find((r) => r.id === `${id}-${which}`);
   if (!isMain && !reel) throw new Error(`No reel ${which} in the package`);
-  const site = `https://www.zalavip.com/?utm_source=${source}&utm_medium=${isMain ? 'video' : 'reel'}&utm_campaign=${isMain ? id : reel.id}`;
+  // Short captions: a post with a wall of 60 credit lines and links got almost no reach on Facebook.
+  // No links; the licences get one short line, and the full credit list stays in the YouTube description.
   const cut = pkg.description.indexOf('\n\nMusic:');
-  const credits = cut >= 0 ? pkg.description.slice(cut) : '';
-  const story = cut >= 0 ? pkg.description.slice(0, cut) : pkg.description;
+  const story = (cut >= 0 ? pkg.description.slice(0, cut) : pkg.description).split('\n\n')[0].slice(0, 600);
+  const hasMusic = /Kevin MacLeod/.test(cut >= 0 ? pkg.description.slice(cut) : '');
+  const credit = (hasMusic ? 'Music: Kevin MacLeod (incompetech.com), CC BY 4.0. ' : '') + 'Images: Wikimedia Commons and Pixabay contributors, open licences; full credits in the YouTube description. Voice is AI-generated.';
+  const tags = '#AncientEgypt #Egypt #History #Archaeology';
   const title = isMain ? pkg.title : reel.title;
-  const long = isMain ? `${title}\n\n${story}\n\nPlan your Egypt trip with ZALA VIP: ${site}${credits}` : `${title}\n\nThe full story: ${pkg.title}\nPlan your Egypt trip with ZALA VIP: ${site}${credits}`;
-  // Instagram allows 2200 characters; the credits must always stay.
-  const short = long.length <= 2200 ? long : `${title}\n\nPlan your Egypt trip with ZALA VIP: ${site}${credits}`.slice(0, 2200);
+  const long = isMain ? `${title}\n\n${story}\n\n${tags}\n\n${credit}` : `${title}\n\nFull story on our page: ${pkg.title}\n\n${tags}\n\n${credit}`;
+  const short = long.slice(0, 2200);
   return { isMain, file: isMain ? pkg.file : reel.file, title, text: long.slice(0, 5000), ig: short };
 }
 
