@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { askJson } from './gemini-lite.mjs';
+import { addArticle, withArabic, slugOf } from './blog-feed.mjs';
 
 const dry = process.argv.includes('--dry');
 const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), '..', '..');
@@ -48,7 +49,9 @@ Use ONLY facts found in this text about the picture; never invent dates, names o
 """${facts}"""
 Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or person names, e.g. 3,300 YEARS OF GOLD",
 "caption": "two short sentences: one surprising true fact from the text, then one simple question that makes people comment (an opinion or a guess, e.g. Would you wear it?). No hashtags, no links, no emojis except at most one.",
-"tags": ["3 to 5 hashtags without #"]}`);
+"tags": ["3 to 5 hashtags without #"],
+"title": "a blog title of 5 to 10 words about this object",
+"story": ["2 or 3 short paragraphs for a blog post about this object, using only the facts in the text, simple words"]}`);
 const words = String(ans?.words || 'ANCIENT TREASURE').slice(0, 40);
 const tags = ['AncientEgypt', 'Egypt', 'History', ...(ans?.tags || [])].map((t) => '#' + String(t).replace(/[^A-Za-z0-9]/g, '')).filter((t, i, a) => t.length > 2 && a.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i).slice(0, 6).join(' ');
 const caption = `${ans?.caption || pick.title}\n\n${tags}`;
@@ -82,6 +85,16 @@ try {
   await call(`${G}/${pub.id}/comments`, { method: 'POST', params: { message: credit } }).catch((e) => console.log('[photo] ig credit:', e.message));
   console.log('[photo] instagram', done.ig);
 } catch (e) { done.igError = e.message; console.log('[photo] instagram failed:', e.message); }
+
+// the same post on the zalavip.com blog
+try {
+  const paras = (Array.isArray(ans?.story) ? ans.story : [ans?.caption || pick.title]).map(String).filter(Boolean);
+  const title = String(ans?.title || pick.title).slice(0, 120);
+  const tr = await withArabic(title, String(ans?.caption || '').split('?')[0], [...paras, String(ans?.caption || '').match(/[^.!]*?/)?.[0]?.trim() || ''].filter(Boolean));
+  await addArticle({ slug: `${slugOf(title)}-${day}`, date: day, image: { url: imageUrl, credit: pick.author || '', license: pick.license || '', sourceUrl: pick.source_url || '' },
+    cta: { to: '/egypt/booking', ar: 'خطط رحلتك إلى مصر مع زالا', en: 'Plan your Egypt trip with ZALA VIP' }, ...tr });
+  done.blog = true;
+} catch (e) { console.log('[photo] blog failed:', e.message); }
 
 state.push(done);
 fs.writeFileSync(stateFile, JSON.stringify(state, null, 2) + '\n');
