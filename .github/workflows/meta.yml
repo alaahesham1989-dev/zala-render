@@ -22,6 +22,11 @@ on:
         type: string
   schedule:
     - cron: "*/20 * * * *"
+    # GitHub often runs the 20-minute timer hours late. These early runs wait on the server until the next post is due,
+    # so posts go out on time even when the timer is lazy.
+    - cron: "0 9 * * *"
+    - cron: "0 11 * * *"
+    - cron: "30 13 * * *"
 
 permissions:
   contents: write
@@ -33,7 +38,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 350
     env:
       META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -46,6 +51,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Wait on the server for the next post that is due within 5 hours
+        if: github.event_name == 'schedule'
+        run: |
+          s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<5*3600e3).sort((a,b)=>a-b)[0];console.log(w?Math.ceil(w/1000)+30:0)")
+          echo "waiting $s seconds"; [ "$s" -gt 0 ] && sleep "$s"; git pull -q --rebase || true
       - name: Video tools for the full episode on Instagram
         if: github.event_name == 'workflow_dispatch' && inputs.which == 'main' && contains(inputs.to, 'ig')
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
