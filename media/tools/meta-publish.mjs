@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { postText, creditText } from './captions.mjs';
 
 const G = 'https://graph.facebook.com/v21.0';
 const TOKEN = process.env.META_SYSTEM_USER_TOKEN;
@@ -29,30 +30,43 @@ function signedUrl(id, file) {
     '--endpoint-url', `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`], { encoding: 'utf8' }).trim();
 }
 
-function texts(pkg, id, which, source) {
+function texts(pkg, id, which) {
   const isMain = which === 'main';
   const reel = isMain ? null : pkg.reels.find((r) => r.id === `${id}-${which}`);
   if (!isMain && !reel) throw new Error(`No reel ${which} in the package`);
-  // Short captions: a post with a wall of 60 credit lines and links got almost no reach on Facebook.
-  // No links; the licences get one short line, and the full credit list stays in the YouTube description.
-  const cut = pkg.description.indexOf('\n\nMusic:');
-  const story = (cut >= 0 ? pkg.description.slice(0, cut) : pkg.description).split('\n\n')[0].slice(0, 600);
-  const hasMusic = /Kevin MacLeod/.test(cut >= 0 ? pkg.description.slice(cut) : '');
-  const credit = (hasMusic ? 'Music: Kevin MacLeod (incompetech.com), CC BY 4.0. ' : '') + 'Images: Wikimedia Commons and Pixabay contributors, open licences; full credits in the YouTube description. Voice is AI-generated.';
-  const tags = '#AncientEgypt #Egypt #History #Archaeology';
-  const title = isMain ? pkg.title : reel.title;
-  const long = isMain ? `${title}\n\n${story}\n\n${tags}\n\n${credit}` : `${title}\n\nFull story on our page: ${pkg.title}\n\n${tags}\n\n${credit}`;
-  const short = long.slice(0, 2200);
-  return { isMain, file: isMain ? pkg.file : reel.file, title, text: long.slice(0, 5000), ig: short };
+  // Owner's order: short words about the episode's subject only; credits go in the first comment.
+  const text = postText(pkg, which);
+  return { isMain, file: isMain ? pkg.file : reel.file, title: isMain ? pkg.title : reel.title, text, ig: text.slice(0, 2200) };
+}
+
+/** The licences' credits as the first comment under the post. A failed comment never stops the post. */
+async function creditComment(objectId, pkg, token, max) {
+  const message = creditText(pkg, max);
+  if (!message) return;
+  try { await call(`${G}/${objectId}/comments`, { method: 'POST', token, params: { message } }); console.log(`credits comment on ${objectId}`); }
+  catch (e) { console.log(`credits comment failed on ${objectId}: ${e.message}`); }
+}
+
+/** YouTube: the credits comment goes up when the video is public (a private video takes no comments). */
+async function youtubeCredits(pkg, videoId) {
+  const { YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN } = process.env;
+  const t = await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: YOUTUBE_CLIENT_ID, client_secret: YOUTUBE_CLIENT_SECRET, refresh_token: YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) })).json();
+  if (!t.access_token) throw new Error(`Google refused the token: ${t.error}`);
+  const res = await fetch('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet', { method: 'POST', headers: { Authorization: `Bearer ${t.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ snippet: { videoId, topLevelComment: { snippet: { textOriginal: creditText(pkg, 9000) } } } }) });
+  const d = await res.json();
+  if (!res.ok) throw new Error(`YouTube refused the comment: ${d.error?.message || res.status}`);
+  return { platform: 'youtube', kind: 'credits comment', id: d.id };
 }
 
 async function toFacebook(pkg, id, which) {
-  const t = texts(pkg, id, which, 'facebook');
+  const t = texts(pkg, id, which);
   const url = signedUrl(id, t.file);
   const { access_token: pageToken } = await call(`${G}/${PAGE}?fields=access_token`);
   if (t.isMain) {
     const r = await call(`https://graph-video.facebook.com/v21.0/${PAGE}/videos`, { method: 'POST', token: pageToken,
       params: { file_url: url, title: t.title.slice(0, 255), description: t.text, published: 'true' } });
+    await creditComment(r.id, pkg, pageToken, 8000);
     return { platform: 'facebook', kind: 'video', id: r.id, url: `https://www.facebook.com/${PAGE}/videos/${r.id}` };
   }
   const start = await call(`${G}/${PAGE}/video_reels`, { method: 'POST', token: pageToken, params: { upload_phase: 'start' } });
@@ -60,11 +74,13 @@ async function toFacebook(pkg, id, which) {
   if (!up.ok) throw new Error(`Facebook reel upload failed: ${up.status} ${await up.text()}`);
   await call(`${G}/${PAGE}/video_reels`, { method: 'POST', token: pageToken,
     params: { upload_phase: 'finish', video_id: start.video_id, video_state: 'PUBLISHED', description: t.text } });
+  await sleep(15000);
+  await creditComment(start.video_id, pkg, pageToken, 8000);
   return { platform: 'facebook', kind: 'reel', id: start.video_id, url: `https://www.facebook.com/reel/${start.video_id}` };
 }
 
 async function toInstagram(pkg, id, which) {
-  const t = texts(pkg, id, which, 'instagram');
+  const t = texts(pkg, id, which);
   let box;
   if (t.isMain) {
     // Instagram refuses the full-size episode by link, so the server makes a lighter copy and sends the file itself.
@@ -91,6 +107,7 @@ async function toInstagram(pkg, id, which) {
   }
   const done = await call(`${G}/${IG}/media_publish`, { method: 'POST', params: { creation_id: box.id } });
   const info = await call(`${G}/${done.id}?fields=permalink`);
+  await creditComment(done.id, pkg, TOKEN, 2200);
   return { platform: 'instagram', kind: 'reel', id: done.id, url: info.permalink };
 }
 
@@ -99,7 +116,7 @@ async function publish(dir, id, which, to) {
   const out = [];
   for (const p of to) {
     try {
-      out.push(p === 'fb' ? await toFacebook(pkg, id, which) : await toInstagram(pkg, id, which));
+      out.push(p === 'fb' ? await toFacebook(pkg, id, which) : p === 'ig' ? await toInstagram(pkg, id, which) : await youtubeCredits(pkg, p.slice(3)));   // 'yt:<video id>' = credits comment
     } catch (err) {
       out.push({ platform: p, error: String(err.message || err).slice(0, 300) });
     }
