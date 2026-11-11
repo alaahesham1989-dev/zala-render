@@ -32,8 +32,10 @@ const items = fs.readFileSync(path.join(CONTENT, 'library', 'items.jsonl'), 'utf
 const used = new Set(state.map((s) => s.id));
 const shiny = /gold|treasure|jewel|mask|coffin|necklace|pectoral|crown|bracelet|scarab|dagger|throne|statue|amulet|ring|collar|diadem/i;
 const textOf = (i) => `${i.title} ${i.seen?.what || ''} ${i.note || ''}`;
+// old glass slides, scans and archive photos look poor on a card: only real colour photographs of the object
+const oldScan = /ETH-BIB|Dia|lantern|slide|postcard|photograph|negative|glass plate|.tif|archive|1920s|black and white|engraving|drawing|lithograph/i;
 const pool = items.filter((i) => i.kind === 'image' && String(i.url).startsWith(BASE) && !used.has(i.id)
-  && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && shiny.test(textOf(i))
+  && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && shiny.test(textOf(i)) && !oldScan.test(`${textOf(i)} ${i.source_url || ''}`)
   && ((i.topics || []).some((t) => /^ZV-T/.test(t)) || /\/vault\/library\/ZV-T/.test(i.url)));
 if (!pool.length) { console.log('[photo] no unused treasure picture left'); process.exit(0); }
 const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 40))];
