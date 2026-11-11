@@ -107,6 +107,7 @@ jobs:
             tries=$attempt
             if [ "$attempt" = 1 ]; then node media/tools/gapfill.mjs "$EP"; else node media/tools/gapfill.mjs "$EP" --review review-out/review.json; fi
             node media/zala-render.mjs all "$EP" || continue
+            /tmp/lib/bin/python media/tools/thumbs.py "media/out/${EP}/publish" "$EP" || true   # the review counts the thumbnails
             rm -rf review-out; node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
             if node -e 'process.exit(JSON.parse(require("fs").readFileSync("review-out/verdict.json")).pass?0:1)'; then pass=yes; break; fi
             echo "Review stopped render $attempt, fixing and trying again"
@@ -117,7 +118,6 @@ jobs:
         if: env.EP != '' && env.PASS == 'yes'
         run: |
           set -euo pipefail
-          /tmp/lib/bin/python media/tools/thumbs.py "media/out/${EP}/publish" "$EP"
           node media/tools/autopublish.mjs "media/out/${EP}/publish" "$EP" content/meta-queue.json
           node -e 'const fs=require("fs"),f="content/factory-state.json",s=JSON.parse(fs.readFileSync(f));const e=process.env.EP;s[e]={...s[e],scheduled:new Date().toISOString(),renders:Number(process.env.TRIES),minutes:Number(process.env.MINUTES)};fs.writeFileSync(f,JSON.stringify(s,null,2))'
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
