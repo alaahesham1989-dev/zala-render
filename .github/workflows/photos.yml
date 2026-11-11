@@ -1,0 +1,65 @@
+name: ZALA picture post
+
+# One picture post a day on Facebook and Instagram at 15:00 UTC (10:00 in New York, 17:00 in Cairo).
+# GitHub's timer runs late, so two early runs wait on the server for 15:00; the second finds today done and stops.
+on:
+  schedule:
+    - cron: "0 10 * * *"
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      now:
+        description: "Post now instead of waiting for 15:00 UTC"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zala-photo
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      LIB_PY: /tmp/p/bin/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Already posted today?
+        run: |
+          d=$(node -e "const f='content/photo-posts.json';const s=require('fs').existsSync(f)?require('./'+f):[];console.log(s.some(x=>String(x.at).slice(0,10)===new Date().toISOString().slice(0,10))?'yes':'no')")
+          echo "DONE_TODAY=$d" >> "$GITHUB_ENV"; echo "posted today: $d"
+      - name: Tools and the picture index
+        if: env.DONE_TODAY == 'no'
+        run: |
+          python3 -m venv /tmp/p && /tmp/p/bin/pip install --quiet pillow
+          mkdir -p media/brand/fonts content/library && curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
+          aws s3 cp "s3://${R2_BUCKET}/render-state/content/library/items.jsonl" content/library/ --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
+      - name: Wait for 15:00 UTC
+        if: env.DONE_TODAY == 'no' && !inputs.now
+        run: |
+          s=$(( $(date -u -d "15:00" +%s) - $(date -u +%s) )); echo "waiting $s seconds"
+          if [ "$s" -gt 0 ] && [ "$s" -lt 19000 ]; then sleep "$s"; fi
+      - name: Post
+        if: env.DONE_TODAY == 'no'
+        run: |
+          node media/tools/photo-post.mjs
+          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
+          git pull -q --rebase --autostash || true
+          git add -f content/photo-posts.json && git commit -qm "photo: daily picture post" && git push -q || echo "state push failed"
