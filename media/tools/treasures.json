@@ -162,20 +162,20 @@
     ]
   },
   "ZV-T10": {
-    "title": "The Warrior Queen's Gold: Ahhotep's Treasure",
-    "hook": "A queen was buried with golden flies, the medal for bravery in battle.",
+    "title": "The Gold of Nubia: The Kingdom That Ruled Egypt",
+    "hook": "The pharaohs got their gold from Nubia, until Nubia's kings took Egypt's throne.",
     "seconds": 480,
-    "match": "ahhotep|ahmose|kamose|golden fl",
-    "archive": "Queen Ahhotep treasure",
+    "match": "nubia|kush|meroe|taharqa|kerma|napata|amanishakheto",
+    "archive": "Kingdom of Kush gold jewellery",
     "queries": [
-      "Ahhotep golden flies",
-      "Ahhotep dagger",
-      "Ahhotep axe",
-      "Ahhotep bracelet",
-      "Ahmose I",
-      "Ahhotep coffin",
-      "Egyptian Museum Cairo gold jewelry",
-      "Hyksos war Egypt"
+      "Amanishakheto treasure gold",
+      "Meroe pyramids",
+      "Taharqa statue",
+      "Kerma Nubia",
+      "Nubian gold jewelry",
+      "Kushite king statue",
+      "Napata Jebel Barkal",
+      "Nubian pharaohs"
     ]
   },
   "ZV-T11": {
