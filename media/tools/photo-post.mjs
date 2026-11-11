@@ -34,7 +34,7 @@ const used = new Set(state.map((s) => s.id));
 const shiny = /gold|treasure|jewel|mask|coffin|necklace|pectoral|crown|bracelet|scarab|dagger|throne|statue|amulet|ring|collar|diadem/i;
 const textOf = (i) => `${i.title} ${i.seen?.what || ''} ${i.note || ''}`;
 // old glass slides, scans and archive photos look poor on a card: only real colour photographs of the object
-const oldScan = /ETH-BIB|\bDia\b|lantern|\bslide\b|postcard|photograph|negative|glass plate|\.tif\b|archive|1920s|black and white|engraving|drawing|lithograph/i;
+const oldScan = /ETH-BIB|\bDia\b|lantern|\bslide\b|postcard|photograph|negative|glass plate|\.tif\b|archive|1920s|black and white|engraving|drawing|lithograph|replica|reproduction|copy|souvenir|modern/i;
 const pool = items.filter((i) => i.kind === 'image' && String(i.url).startsWith(BASE) && !used.has(i.id)
   && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && shiny.test(textOf(i)) && !oldScan.test(`${textOf(i)} ${i.source_url || ''}`)
   && ((i.topics || []).some((t) => /^ZV-T/.test(t)) || /\/vault\/library\/ZV-T/.test(i.url)));
@@ -77,7 +77,8 @@ The picture is supposed to show: """${facts}"""
 Caption: """${a.caption}"""
 Fail it if ANY of these is true: the picture does not clearly show that object; it is dull, washed out, yellowed, blurry, low resolution or badly cropped (the object cut off);
 it is an old slide, scan, drawing or black-and-white photo; there are watermarks, museum labels, modern people or handwriting; the big words on the card are hard to read, cover the object's face, or are wrong English;
-the caption says something the text does not support or has a mistake. Be strict: only a picture that would make people stop scrolling passes.
+the caption says something the text does not support or has a mistake; the caption is vague or boring (it must give one specific, surprising fact);
+the object is a replica, copy or souvenir. Be strict: only a picture that would make people stop scrolling passes.
 Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
     { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
   ], { temperature: 0 });
