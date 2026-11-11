@@ -20,10 +20,12 @@ export async function addArticle(article) {
   const tmp = path.join(REPO, 'blog-auto.json');
   let feed = { posts: [] };
   try { s3('cp', `s3://${process.env.R2_BUCKET}/blog/auto.json`, tmp); feed = JSON.parse(fs.readFileSync(tmp, 'utf8')); } catch { /* first article */ }
-  feed.posts = [...(feed.posts || []).filter((p) => p.slug !== article.slug), article];
+  // an episode's article replaces its older version even when the slug changed
+  const { replaces, ...clean } = article;
+  feed.posts = [...(feed.posts || []).filter((p) => p.slug !== clean.slug && p.slug !== replaces && !(clean.episode && p.episode === clean.episode)), clean];
   fs.writeFileSync(tmp, JSON.stringify(feed));
   s3('cp', tmp, `s3://${process.env.R2_BUCKET}/blog/auto.json`, '--content-type', 'application/json; charset=utf-8', '--cache-control', 'public, max-age=300');
-  console.log(`[blog] ${article.date} ${article.slug} (${feed.posts.length} automatic articles)`);
+  console.log(`[blog] ${clean.date} ${clean.slug} (${feed.posts.length} automatic articles)`);
 }
 
 /** English article → the same article with Arabic, in one Gemini answer. */
@@ -53,13 +55,34 @@ async function episode(id) {
     const pic = c.lines.flatMap((l) => l.pictures || []).map((p) => items.get(p)).find((i) => i && i.kind === 'image' && !used.has(i.id) && String(i.url).startsWith('http'));
     if (pic) { used.add(pic.id); body.splice(body.length - Math.min(2, Math.ceil(lines.length / 3)), 0, { img: pic.url, credit: credit(pic) }); }
   }
-  const excerpt = String(script.description || '').split(/(?<=[.!?])\s/).slice(0, 2).join(' ');
-  const tr = await withArabic(script.title, excerpt, body);
+  // SEO: what people really type into Google about this subject (Google's own free suggestions), then one keyword,
+  // a title and description built around it, and a short FAQ from the story's own facts (questions people ask).
+  const topic = (script.title.split(':')[0] || script.title).trim();
+  const ideas = [];
+  for (const q of [topic, `${topic} facts`, `${topic} treasure`]) {
+    try { ideas.push(...(await (await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&hl=en&q=${encodeURIComponent(q)}`)).json())[1]); } catch { /* no suggestions */ }
+  }
+  const facts = script.chapters.flatMap((c) => c.lines.map((l) => l.en)).join(' ').slice(0, 9000);
+  const seo = await askJson(`You are an SEO editor for a history blog read in the USA. Article topic: "${script.title}".
+Real Google searches about it: ${JSON.stringify([...new Set(ideas)].slice(0, 25))}
+The article's facts: """${facts}"""
+Pick the one main keyword with the clearest search intent from the real searches. Return JSON:
+{"keyword": "...", "title": "SEO title, max 60 characters, starts with or contains the keyword, still exciting",
+"description": "meta description, 140 to 155 characters, contains the keyword, makes people click",
+"faq": [{"q": "a question people really search (use the real searches)", "a": "a 1 to 2 sentence answer using ONLY the article's facts"}] (3 or 4 items; skip any question the facts cannot answer)}`, { temperature: 0.3 });
+  if (seo?.faq?.length) {
+    body.push({ h: 'Frequently asked questions' });
+    for (const f of seo.faq.slice(0, 4)) { body.push({ h: f.q }); body.push(f.a); }
+  }
+  const title = String(seo?.title || script.title).slice(0, 70);
+  const excerpt = String(seo?.description || String(script.description || '').split(/(?<=[.!?])\s/).slice(0, 2).join(' ')).slice(0, 160);
+  console.log(`[blog] keyword: ${seo?.keyword || '-'} | ${title}`);
+  const tr = await withArabic(title, excerpt, body);
   await addArticle({
-    slug: slugOf(script.title), date: cairoDay(main?.at || Date.now()),
+    slug: slugOf(seo?.keyword ? `${seo.keyword} ${topic}`.split(' ').filter((w, i, a) => a.findIndex((x) => x.toLowerCase() === w.toLowerCase()) === i).join(' ') : script.title), date: cairoDay(main?.at || Date.now()),
     image: { url: `${BASE}/renders/${id}/publish/${id}_thumbnail.jpg`, credit: 'ZALA VIP' },
     cta: { to: '/egypt/booking', ar: 'خطط رحلتك إلى مصر مع زالا', en: 'Plan your Egypt trip with ZALA VIP' },
-    ...tr, ...(video ? { video } : {}),
+    episode: id, replaces: slugOf(script.title), ...tr, ...(video ? { video } : {}),
   });
 }
 
