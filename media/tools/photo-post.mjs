@@ -1,0 +1,86 @@
+// One picture post a day on Facebook and Instagram: a treasure from the library, a card with a few big words,
+// a short caption (one true fact from the picture's own notes + a question that invites comments), credits in the first comment.
+// Runs on the server (photos.yml). State: content/photo-posts.json (in git), so a picture is never posted twice.
+// Usage: node media/tools/photo-post.mjs [--dry]
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { askJson } from './gemini-lite.mjs';
+
+const dry = process.argv.includes('--dry');
+const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), '..', '..');
+const CONTENT = path.join(REPO, 'content');
+const G = 'https://graph.facebook.com/v21.0';
+const TOKEN = process.env.META_SYSTEM_USER_TOKEN;
+const PAGE = process.env.FB_PAGE_ID || '108172631323930';
+const IG = process.env.IG_ACCOUNT_ID || '17841480123002919';
+const BASE = process.env.VITE_MEDIA_BASE_URL || 'https://pub-20815a715a814497b24a479c98b1815e.r2.dev';
+const stateFile = path.join(CONTENT, 'photo-posts.json');
+const state = fs.existsSync(stateFile) ? JSON.parse(fs.readFileSync(stateFile, 'utf8')) : [];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function call(url, { method = 'GET', params = {}, token = TOKEN } = {}) {
+  const body = new URLSearchParams({ ...params, access_token: token });
+  const res = method === 'GET' ? await fetch(`${url}${url.includes('?') ? '&' : '?'}${body}`) : await fetch(url, { method, body });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error(`Meta refused ${url.replace(G, '')}: ${data.error?.message || res.status}`);
+  return data;
+}
+
+// ── pick the picture ──
+const items = fs.readFileSync(path.join(CONTENT, 'library', 'items.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+const used = new Set(state.map((s) => s.id));
+const shiny = /gold|treasure|jewel|mask|coffin|necklace|pectoral|crown|bracelet|scarab|dagger|throne|statue|amulet|ring|collar|diadem/i;
+const textOf = (i) => `${i.title} ${i.seen?.what || ''} ${i.note || ''}`;
+const pool = items.filter((i) => i.kind === 'image' && String(i.url).startsWith(BASE) && !used.has(i.id)
+  && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && shiny.test(textOf(i))
+  && ((i.topics || []).some((t) => /^ZV-T/.test(t)) || /\/vault\/library\/ZV-T/.test(i.url)));
+if (!pool.length) { console.log('[photo] no unused treasure picture left'); process.exit(0); }
+const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 40))];
+console.log(`[photo] ${pick.id} ${pick.title}`);
+
+// ── the words ──
+const facts = [pick.title, pick.seen?.what, pick.note].filter(Boolean).join('\n');
+const ans = await askJson(`You write one social media picture post for an Ancient Egypt history page (audience: Americans who love history and treasure).
+Use ONLY facts found in this text about the picture; never invent dates, names or numbers:
+"""${facts}"""
+Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or person names, e.g. 3,300 YEARS OF GOLD",
+"caption": "two short sentences: one surprising true fact from the text, then one simple question that makes people comment (an opinion or a guess, e.g. Would you wear it?). No hashtags, no links, no emojis except at most one.",
+"tags": ["3 to 5 hashtags without #"]}`);
+const words = String(ans?.words || 'ANCIENT TREASURE').slice(0, 40);
+const tags = ['AncientEgypt', 'Egypt', 'History', ...(ans?.tags || [])].map((t) => '#' + String(t).replace(/[^A-Za-z0-9]/g, '')).filter((t, i, a) => t.length > 2 && a.indexOf(t) === i).slice(0, 6).join(' ');
+const caption = `${ans?.caption || pick.title}\n\n${tags}`;
+const credit = `Photo: ${pick.author || 'unknown'}${pick.license ? `, ${pick.license}` : ''}${pick.source_url ? ` (${pick.source_url})` : ''}`;
+console.log(`[photo] words: ${words}\n[photo] caption: ${caption}\n[photo] ${credit}`);
+
+// ── the card, on R2 so Meta can fetch it ──
+const day = new Date().toISOString().slice(0, 10);
+const card = path.join(REPO, `post-${day}.jpg`);
+execFileSync(process.env.LIB_PY || 'python3', [path.join(REPO, 'media', 'tools', 'photo_card.py'), pick.url, words, card], { stdio: 'inherit' });
+const key = `posts/${day}-${pick.id}.jpg`;
+if (dry) { console.log('[photo] dry run, nothing posted'); process.exit(0); }
+execFileSync('aws', ['s3', 'cp', card, `s3://${process.env.R2_BUCKET}/${key}`, '--endpoint-url', `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, '--content-type', 'image/jpeg', '--no-progress'], { stdio: 'inherit' });
+const imageUrl = `${BASE}/${key}`;
+
+const done = { id: pick.id, at: new Date().toISOString(), words, caption, image: imageUrl };
+// Facebook
+try {
+  const { access_token: pageToken } = await call(`${G}/${PAGE}?fields=access_token`);
+  const fb = await call(`${G}/${PAGE}/photos`, { method: 'POST', token: pageToken, params: { url: imageUrl, message: caption, published: 'true' } });
+  done.fb = fb.post_id || fb.id;
+  await call(`${G}/${done.fb}/comments`, { method: 'POST', token: pageToken, params: { message: credit } }).catch((e) => console.log('[photo] fb credit:', e.message));
+  console.log('[photo] facebook', done.fb);
+} catch (e) { done.fbError = e.message; console.log('[photo] facebook failed:', e.message); }
+// Instagram
+try {
+  const box = await call(`${G}/${IG}/media`, { method: 'POST', params: { image_url: imageUrl, caption } });
+  for (let i = 0; i < 20; i++) { const s = await call(`${G}/${box.id}?fields=status_code`); if (s.status_code === 'FINISHED') break; await sleep(5000); }
+  const pub = await call(`${G}/${IG}/media_publish`, { method: 'POST', params: { creation_id: box.id } });
+  done.ig = pub.id;
+  await call(`${G}/${pub.id}/comments`, { method: 'POST', params: { message: credit } }).catch((e) => console.log('[photo] ig credit:', e.message));
+  console.log('[photo] instagram', done.ig);
+} catch (e) { done.igError = e.message; console.log('[photo] instagram failed:', e.message); }
+
+state.push(done);
+fs.writeFileSync(stateFile, JSON.stringify(state, null, 2) + '\n');
+console.log(`PHOTO_RESULT:${JSON.stringify(done)}`);
