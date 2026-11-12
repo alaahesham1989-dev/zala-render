@@ -70,11 +70,13 @@ async function plan(count) {
   }
   const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const ids = [];
-  for (let n = 0; n < count; n++) {
+  // a short that cannot be made is replaced by another topic, so the day still gets its shorts
+  for (let tries = 0, n = 0; ids.length < count && tries < count + 4; tries++) {
     // owner's order: after every 4 shorts, the 5th is an ad for ZALA VIP itself
     const sincePromo = state.made.length - 1 - state.made.map((m) => m.kind).lastIndexOf('promo');
     const kind = sincePromo >= 4 ? 'promo' : kinds[state.made.filter((m) => m.kind !== 'promo').length % kinds.length];
-    const id = `ZV-S${day}${n + 1}`;
+    n = Math.max(n, ids.length) + 1;
+    const id = `ZV-S${day}${n}`;
     let facts = '', topic = '', place = null;
     if (kind === 'promo') {
       topic = 'ZALA VIP, luxury travel in Egypt';
