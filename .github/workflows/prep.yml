@@ -1,0 +1,62 @@
+name: ZALA prep (facts, clean pictures, story check, Flow shot list)
+
+# Prepares episodes before the factory renders them: a Wikipedia fact bank, the picture library cleaned of
+# unrelated stock photos, a story written only from the facts and checked line by line by an editor, and the list of
+# Google Flow shots (opening hook, reconstructions) that flow-runner.mjs makes on the owner's computer.
+on:
+  workflow_dispatch:
+    inputs:
+      episodes:
+        description: "Episode ids, separated by spaces (e.g. ZV-T02 ZV-T03)"
+        required: true
+        type: string
+      force:
+        description: "Write the story again even if the episode is prepared"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zala-episode
+  cancel-in-progress: false
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bring scripts and picture index from R2
+        run: aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/*" --include "library/*" --include "factbank/*" --include "prep/*"
+      - name: Prepare
+        run: |
+          set -uo pipefail
+          fail=0
+          for EP in ${{ inputs.episodes }}; do
+            ok=no
+            for i in 1 2 3; do node media/tools/prep.mjs "$EP" ${{ inputs.force && '--force' || '' }} && { ok=yes; break; }; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
+            [ $ok = yes ] || fail=1
+          done
+          exit $fail
+      - name: Save back to R2
+        if: always()
+        run: |
+          for d in youtube library factbank prep; do [ -d "content/$d" ] && aws s3 sync "content/$d" "s3://${R2_BUCKET}/render-state/content/$d" --endpoint-url "$E" --no-progress; done
+          true
