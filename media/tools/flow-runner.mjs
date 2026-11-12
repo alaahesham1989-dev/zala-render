@@ -194,8 +194,19 @@ if (args[0] === '--put') {
   await r2Put(`render-state/content/prep/${ep}.flow.json`, Buffer.from(JSON.stringify(done, null, 2)), 'application/json');
   log(`put ${key}`); process.exit(0);
 }
+// --pending: every episode the server prepared (prep.yml), in the order of the episode list, that still misses shots
+let episodes = args.filter((a) => /^ZV-/.test(a));
+if (args.includes('--pending')) {
+  const list = await (await fetch('https://raw.githubusercontent.com/alaahesham1989-dev/zala-render/main/media/tools/treasures.json')).json();
+  episodes = [];
+  for (const id of Object.keys(list)) {
+    const r = await fetch(`${BASE}/render-state/content/prep/${id}.json?t=${Date.now()}`);
+    if (r.ok) episodes.push(id);
+  }
+  log(`prepared on the server: ${episodes.join(' ') || 'none'}`);
+}
 const p = await page();
-for (const ep of args.filter((a) => /^ZV-/.test(a))) {
+for (const ep of episodes) {
   const prep = await (await fetch(`${BASE}/render-state/content/prep/${ep}.json?t=${Date.now()}`)).json();
   let done = { id: ep, shots: [] };
   try { done = await (await fetch(`${BASE}/render-state/content/prep/${ep}.flow.json?t=${Date.now()}`)).json(); } catch { /* first run */ }
