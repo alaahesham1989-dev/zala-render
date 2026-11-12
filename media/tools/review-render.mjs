@@ -67,7 +67,23 @@ function compare(expected, heard) {
   b.forEach((w) => have.set(w, (have.get(w) || 0) + 1));
   const missing = a.filter((w) => { const n = have.get(w) || 0; if (n) have.set(w, n - 1); return !n; });
   const extra = [...have.entries()].flatMap(([w, n]) => Array(n).fill(w));
-  return { missing, extra, firstOk: a[0] === b[0], lastOk: a[a.length - 1] === b[b.length - 1] };
+  return { missing, extra, plainMissing: missing.filter((w) => !nameWords(expected).has(w)), firstOk: a[0] === b[0], lastOk: a[a.length - 1] === b[b.length - 1] };
+}
+// Ancient names (Psusennes, Pinedjem, Duathathor-Henuttawy), Roman numerals and codes (NRT IV) are what speech
+// recognition mishears, not what the voice gets wrong: a line only fails on its ordinary words.
+function nameWords(text) {
+  const out = new Set();
+  const toks = String(text).split(/\s+/);
+  toks.forEach((t, i) => {
+    const prev = toks[i - 1] || '';
+    const sentenceStart = i === 0 || /[.!?:]["')]*$/.test(prev);
+    const clean = t.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
+    if (!clean) return;
+    if ((/^[A-Z]/.test(clean) && !sentenceStart) || /^[IVXL]+$/.test(clean) || /^[A-Z]{2,}\d*$/.test(clean) || /-/.test(clean)) {
+      for (const w of words(clean.replace(/-/g, ' '))) out.add(w);
+    }
+  });
+  return out;
 }
 
 function detect(filter) {
@@ -181,7 +197,7 @@ if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, 
 for (const l of report.lines) {
   if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
   else if ((l.missing || []).length > words(l.text).length * 0.6) fail.push(`line ${l.n}: most words were not heard: ${l.text.slice(0, 60)}`);
-  else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  else if ((l.plainMissing || l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
   const source = lines[l.n - 1] || {};
