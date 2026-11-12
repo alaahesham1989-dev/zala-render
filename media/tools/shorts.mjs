@@ -39,6 +39,21 @@ Return JSON {"title": "the Short's title, a question or shocking claim, max 60 c
 "badge": "1 to 3 words", "sub": "one short sentence about the subject", "thumbnailText": "2 to 4 words",
 "lines": [{"en": "", "queries": ["", ""]}], "tags": ["5 tags"], "queries": ["6 picture search queries for the whole short"]}`;
 
+// the 5th short: an ad for ZALA VIP, told like a story, never with a price or a promise the company does not make
+const PROMO_FACTS = `ZALA VIP (zalavip.com) is a luxury concierge in Egypt.
+Cairo Airport VIP and fast-track service: a ZALA VIP host meets you on arrival and takes you quickly through the airport.
+Private limousines with chauffeurs in Cairo and Giza, and transfers between Egyptian cities.
+Private trips in Egypt: the Giza pyramids, museums, old Cairo and more.
+Hand-picked hotels in Cairo and Giza.
+ZALA Guide: a free audio map on zalavip.com/guide with more than 300 places in Egypt, each with its story narrated.
+Requests are answered on WhatsApp and through the website, in English and Arabic.`;
+const PROMO_RULES = `Write ONE vertical ad (45 to 50 seconds spoken, 6 to 7 lines, about 110 words) for ZALA VIP for American travellers, told like a short story, not like a sales pitch.
+Line 1 is a hook question a traveller feels (landing in Cairo for the first time, the chaos, the queues). Then show how ZALA VIP makes Egypt easy and luxurious.
+The last line invites them to plan their trip on zalavip.com. Use ONLY the facts below; no prices, no discounts, no promises that are not in the text.
+For each line give 2 picture search queries (Cairo airport, Giza pyramids, luxury car, Nile, hotel, Egyptian museum).
+Return JSON {"title": "max 60 characters", "hook": "3 to 6 words", "badge": "ZALA VIP", "sub": "one short sentence", "thumbnailText": "2 to 4 words",
+"lines": [{"en": "", "queries": ["", ""]}], "tags": ["5 tags"], "queries": ["6 picture search queries"]}`;
+
 async function plan(count) {
   const kinds = ['mystery', 'daily', 'place'];
   // the ZALA Guide map's places (zalavip.com/guide): ancient sites first, then museums, Coptic and Islamic Cairo, nature
@@ -55,10 +70,15 @@ async function plan(count) {
   const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const ids = [];
   for (let n = 0; n < count; n++) {
-    const kind = kinds[(state.made.length + n) % kinds.length];
+    // owner's order: after every 4 shorts, the 5th is an ad for ZALA VIP itself
+    const sincePromo = state.made.length - 1 - state.made.map((m) => m.kind).lastIndexOf('promo');
+    const kind = sincePromo >= 4 ? 'promo' : kinds[state.made.filter((m) => m.kind !== 'promo').length % kinds.length];
     const id = `ZV-S${day}${n + 1}`;
     let facts = '', topic = '', place = null;
-    if (kind === 'place') {
+    if (kind === 'promo') {
+      topic = 'ZALA VIP, luxury travel in Egypt';
+      facts = PROMO_FACTS;
+    } else if (kind === 'place') {
       place = (Array.isArray(places) ? places : []).find((p) => !state.made.some((m) => m.place === p.slug));
       if (!place) continue;
       topic = place.name;
@@ -73,11 +93,18 @@ Return JSON {"topic": "", "queries": ["3 Wikipedia search queries"]}`, { tempera
       facts = await wikiText(idea.queries || [topic]);
     }
     if (facts.length < 800) { log(`${id}: not enough facts for "${topic}"`); continue; }
-    const s = await askJson(`${SHORT_RULES}\nTopic: ${topic}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0.7 });
+    const s = await askJson(`${kind === 'promo' ? PROMO_RULES : SHORT_RULES}\nTopic: ${topic}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0.7 });
     if (!s?.lines?.length || s.lines.length < 5) { log(`${id}: no script`); continue; }
     // the editor: every line must be supported by the text
     const check = await askJson(`Check this Short against the text. List the lines (1-based) that say anything the text does not support. Return JSON {"bad": [numbers]}\nSHORT: ${JSON.stringify(s.lines.map((l) => l.en))}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0 });
-    if (!check || (check.bad || []).length) { log(`${id}: the editor refused lines ${JSON.stringify(check?.bad)}`); continue; }
+    if (!check) { log(`${id}: the editor gave no answer`); continue; }
+    // a line the facts do not support is dropped (never the whole short), as long as 5 good lines stay
+    if ((check.bad || []).length) {
+      const keep = s.lines.filter((_, i) => !check.bad.includes(i + 1));
+      log(`${id}: the editor dropped lines ${JSON.stringify(check.bad)}`);
+      if (keep.length < 5) continue;
+      s.lines = keep;
+    }
     const script = {
       id, series: 'ZALA VIP Shorts', verticalOnly: true, kind, title: s.title, thumbnailText: s.thumbnailText, description: s.sub, tags: s.tags || [],
       chapters: [{ title: s.title, lines: s.lines.map((l, i) => ({ en: l.en, ...(i === 0 && place ? { map: place.name } : {}) })) }],
