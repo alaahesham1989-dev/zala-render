@@ -100,7 +100,12 @@ def pixabay(query, limit=30):
         return []
     j = get_json(f"https://pixabay.com/api/?key={key}&q={urllib.parse.quote(query[:100])}&image_type=photo&safesearch=true&per_page={limit}&min_width=1600")
     return [{"title": (h.get("tags") or query)[:120], "url": h["largeImageURL"], "source_url": h["pageURL"], "license": "Pixabay Content License",
-             "author": h.get("user", "Pixabay"), "source": "Pixabay"} for h in j.get("hits", [])]
+             "author": h.get("user", "Pixabay"), "source": "Pixabay"} for h in j.get("hits", [])
+            # stock search returns anything that shares a word (a suitcase of coins for "treasure"): keep only Egyptian pictures
+            if EGYPT_TAGS.search(h.get("tags") or "")]
+
+
+EGYPT_TAGS = re.compile(r"egypt|pharaoh|pyramid|hieroglyph|sphinx|tutankh|nile|luxor|karnak|giza|cairo|aswan|abu simbel|mummy|sarcophag|papyrus|anubis|horus|scarab|nefert|cleopatra|ramses|tanis|saqqara", re.I)
 
 
 # ── local eyes ──────────────────────────────────────────────────────────
