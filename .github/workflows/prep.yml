@@ -29,7 +29,7 @@ concurrency:
 jobs:
   prep:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 350
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
