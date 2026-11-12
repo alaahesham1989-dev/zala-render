@@ -86,6 +86,8 @@ jobs:
               const next=ids.find((id)=>!plan.some((p)=>p.episode===id)&&(st[id]?.days||0)<3&&ready(id));
               console.log(next||"");')
           fi
+          # owner rule: no episode is rendered before its preparation is complete, even when it is asked for by name
+          if [ -n "$EP" ] && ! node -e 'const fs=require("fs");const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};const id=process.argv[1];const s=j(`content/youtube/${id}.json`),p=j(`content/prep/${id}.json`),f=j(`content/prep/${id}.flow.json`);const made=new Set((f?.shots||[]).filter((x)=>x.url).map((x)=>x.line));process.exit(s?.prepared&&p&&(p.shots||[]).every((x)=>made.has(x.line))?0:1)' "$EP"; then echo "$EP is not fully prepared yet (story, pictures, Flow and Nano Banana): not rendered"; EP=""; fi
           echo "EP=$EP" >> "$GITHUB_ENV"
           echo "Today: ${EP:-nothing prepared yet}"
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
