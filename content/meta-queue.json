@@ -31,7 +31,21 @@
       "ig"
     ],
     "at": "2026-11-12T16:00:00Z",
-    "done": false
+    "done": "2026-11-12T16:02:43.824Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "2694084471050800",
+        "url": "https://www.facebook.com/reel/2694084471050800"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18121002082970739",
+        "url": "https://www.instagram.com/reel/Dfpb_-dDIMc/"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
@@ -40,7 +54,15 @@
       "fb"
     ],
     "at": "2026-11-12T16:00:00Z",
-    "done": false
+    "done": "2026-11-12T16:03:10.224Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "1779346016629927",
+        "url": "https://www.facebook.com/108172631323930/videos/1779346016629927"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
