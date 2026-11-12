@@ -65,42 +65,73 @@ async function page() {
   const ws = new WebSocket(t.webSocketDebuggerUrl);
   await new Promise((r, j) => { ws.onopen = r; ws.onerror = j; });
   let n = 0; const wait = new Map();
-  ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && wait.has(m.id)) { wait.get(m.id)(m); wait.delete(m.id); } };
+  // Flow's own answers (batchexecute) carry each finished file as a signed link: flow-content.google/<video|image>/<id>?...
+  const media = new Map();   // id -> { video, image }
+  const pending = new Set();
   const send = (method, params = {}) => new Promise((r) => { const id = ++n; wait.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
+  const scan = (body) => {
+    const s = body.split('\\\\u003d').join('=').split('\\\\u0026').join('&').split('\\u003d').join('=').split('\\u0026').join('&');
+    for (const m of s.matchAll(/https:\/\/(?:flow-content\.google|storage\.googleapis\.com\/ai-sandbox-videofx)\/(video|image)\/([\w-]{36})\?[^"\\\s]+/g)) {
+      const e = media.get(m[2]) || {};
+      e[m[1]] = m[0];
+      media.set(m[2], e);
+    }
+  };
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.id && wait.has(m.id)) { wait.get(m.id)(m); wait.delete(m.id); return; }
+    if (m.method === 'Network.responseReceived' && /batchexecute/.test(m.params.response.url)) pending.add(m.params.requestId);
+    if (m.method === 'Network.loadingFinished' && pending.has(m.params.requestId)) {
+      pending.delete(m.params.requestId);
+      send('Network.getResponseBody', { requestId: m.params.requestId }).then((r) => { const b = r.result; if (b?.body) scan(b.base64Encoded ? Buffer.from(b.body, 'base64').toString('utf8') : b.body); });
+    }
+  };
+  await send('Network.enable', { maxResourceBufferSize: 50e6, maxTotalBufferSize: 200e6 });
   const js = async (expr) => { const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }); if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description || 'page script failed'); return r.result?.result?.value; };
-  return { send, js, close: () => ws.close() };
+  return { send, js, media, close: () => ws.close() };
 }
 // clicks the visible element whose own text (or aria-label) matches; returns true when found
 const clickText = (p, re) => p.js(`(() => { const re = ${re}; const els = [...document.querySelectorAll('button,[role=button],[role=option],[role=menuitem],[role=radio],div,span')]
   .filter((e) => e.offsetParent && re.test((e.getAttribute('aria-label') || e.innerText || '').trim()) && e.innerText.length < 60);
   const e = els.sort((a, b) => a.innerText.length - b.innerText.length)[0]; if (!e) return false; e.click(); return true; })()`);
-// Flow's finished pictures are big images served from its own /asb/ links or Google's image servers
-const images = (p) => p.js(`[...document.querySelectorAll('img')].filter((i) => i.naturalWidth >= 600 && /asb|googleusercontent|blob:/.test(i.currentSrc || i.src)).map((i) => i.currentSrc || i.src)`);
-const videos = (p) => p.js(`[...document.querySelectorAll('video')].map((v) => v.currentSrc || v.src || v.querySelector('source')?.src).filter(Boolean)`);
+// a finished shot shows as a picture whose alt text is its prompt and whose link holds its id (flow-content.google/image/<id>)
+const idsFor = (p, prompt) => p.js(`[...new Set([...document.querySelectorAll('img')].filter((i) => (i.alt || '').startsWith(${JSON.stringify(String(prompt).slice(0, 40))})).map((i) => ((i.currentSrc || i.src).match(/\\/image\\/([\\w-]{36})/) || [])[1]).filter(Boolean))]`);
+const projectUrl = () => { const f = path.join(PROFILE, 'zala-project.txt'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : ''; };
+const openProject = async (p) => { await p.send('Page.navigate', { url: projectUrl() }); await sleep(9000); };
 
+/** Sends one prompt to Flow's agent and returns the signed link of the finished video (or picture). */
 async function makeShot(p, prompt, still = false) {
-  const list = still ? images : videos;
-  // a fresh project for each episode keeps the gallery small; the prompt box is the page's only textarea
-  const before = new Set(await list(p));
+  // always from the project page (a click elsewhere can leave the window in a video's edit page)
+  if (!(await p.js('location.href')).startsWith(projectUrl()) || /\/edit\//.test(await p.js('location.href'))) await openProject(p);
+  const before = new Set(await idsFor(p, prompt));
+  // already made on an earlier run (the window closed, a step failed): take it, no credits spent again
+  // (Flow's media list arrives a few seconds after the page opens, so wait for it before deciding)
+  for (let k = 0; before.size && k < 10; k++) {
+    for (const id of before) { const link = p.media.get(id)?.[still ? 'image' : 'video']; if (link) { log('   already made in Flow, taking it'); return link; } }
+    await sleep(3000);
+  }
+  if (process.env.NO_SEND) throw new Error('not made yet (NO_SEND: nothing sent)');
   const ok = await p.js(`(() => { const t = document.querySelector('.ProseMirror, [contenteditable=true][role=textbox], div[contenteditable=true], textarea'); if (!t) return false; t.focus(); t.click(); return true; })()`);
   if (!ok) throw new Error('no prompt box on the page');
   await p.send('Input.insertText', { text: still ? `Create exactly one 16:9 image (an image, not a video) with Nano Banana from this prompt, word for word, with no changes:\n${prompt}` : `Create exactly one 8-second 16:9 video (a video, not an image) from this prompt, word for word, with no changes:\n${prompt}` });
   await sleep(800);
   // the send arrow only answers a real mouse click (a script click is ignored by the page)
   const pt = await p.js(`(() => { const b = [...document.querySelectorAll('button')].find((e) => e.offsetParent && /بدء الإنشاء|^Create|Send|إرسال/.test(e.getAttribute('aria-label') || '')); if (!b || b.disabled) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
-  if (pt) for (const type of ['mousePressed', 'mouseReleased']) await p.send('Input.dispatchMouseEvent', { type, x: pt[0], y: pt[1], button: 'left', clickCount: 1 });
-  const sent = !!pt;
-  if (!sent) throw new Error('the create button did not take the prompt');
+  if (!pt) throw new Error('the create button did not take the prompt');
+  for (const type of ['mousePressed', 'mouseReleased']) await p.send('Input.dispatchMouseEvent', { type, x: pt[0], y: pt[1], button: 'left', clickCount: 1 });
   log('   sent, waiting for Flow');
-  for (let i = 0; i < 90; i++) {   // up to 15 minutes
-    await clickText(p, /^(تأكيد|إنشاء|Confirm|Create|Generate|متابعة|Continue)$/i);
-    await sleep(10000);
-    const fresh = (await list(p)).filter((v) => !before.has(v));
-    if (fresh.length) return fresh[0];
-    const fail = await p.js(`/(failed|couldn.t|could not|try again|policy|تعذّر|فشل|سياس)/i.test(document.body.innerText.slice(-4000)) ? document.body.innerText.slice(-300) : ''`);
-    if (fail && i > 3) throw new Error(`Flow refused: ${fail.replace(/\s+/g, ' ').slice(0, 200)}`);
+  for (let i = 1; i <= 60; i++) {   // up to 20 minutes
+    await sleep(20000);
+    if (i % 3 === 0) await openProject(p);   // a fresh page makes Flow send its media list again
+    const fresh = (await idsFor(p, prompt)).filter((id) => !before.has(id));
+    for (const id of fresh) {
+      const link = p.media.get(id)?.[still ? 'image' : 'video'];
+      if (link) return link;
+    }
+    const fail = await p.js(`/(couldn.t generate|could not generate|violat|policy|تعذّر إنشاء|فشل الإنشاء)/i.test(document.body.innerText.slice(-3000)) ? document.body.innerText.slice(-300) : ''`);
+    if (fail) throw new Error(`Flow refused: ${fail.replace(/\s+/g, ' ').slice(0, 200)}`);
   }
-  throw new Error('Flow took more than 15 minutes');
+  throw new Error('Flow took more than 20 minutes');
 }
 
 async function settings(p) {
@@ -151,6 +182,7 @@ for (const ep of args.filter((a) => /^ZV-/.test(a))) {
   const url = await p.js('location.href');
   if (/\/project\//.test(url)) fs.writeFileSync(projectFile, url);
   else throw new Error('no Flow project open: open one project in the Flow window and run again');
+  await openProject(p);   // a fresh load, so Flow sends its media list with the signed links
   for (const s of todo) {
     log(` shot ${s.n} (${s.kind})`);
     try {
