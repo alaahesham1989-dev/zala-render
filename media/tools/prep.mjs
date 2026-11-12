@@ -206,12 +206,15 @@ ${catalog}`, { temperature: 0.5 });
 // What grows in this niche (2026): mystery and shocking-question titles, and shorts that open on a question in the
 // first second instead of a plain cut of a chapter. The render already shows reel.hook as big words over the first
 // seconds, starts the reel at reel.from inside its chapter and ends on the channel outro.
+// what worked on our own channel (yt-insights.mjs keeps content/insights.json): shown to Gemini as examples to follow
+const learned = () => { const i = readJson(path.join(REPO, 'content', 'insights.json'), null); if (!i?.bestTitles?.length) return ''; return `Our own best performing titles so far (copy their style, not their topic): ${JSON.stringify(i.bestTitles)}. Our best shorts: ${JSON.stringify(i.bestShorts || [])}.
+`; };
 async function packaging(script) {
   if (script.packaged && !force) return script;
   const chapters = script.chapters.map((c, ci) => `CHAPTER ${ci + 1}: ${c.title}\n${c.lines.map((l, li) => `  [${li}] ${l.en}`).join('\n')}`).join('\n');
   const ans = await askJson(`You package a history video for YouTube and for short vertical videos (Shorts, Reels, TikTok). Audience: Americans who love mysteries and treasure.
 Titles that grow channels in this niche are mysteries and shocking questions, e.g. "Why Did They Hide This Inside the Pyramid?", "The Treasure They Never Wanted You to See", "What Was Inside the Sealed Coffin Shocked Everyone".
-Write 10 title ideas (max 65 characters, true to the story, no clickbait lies), pick the best, and a thumbnail text of 2 to 4 words (a hook or question; no place or person names an American would not know).
+${learned()}Write 10 title ideas (max 65 characters, true to the story, no clickbait lies), pick the best, and a thumbnail text of 2 to 4 words (a hook or question; no place or person names an American would not know).
 Then design 3 shorts. Each short is a run of lines inside ONE chapter that tells a complete mini story on its own (45 to 55 seconds, about 6 to 8 lines).
 Pick where it starts ("from" = the line number in brackets) so the FIRST line is the most surprising one, give it a hook of 3 to 6 words shown big on screen in the first second (a question or a shocking claim),
 a short title, a badge of 1 to 3 words, and "sub": one short sentence about the subject (no links, no hashtags).
