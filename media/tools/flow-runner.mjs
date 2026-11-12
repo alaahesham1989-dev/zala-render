@@ -103,7 +103,19 @@ const projectUrl = () => { const f = path.join(PROFILE, 'zala-project.txt'); ret
 const openProject = async (p) => { await p.send('Page.navigate', { url: projectUrl() }); await sleep(9000); };
 
 /** Sends one prompt to Flow's agent and returns the signed link of the finished video (or picture). */
+// a minimized window hides the page and Flow stops working; the window is kept "open" but outside the screen,
+// so it never covers the owner's work and Chrome still treats it as visible
+async function keepOpen(p) {
+  try {
+    const { windowId, bounds } = (await p.send('Browser.getWindowForTarget')).result;
+    if (bounds.windowState !== 'normal') await p.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+    if (bounds.left > -2000) await p.send('Browser.setWindowBounds', { windowId, bounds: { left: -3000, top: 0, width: 1500, height: 1000 } });
+    await p.send('Emulation.setFocusEmulationEnabled', { enabled: true });
+  } catch (e) { log(`   (window: ${e.message})`); }
+}
+
 async function makeShot(p, prompt, still = false) {
+  await keepOpen(p);
   // always from the project page (a click elsewhere can leave the window in a video's edit page)
   if (!(await p.js('location.href')).startsWith(projectUrl()) || /\/edit\//.test(await p.js('location.href'))) await openProject(p);
   // a Nano Banana picture shows as an image whose alt is its prompt; its own /asb/ link serves the full picture
