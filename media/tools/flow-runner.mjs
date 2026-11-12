@@ -98,6 +98,7 @@ const clickText = (p, re) => p.js(`(() => { const re = ${re}; const els = [...do
   const e = els.sort((a, b) => a.innerText.length - b.innerText.length)[0]; if (!e) return false; e.click(); return true; })()`);
 // a finished shot shows as a picture whose alt text is its prompt and whose link holds its id (flow-content.google/image/<id>)
 const idsFor = (p, prompt) => p.js(`[...new Set([...document.querySelectorAll('img')].filter((i) => (i.alt || '').startsWith(${JSON.stringify(String(prompt).slice(0, 40))})).map((i) => ((i.currentSrc || i.src).match(/\\/image\\/([\\w-]{36})/) || [])[1]).filter(Boolean))]`);
+const stillSrcs = (p, prompt) => p.js(`[...new Set([...document.querySelectorAll('img')].filter((i) => (i.alt || '').startsWith(${JSON.stringify(String(prompt).slice(0, 40))}) && (i.currentSrc || i.src).includes('/asb/')).map((i) => i.currentSrc || i.src))]`);
 const projectUrl = () => { const f = path.join(PROFILE, 'zala-project.txt'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : ''; };
 const openProject = async (p) => { await p.send('Page.navigate', { url: projectUrl() }); await sleep(9000); };
 
@@ -105,10 +106,15 @@ const openProject = async (p) => { await p.send('Page.navigate', { url: projectU
 async function makeShot(p, prompt, still = false) {
   // always from the project page (a click elsewhere can leave the window in a video's edit page)
   if (!(await p.js('location.href')).startsWith(projectUrl()) || /\/edit\//.test(await p.js('location.href'))) await openProject(p);
+  // a Nano Banana picture shows as an image whose alt is its prompt; its own /asb/ link serves the full picture
+  if (still) {
+    const old = await stillSrcs(p, prompt);
+    if (old.length) { log('   already made in Flow, taking it'); return old[0]; }
+  }
   const before = new Set(await idsFor(p, prompt));
   // already made on an earlier run (the window closed, a step failed): take it, no credits spent again
   // (Flow's media list arrives a few seconds after the page opens, so wait for it before deciding)
-  for (let k = 0; before.size && k < 10; k++) {
+  for (let k = 0; !still && before.size && k < 10; k++) {
     for (const id of before) { const link = p.media.get(id)?.[still ? 'image' : 'video']; if (link) { log('   already made in Flow, taking it'); return link; } }
     await sleep(3000);
   }
@@ -134,7 +140,8 @@ async function makeShot(p, prompt, still = false) {
   if (!sent) throw new Error('the prompt could not be sent to Flow');
   log('   sent, waiting for Flow');
   for (let i = 1; i <= 60; i++) {   // up to 20 minutes
-    await sleep(20000);
+    await sleep(still ? 10000 : 20000);
+    if (still) { const made = await stillSrcs(p, prompt); if (made.length) return made[0]; continue; }
     if (i % 3 === 0) await openProject(p);   // a fresh page makes Flow send its media list again
     const fresh = (await idsFor(p, prompt)).filter((id) => !before.has(id));
     for (const id of fresh) {
@@ -206,8 +213,11 @@ for (const ep of args.filter((a) => /^ZV-/.test(a))) {
       const res = await fetch(src, { headers: { cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; '), 'user-agent': 'Mozilla/5.0' }, redirect: 'follow' });
       const data = Buffer.from(await res.arrayBuffer());
       if (data.length < (still ? 20000 : 100000)) throw new Error(`the file is only ${data.length} bytes`);
-      const key = `vault/flow/${ep}/${s.n}-${crypto.createHash('sha1').update(s.prompt).digest('hex').slice(0, 8)}.${still ? 'jpg' : 'mp4'}`;
-      await r2Put(key, data, still ? 'image/jpeg' : 'video/mp4');
+      const type = (res.headers.get('content-type') || (still ? 'image/jpeg' : 'video/mp4')).split(';')[0];
+      if (still ? !type.startsWith('image/') : !type.startsWith('video/')) throw new Error(`Flow sent ${type}, not the file`);
+      const ext = { 'image/webp': 'webp', 'image/png': 'png', 'image/jpeg': 'jpg', 'video/mp4': 'mp4' }[type] || (still ? 'jpg' : 'mp4');
+      const key = `vault/flow/${ep}/${s.n}-${crypto.createHash('sha1').update(s.prompt).digest('hex').slice(0, 8)}.${ext}`;
+      await r2Put(key, data, type);
       done.shots = done.shots.filter((d) => d.line !== s.line).concat({ n: s.n, line: s.line, kind: s.kind, url: `${BASE}/${key}`, bytes: data.length, at: new Date().toISOString() });
       await r2Put(`render-state/content/prep/${ep}.flow.json`, Buffer.from(JSON.stringify(done, null, 2)), 'application/json');
       log(`   ready: ${key} (${Math.round(data.length / 1e5) / 10} MB)`);
