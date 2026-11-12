@@ -32,7 +32,7 @@ async function wiki(params) {
 }
 async function factBank() {
   const old = readJson(factFile, null);
-  if (old?.facts?.length >= 25 && !force) { log(`facts: ${old.facts.length} already`); await addPlaces((old.sources || []).map((x) => x.title).filter(Boolean)); return old; }
+  if (old?.facts?.length >= 25 && !force) { log(`facts: ${old.facts.length} already`); await addPlaces((old.sources || []).map((x) => decodeURIComponent(String(x.url || '').split('/wiki/')[1] || '').replace(/_/g, ' ')).filter(Boolean)); return old; }
   const titles = [];
   for (const q of spec.queries.slice(0, 8)) {
     try { for (const r of (await wiki({ action: 'query', list: 'search', srsearch: q, srlimit: 2 })).query.search) if (!titles.includes(r.title)) titles.push(r.title); } catch { /* next search */ }
