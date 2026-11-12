@@ -196,6 +196,20 @@ try {
   for (const sh of made) {
     const l = lines.find((x) => x.en === sh.line) || lines[sh.n - 1];
     if (!l || !sh.url || banned.has(sh.url)) continue;
+    if (/\.(jpe?g|png|webp)$/i.test(sh.url)) {
+      // a Nano Banana still joins the library as a reconstruction picture; Meta may give it a slow camera move
+      const pid = `nb-${hash(sh.url)}`;
+      if (banned.has(pid)) continue;
+      if (!byId.has(pid)) {
+        const item = { id: pid, kind: 'image', title: 'Artistic reconstruction', url: sh.url, source: 'ZALA VIP', source_url: '', author: 'ZALA VIP',
+          license: 'AI reconstruction (Google Nano Banana)', recon: true, topics: [id], seen: { usable: true, wide: true, what: sh.line, subject: 'reconstruction', check: { kind: 'reconstruction' } } };
+        items.push(item); byId.set(pid, item);
+      }
+      delete l.clip;
+      l.pictures = [pid];
+      fromPrep++;
+      continue;
+    }
     l.clip = { url: sh.url, what: sh.kind || 'reconstruction', credit: 'AI reconstruction made with Google Flow', license: 'AI reconstruction (ZALA VIP)', recon: true, prep: true };
     l.pictures = [];
     fromPrep++;
