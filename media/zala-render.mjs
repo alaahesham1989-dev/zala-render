@@ -614,7 +614,7 @@ async function stageImages(script, flat) {
       if (!file) continue;
       beats.push({
         need: p.seen?.what || p.title, picture: pid, animate: !!p.seen?.wide, motion: p.seen?.wide ? motionPrompt(p) : '',
-        asset: { kind: 'image', file: rel(file), url: p.url, page: p.source_url, attribution: `"${String(p.title).slice(0, 80)}" by ${p.author}, ${p.license}, via ${p.source === 'ZALA vault' ? 'Wikimedia Commons' : p.source}`, license: p.license },
+        asset: { kind: 'image', file: rel(file), url: p.url, page: p.source_url, attribution: `"${String(p.title).slice(0, 80)}" by ${p.author}, ${p.license}, via ${p.source === 'ZALA vault' ? 'Wikimedia Commons' : p.source}`, license: p.license, recon: !!p.recon },
       });
     }
     if (!beats.length && f.card) beats.push({ need: f.card, picture: null, animate: false, motion: '', asset: { kind: 'image', card: f.card, file: '', url: '', page: '', attribution: '' } });
