@@ -23,7 +23,7 @@ do {
 const out = [];
 for (let k = 0; k < ids.length; k += 50) {
   const v = await get(`videos?part=status,snippet,contentDetails&id=${ids.slice(k, k + 50).join(',')}`);
-  for (const x of v.items) out.push({ id: x.id, title: x.snippet.title, privacy: x.status.privacyStatus, publishAt: x.status.publishAt || '', published: x.snippet.publishedAt, duration: x.contentDetails.duration });
+  for (const x of v.items) out.push({ id: x.id, title: x.snippet.title, privacy: x.status.privacyStatus, publishAt: x.status.publishAt || '', published: x.snippet.publishedAt, duration: x.contentDetails.duration, description: x.snippet.description, tags: x.snippet.tags || [] });
 }
-for (const o of out) console.log(JSON.stringify(o));
+for (const o of out) console.log(JSON.stringify({ ...o, description: undefined, tags: undefined }));
 console.log(`YT_LIST:${JSON.stringify(out)}`);
