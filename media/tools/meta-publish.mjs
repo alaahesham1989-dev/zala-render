@@ -96,7 +96,17 @@ async function toInstagram(pkg, id, which) {
     const up = await fetch(box.uri, { method: 'POST', headers: { Authorization: `OAuth ${TOKEN}`, offset: '0', file_size: String(size) }, body: fs.readFileSync('/tmp/ig.mp4') });
     if (!up.ok) throw new Error(`Instagram upload failed: ${up.status} ${(await up.text()).slice(0, 200)}`);
   } else {
-    box = await call(`${G}/${IG}/media`, { method: 'POST', params: { media_type: 'REELS', video_url: signedUrl(id, t.file), caption: t.ig, share_to_feed: 'true' } });
+    // Trial Reels (the main idea of Meta's Edits app): a short reel goes first to people who do not follow the page,
+    // and Instagram shares it with the followers by itself when it does well (SS_PERFORMANCE), so a weak reel never
+    // hurts the page. Not every account may use it (Meta asks for a follower count): then it is posted as a normal reel.
+    const base = { media_type: 'REELS', video_url: signedUrl(id, t.file), caption: t.ig };
+    try {
+      box = await call(`${G}/${IG}/media`, { method: 'POST', params: { ...base, trial_params: JSON.stringify({ graduation_strategy: 'SS_PERFORMANCE' }) } });
+      console.log('Instagram: trial reel (non-followers first, shared to followers when it does well)');
+    } catch (e) {
+      console.log(`Instagram: trial reel not allowed (${String(e.message).slice(0, 120)}), posting a normal reel`);
+      box = await call(`${G}/${IG}/media`, { method: 'POST', params: { ...base, share_to_feed: 'true' } });
+    }
   }
   for (let i = 0; i < 90; i++) {
     const s = await call(`${G}/${box.id}?fields=status_code,status`);
