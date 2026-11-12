@@ -212,7 +212,7 @@ async function packaging(script) {
   const ans = await askJson(`You package a history video for YouTube and for short vertical videos (Shorts, Reels, TikTok). Audience: Americans who love mysteries and treasure.
 Titles that grow channels in this niche are mysteries and shocking questions, e.g. "Why Did They Hide This Inside the Pyramid?", "The Treasure They Never Wanted You to See", "What Was Inside the Sealed Coffin Shocked Everyone".
 Write 10 title ideas (max 65 characters, true to the story, no clickbait lies), pick the best, and a thumbnail text of 2 to 4 words (a hook or question; no place or person names an American would not know).
-Then design 3 shorts. Each short is a run of lines inside ONE chapter that tells a complete mini story on its own (35 to 55 seconds, about 5 to 8 lines).
+Then design 3 shorts. Each short is a run of lines inside ONE chapter that tells a complete mini story on its own (45 to 55 seconds, about 6 to 8 lines).
 Pick where it starts ("from" = the line number in brackets) so the FIRST line is the most surprising one, give it a hook of 3 to 6 words shown big on screen in the first second (a question or a shocking claim),
 a short title, a badge of 1 to 3 words, and "sub": one short sentence about the subject (no links, no hashtags).
 Return JSON {"titles": ["..."], "best": 0, "thumbnailText": "", "reels": [{"chapter": 1, "from": 0, "title": "", "hook": "", "badge": "", "sub": ""}]}
