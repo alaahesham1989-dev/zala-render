@@ -1,0 +1,56 @@
+name: ZALA insights (learn from the numbers)
+
+# Daily: reads YouTube Analytics, keeps content/insights.json (prep.mjs learns from the best titles) and gives a new
+# title to a video whose click-through rate is weak 2 to 5 days after it goes public. Mondays: an Arabic report on Telegram.
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      telegram:
+        description: "Send the Arabic report now"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zala-insights
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scripts and schedule from R2
+        run: aws s3 sync "s3://${{ secrets.R2_BUCKET }}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/*.json" --include "schedule.json"
+      - name: Read the numbers
+        run: |
+          tg=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.telegram }}" = "true" ]; then tg="--telegram"; fi
+          if [ "$(date -u +%u)" = "1" ]; then tg="--telegram"; fi
+          node media/tools/yt-insights.mjs --retitle $tg
+      - name: Keep what was learned
+        if: always()
+        run: |
+          aws s3 sync content/youtube "s3://${{ secrets.R2_BUCKET }}/render-state/content/youtube" --endpoint-url "$E" --no-progress --exclude "*" --include "*.json" || true
+          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
+          git add -f content/insights.json 2>/dev/null && git commit -qm "insights: numbers from YouTube" && { git pull --rebase -q || true; git push -q; } || true
