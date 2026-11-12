@@ -202,6 +202,32 @@ ${catalog}`, { temperature: 0.5 });
   return null;
 }
 
+// ── 7. packaging: a title people click, and three shorts built to stop the scroll ────────────
+// What grows in this niche (2026): mystery and shocking-question titles, and shorts that open on a question in the
+// first second instead of a plain cut of a chapter. The render already shows reel.hook as big words over the first
+// seconds, starts the reel at reel.from inside its chapter and ends on the channel outro.
+async function packaging(script) {
+  if (script.packaged && !force) return script;
+  const chapters = script.chapters.map((c, ci) => `CHAPTER ${ci + 1}: ${c.title}\n${c.lines.map((l, li) => `  [${li}] ${l.en}`).join('\n')}`).join('\n');
+  const ans = await askJson(`You package a history video for YouTube and for short vertical videos (Shorts, Reels, TikTok). Audience: Americans who love mysteries and treasure.
+Titles that grow channels in this niche are mysteries and shocking questions, e.g. "Why Did They Hide This Inside the Pyramid?", "The Treasure They Never Wanted You to See", "What Was Inside the Sealed Coffin Shocked Everyone".
+Write 10 title ideas (max 65 characters, true to the story, no clickbait lies), pick the best, and a thumbnail text of 2 to 4 words (a hook or question; no place or person names an American would not know).
+Then design 3 shorts. Each short is a run of lines inside ONE chapter that tells a complete mini story on its own (35 to 55 seconds, about 5 to 8 lines).
+Pick where it starts ("from" = the line number in brackets) so the FIRST line is the most surprising one, give it a hook of 3 to 6 words shown big on screen in the first second (a question or a shocking claim),
+a short title, a badge of 1 to 3 words, and "sub": one short sentence about the subject (no links, no hashtags).
+Return JSON {"titles": ["..."], "best": 0, "thumbnailText": "", "reels": [{"chapter": 1, "from": 0, "title": "", "hook": "", "badge": "", "sub": ""}]}
+STORY:
+${chapters}`, { temperature: 0.6 });
+  if (!ans?.titles?.length || !Array.isArray(ans.reels)) { log('packaging: no answer, keeping the story as it is'); return script; }
+  const reels = ans.reels.filter((r) => script.chapters[r.chapter - 1] && Number.isInteger(r.from) && r.from >= 0 && r.from < script.chapters[r.chapter - 1].lines.length - 2).slice(0, 3);
+  const title = String(ans.titles[ans.best] || ans.titles[0]).slice(0, 90);
+  log(`packaging: "${title}" | thumbnail "${ans.thumbnailText}" | shorts: ${reels.map((r) => `ch${r.chapter}@${r.from} "${r.hook}"`).join(' ; ')}`);
+  Object.assign(script, { title, thumbnailText: ans.thumbnailText || script.thumbnailText, titleIdeas: ans.titles, packaged: true });
+  if (reels.length === 3) script.reels = reels;
+  fs.writeFileSync(scriptFile, JSON.stringify(script, null, 2) + '\n', 'utf8');
+  return script;
+}
+
 // ── 6. Nano Banana stills for lines nothing shows ────────────────────
 // Lines with no picture and no Flow shot would fall back to crops or title cards. For up to 8 of them where a still
 // reconstruction truly helps (a place as it looked, an object, a scene), Gemini writes a Nano Banana prompt.
@@ -225,7 +251,7 @@ Return JSON {"stills": [{"n": line number, "prompt": "..."}]}`, { temperature: 0
 
 // ── run ──────────────────────────────────────────────────────────────
 const old = readJson(scriptFile, null);
-if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); await cleanLibrary(); await stills(old); process.exit(0); }
+if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); await cleanLibrary(); await stills(old); await packaging(readJson(scriptFile, old)); process.exit(0); }
 // a story written and voiced before the factory (handWritten) is kept word for word: the preparation only cleans its
 // library, adds its places and plans Nano Banana stills for the lines that have no picture
 if (old?.handWritten) {
@@ -235,6 +261,7 @@ if (old?.handWritten) {
   await stills(old);
   old.prepared = { at: new Date().toISOString(), shots: readJson(prepFile, { shots: [] }).shots.length, kept: 'hand written story' };
   fs.writeFileSync(scriptFile, JSON.stringify(old, null, 2) + '\n', 'utf8');
+  await packaging(old);
   log(`${id} prepared (story kept)`);
   process.exit(0);
 }
@@ -251,3 +278,4 @@ fs.mkdirSync(path.dirname(prepFile), { recursive: true });
 fs.writeFileSync(prepFile, JSON.stringify({ id, title: story.title, at: new Date().toISOString(), shots }, null, 2) + '\n');
 log(`${id} prepared: "${story.title}", ${shots.length} Flow shots waiting in content/prep/${id}.json`);
 await stills(readJson(scriptFile, null));
+await packaging(readJson(scriptFile, null));
