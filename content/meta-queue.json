@@ -292,5 +292,80 @@
     "at": "2026-11-19T12:00:00Z",
     "done": false,
     "note": "older episode already public on YouTube"
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "main",
+    "to": [
+      "fb"
+    ],
+    "at": "2026-11-23T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "main",
+    "to": [
+      "yt:9nrQP7Dq58Q"
+    ],
+    "at": "2026-11-23T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-24T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "R1",
+    "to": [
+      "yt:C9idHAReMEA"
+    ],
+    "at": "2026-11-24T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "R2",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-25T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "R2",
+    "to": [
+      "yt:53g1DQcf4w0"
+    ],
+    "at": "2026-11-25T16:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "R3",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-27T16:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T02",
+    "which": "R3",
+    "to": [
+      "yt:dWNnwbqoF_w"
+    ],
+    "at": "2026-11-27T16:20:00.000Z",
+    "done": false
   }
 ]
