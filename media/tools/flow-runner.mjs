@@ -74,14 +74,17 @@ async function page() {
 const clickText = (p, re) => p.js(`(() => { const re = ${re}; const els = [...document.querySelectorAll('button,[role=button],[role=option],[role=menuitem],[role=radio],div,span')]
   .filter((e) => e.offsetParent && re.test((e.getAttribute('aria-label') || e.innerText || '').trim()) && e.innerText.length < 60);
   const e = els.sort((a, b) => a.innerText.length - b.innerText.length)[0]; if (!e) return false; e.click(); return true; })()`);
+// Flow's finished pictures are big images served from its own /asb/ links or Google's image servers
+const images = (p) => p.js(`[...document.querySelectorAll('img')].filter((i) => i.naturalWidth >= 600 && /asb|googleusercontent|blob:/.test(i.currentSrc || i.src)).map((i) => i.currentSrc || i.src)`);
 const videos = (p) => p.js(`[...document.querySelectorAll('video')].map((v) => v.currentSrc || v.src || v.querySelector('source')?.src).filter(Boolean)`);
 
-async function makeShot(p, prompt) {
+async function makeShot(p, prompt, still = false) {
+  const list = still ? images : videos;
   // a fresh project for each episode keeps the gallery small; the prompt box is the page's only textarea
-  const before = new Set(await videos(p));
+  const before = new Set(await list(p));
   const ok = await p.js(`(() => { const t = document.querySelector('.ProseMirror, [contenteditable=true][role=textbox], div[contenteditable=true], textarea'); if (!t) return false; t.focus(); t.click(); return true; })()`);
   if (!ok) throw new Error('no prompt box on the page');
-  await p.send('Input.insertText', { text: `Create exactly one 8-second 16:9 video (a video, not an image) from this prompt, word for word, with no changes:\n${prompt}` });
+  await p.send('Input.insertText', { text: still ? `Create exactly one 16:9 image (an image, not a video) with Nano Banana from this prompt, word for word, with no changes:\n${prompt}` : `Create exactly one 8-second 16:9 video (a video, not an image) from this prompt, word for word, with no changes:\n${prompt}` });
   await sleep(800);
   // the send arrow only answers a real mouse click (a script click is ignored by the page)
   const pt = await p.js(`(() => { const b = [...document.querySelectorAll('button')].find((e) => e.offsetParent && /بدء الإنشاء|^Create|Send|إرسال/.test(e.getAttribute('aria-label') || '')); if (!b || b.disabled) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
@@ -92,7 +95,7 @@ async function makeShot(p, prompt) {
   for (let i = 0; i < 90; i++) {   // up to 15 minutes
     await clickText(p, /^(تأكيد|إنشاء|Confirm|Create|Generate|متابعة|Continue)$/i);
     await sleep(10000);
-    const fresh = (await videos(p)).filter((v) => !before.has(v));
+    const fresh = (await list(p)).filter((v) => !before.has(v));
     if (fresh.length) return fresh[0];
     const fail = await p.js(`/(failed|couldn.t|could not|try again|policy|تعذّر|فشل|سياس)/i.test(document.body.innerText.slice(-4000)) ? document.body.innerText.slice(-300) : ''`);
     if (fail && i > 3) throw new Error(`Flow refused: ${fail.replace(/\s+/g, ' ').slice(0, 200)}`);
@@ -151,15 +154,16 @@ for (const ep of args.filter((a) => /^ZV-/.test(a))) {
   for (const s of todo) {
     log(` shot ${s.n} (${s.kind})`);
     try {
-      const src = await makeShot(p, s.prompt);
+      const still = s.kind === 'still';
+      const src = await makeShot(p, s.prompt, still);
       // the page cannot read its own video (it redirects to Google's video servers), so Node downloads it with the window's cookies
       const { cookies } = await p.send('Network.getCookies', { urls: [src] }).then((m) => m.result);
       const res = await fetch(src, { headers: { cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; '), 'user-agent': 'Mozilla/5.0' }, redirect: 'follow' });
       const data = Buffer.from(await res.arrayBuffer());
-      if (data.length < 100000) throw new Error(`the video is only ${data.length} bytes`);
-      const key = `vault/flow/${ep}/${s.n}-${crypto.createHash('sha1').update(s.prompt).digest('hex').slice(0, 8)}.mp4`;
-      await r2Put(key, data, 'video/mp4');
-      done.shots = done.shots.filter((d) => d.line !== s.line).concat({ n: s.n, line: s.line, url: `${BASE}/${key}`, bytes: data.length, at: new Date().toISOString() });
+      if (data.length < (still ? 20000 : 100000)) throw new Error(`the file is only ${data.length} bytes`);
+      const key = `vault/flow/${ep}/${s.n}-${crypto.createHash('sha1').update(s.prompt).digest('hex').slice(0, 8)}.${still ? 'jpg' : 'mp4'}`;
+      await r2Put(key, data, still ? 'image/jpeg' : 'video/mp4');
+      done.shots = done.shots.filter((d) => d.line !== s.line).concat({ n: s.n, line: s.line, kind: s.kind, url: `${BASE}/${key}`, bytes: data.length, at: new Date().toISOString() });
       await r2Put(`render-state/content/prep/${ep}.flow.json`, Buffer.from(JSON.stringify(done, null, 2)), 'application/json');
       log(`   ready: ${key} (${Math.round(data.length / 1e5) / 10} MB)`);
     } catch (e) { log(`   failed: ${e.message}`); }
