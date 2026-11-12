@@ -45,7 +45,7 @@ const today = new Date().toISOString().slice(0, 10);
 const start = '2025-01-01';
 // per video: watch numbers; impressions and click-through rate are asked separately (not every channel gets them)
 const base = await report({ startDate: start, endDate: today, dimensions: 'video', metrics: 'views,averageViewDuration,averageViewPercentage,subscribersGained', maxResults: 200, sort: '-views' });
-const imp = await report({ startDate: start, endDate: today, dimensions: 'video', metrics: 'videoThumbnailImpressions,videoThumbnailImpressionsClickRate', maxResults: 200, sort: '-views' });
+const imp = await report({ startDate: start, endDate: today, dimensions: 'video', metrics: 'videoThumbnailImpressions,videoThumbnailImpressionsClickRate', maxResults: 200, sort: '-videoThumbnailImpressions' });
 if (base.error) throw new Error(`Analytics refused: ${base.error} (the YouTube permission needs yt-analytics.readonly)`);
 if (imp.error) log(`impressions not available: ${imp.error}`);
 const by = Object.fromEntries((base.rows || []).map((r) => [r.video, r]));
