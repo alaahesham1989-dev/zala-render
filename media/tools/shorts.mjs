@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { askJson } from './gemini-lite.mjs';
+import { addVideo } from './atlas-link.mjs';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const CONTENT = path.join(REPO, 'content');
@@ -160,7 +161,11 @@ function schedule(id) {
   if (r.status !== 0 || !line) throw new Error(`YouTube upload of ${id} failed: ${(r.stderr || r.stdout || '').slice(-300)}`);
   queue.push({ episode: id, which: 'R1', to: ['fb', 'ig'], at: when, done: false });
   fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2) + '\n');
-  log(`${id} at ${when}: ${JSON.parse(line.slice(7)).url || ''}`);
+  const url = JSON.parse(line.slice(7)).url || '';
+  log(`${id} at ${when}: ${url}`);
+  // a place short shows on its place on the ZALA Guide map from its publish time
+  const made = state.made.find((m) => m.id === id);
+  if (made?.place && url) addVideo(made.place, { url, title: made.title, kind: 'short', at: when, episode: id });
 }
 
 if (cmd === 'plan') await plan(Number(arg) || 3);
