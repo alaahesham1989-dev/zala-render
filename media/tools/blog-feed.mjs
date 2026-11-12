@@ -38,6 +38,9 @@ ${JSON.stringify({ title, excerpt, items: strings })}`, { temperature: 0.2 });
   return { title: { en: title, ar: (ok && ans.title) || title }, excerpt: { en: excerpt, ar: (ok && ans.excerpt) || excerpt }, body: { en: body, ar } };
 }
 
+// words of a phrase without the possessive 's, so "Tutankhamun's" and "tutankhamun" count as one word
+const topicWords = (t) => String(t).toLowerCase().replace(/['’]s\b/g, '').split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+
 async function episode(id) {
   const script = JSON.parse(fs.readFileSync(path.join(CONTENT, 'youtube', `${id}.json`), 'utf8'));
   const items = new Map(fs.readFileSync(path.join(CONTENT, 'library', 'items.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).map((i) => [i.id, i]));
@@ -69,7 +72,7 @@ The article's facts: """${facts}"""
 Pick the one main keyword with the clearest search intent from the real searches. Return JSON:
 {"keyword": "...", "title": "SEO title, max 60 characters, starts with or contains the keyword, still exciting",
 "description": "meta description, 140 to 155 characters, contains the keyword, makes people click",
-"faq": [{"q": "a question people really search (use the real searches)", "a": "a 1 to 2 sentence answer using ONLY the article's facts"}] (3 or 4 items; skip any question the facts cannot answer)}`, { temperature: 0.3 });
+"faq": [{"q": "a question people really search (use the real searches), rewritten in correct English with names capitalised (Abu Simbel, Tutankhamun)", "a": "a 1 to 2 sentence answer using ONLY the article's facts"}] (3 or 4 items; skip any question the facts cannot answer)}`, { temperature: 0.3 });
   if (seo?.faq?.length) {
     body.push({ h: 'Frequently asked questions' });
     for (const f of seo.faq.slice(0, 4)) { const q = String(f.q).trim(); body.push({ h: q[0].toUpperCase() + q.slice(1).replace(/([^?])$/, "$1?") }); body.push(f.a); }
@@ -79,7 +82,7 @@ Pick the one main keyword with the clearest search intent from the real searches
   console.log(`[blog] keyword: ${seo?.keyword || '-'} | ${title}`);
   const tr = await withArabic(title, excerpt, body);
   await addArticle({
-    slug: slugOf(seo?.keyword ? `${seo.keyword} ${topic}`.split(' ').filter((w, i, a) => a.findIndex((x) => x.toLowerCase() === w.toLowerCase()) === i).join(' ') : script.title), date: cairoDay(main?.at || Date.now()),
+    slug: slugOf(seo?.keyword ? (topicWords(topic).every((w) => topicWords(seo.keyword).includes(w)) ? seo.keyword : `${seo.keyword} ${topic}`) : script.title), date: cairoDay(main?.at || Date.now()),
     image: { url: `${BASE}/renders/${id}/publish/${id}_thumbnail.jpg`, credit: 'ZALA VIP' },
     cta: { to: '/egypt/booking', ar: 'خطط رحلتك إلى مصر مع زالا', en: 'Plan your Egypt trip with ZALA VIP' },
     episode: id, replaces: slugOf(script.title), ...tr, ...(video ? { video } : {}),
