@@ -28,6 +28,19 @@ async function call(url, { method = 'GET', params = {}, token = TOKEN } = {}) {
   return data;
 }
 
+/** A short Wikipedia extract about the object, so the caption has one real fact. */
+async function wikiFacts(q) {
+  try {
+    const term = String(q).replace(/\(.*?\)|\d{6,}|DSC\s*\d+|\b(by|in|20\d\d)\b/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 90);
+    const h = { headers: { 'user-agent': 'zala-render/1.0' } };
+    const sr = await (await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=1&srsearch=${encodeURIComponent(term + ' ancient Egypt')}`, h)).json();
+    const t = sr?.query?.search?.[0]?.title; if (!t) return '';
+    const ex = await (await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&format=json&titles=${encodeURIComponent(t)}`, h)).json();
+    const p = Object.values(ex?.query?.pages || {})[0];
+    return p?.extract ? `From Wikipedia (${t}): ${p.extract.slice(0, 1200)}` : '';
+  } catch { return ''; }
+}
+
 // ── pick the picture ──
 const items = fs.readFileSync(path.join(CONTENT, 'library', 'items.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const used = new Set(state.map((s) => s.id));
@@ -55,16 +68,19 @@ for (const cand of pool.slice(0, 40)) {
   let m;
   try { m = JSON.parse(execFileSync(PY, [CARD_PY, '--check', cand.url], { encoding: 'utf8' }).trim().split('\n').pop()); } catch { continue; }
   if (!m.ok) { console.log(`[qc] ${cand.id} refused by the numbers: ${m.reasons.join(', ')}`); used.add(cand.id); continue; }
-  measured.push({ cand, score: m.colour + m.contrast * 0.5 + m.sharp * 2 + Math.min(m.w, m.h) / 100 });
+  // clean studio photos from the museums' open collections go first
+  const museum = /metmuseum|clevelandart|walters|smithsonian|si\.edu/i.test(`${cand.source_url || ''} ${cand.license || ''} ${cand.title}`) ? 25 : 0;
+  measured.push({ cand, score: museum + m.colour + m.contrast * 0.5 + m.sharp * 2 + Math.min(m.w, m.h) / 100 });
 }
 measured.sort((a, b) => b.score - a.score);
 for (const { cand } of measured.slice(0, 10)) {
-  const facts = [cand.title, cand.seen?.what, cand.note].filter(Boolean).join('\n');
+  const wiki = await wikiFacts(`${cand.title} ${cand.seen?.what || ''}`);
+  const facts = [cand.title, cand.seen?.what, cand.note, wiki].filter(Boolean).join('\n');
   const a = await askJson(`You write one social media picture post for an Ancient Egypt history page (audience: Americans who love history and treasure).
 Use ONLY facts found in this text about the picture; never invent dates, names or numbers:
 """${facts}"""
 Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or person names, e.g. 3,300 YEARS OF GOLD",
-"caption": "two short sentences: one surprising true fact from the text, then one simple question that makes people comment (an opinion or a guess, e.g. Would you wear it?). No hashtags, no links, no emojis except at most one.",
+"caption": "two short sentences. First: one specific, surprising true fact from the text (a number, a material, an age, who owned it, how it was made). Second: a short question about that fact that makes people comment. Never a generic question alone. No hashtags, no links, no emojis except at most one.",
 "tags": ["3 to 5 hashtags without #"],
 "title": "a blog title of 5 to 10 words about this object",
 "story": ["2 or 3 short paragraphs for a blog post about this object, using only the facts in the text, simple words"]}`);
@@ -79,11 +95,26 @@ Fail it if ANY of these is true: the picture does not clearly show that object; 
 it is an old slide, scan, drawing or black-and-white photo; there are watermarks, museum labels, modern people or handwriting; the big words on the card are hard to read, cover the object's face, or are wrong English;
 the caption says something the text does not support or has a mistake; the caption is vague or boring (it must give one specific, surprising fact);
 the object is a replica, copy or souvenir. Be strict: only a picture that would make people stop scrolling passes.
-Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
+Return JSON {"pass": true|false, "score": 1-10, "pictureOk": true|false (false only for a problem with the picture itself), "reasons": ["..."]}` },
     { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
   ], { temperature: 0 });
   console.log(`[qc] ${cand.id} ${cand.title}: ${judge ? `${judge.pass ? 'pass' : 'fail'} ${judge.score}/10 ${(judge.reasons || []).join('; ')}` : 'no answer'}`);
   if (judge?.pass && judge.score >= 8) { pick = cand; ans = a; words = w; break; }
+  // the picture is fine and only the words are weak: rewrite them from the reviewer's notes and check once more
+  if (judge && judge.pictureOk) {
+    const fix = await askJson(`Rewrite this picture post caption. Reviewer notes: ${(judge.reasons || []).join('; ')}
+Use ONLY facts from this text: """${facts}"""
+Return JSON {"caption": "two short sentences: one specific surprising fact, then a short question about it"}`);
+    if (fix?.caption) {
+      const again = await askJson([{ text: `Strict quality check of a history post caption. Facts: """${facts}"""
+Caption: """${fix.caption}"""
+Fail it if it says anything the facts do not support, or if it is vague (it must give one specific, surprising fact).
+Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` }], { temperature: 0 });
+      console.log(`[qc] ${cand.id} words rewritten: ${again ? `${again.pass ? 'pass' : 'fail'} ${again.score}/10` : 'no answer'}`);
+      if (again?.pass && again.score >= 8) { pick = cand; ans = { ...a, caption: fix.caption }; words = w; break; }
+    }
+    continue;   // a good picture stays for another day
+  }
   if (judge) used.add(cand.id);   // refused pictures are not tried again on another day
 }
 const refused = pool.filter((c) => used.has(c.id) && !state.some((s) => s.id === c.id)).map((c) => c.id);
@@ -103,12 +134,13 @@ if (dry) { console.log('[photo] dry run, nothing posted'); process.exit(0); }
 execFileSync('aws', ['s3', 'cp', card, `s3://${process.env.R2_BUCKET}/${key}`, '--endpoint-url', `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, '--content-type', 'image/jpeg', '--no-progress'], { stdio: 'inherit' });
 const imageUrl = `${BASE}/${key}`;
 
-const done = { id: pick.id, at: new Date().toISOString(), words, caption, image: imageUrl, credit };   // shown on zalavip.com/credits
+const done = { id: pick.id, at: new Date().toISOString(), words, caption, image: imageUrl };
 // Facebook
 try {
   const { access_token: pageToken } = await call(`${G}/${PAGE}?fields=access_token`);
   const fb = await call(`${G}/${PAGE}/photos`, { method: 'POST', token: pageToken, params: { url: imageUrl, message: caption, published: 'true' } });
   done.fb = fb.post_id || fb.id;
+  await call(`${G}/${done.fb}/comments`, { method: 'POST', token: pageToken, params: { message: credit } }).catch((e) => console.log('[photo] fb credit:', e.message));
   console.log('[photo] facebook', done.fb);
 } catch (e) { done.fbError = e.message; console.log('[photo] facebook failed:', e.message); }
 // Instagram
@@ -117,6 +149,7 @@ try {
   for (let i = 0; i < 20; i++) { const s = await call(`${G}/${box.id}?fields=status_code`); if (s.status_code === 'FINISHED') break; await sleep(5000); }
   const pub = await call(`${G}/${IG}/media_publish`, { method: 'POST', params: { creation_id: box.id } });
   done.ig = pub.id;
+  await call(`${G}/${pub.id}/comments`, { method: 'POST', params: { message: credit } }).catch((e) => console.log('[photo] ig credit:', e.message));
   console.log('[photo] instagram', done.ig);
 } catch (e) { done.igError = e.message; console.log('[photo] instagram failed:', e.message); }
 
