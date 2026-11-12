@@ -77,6 +77,8 @@ function score(line, p) {
 }
 
 const uses = new Map();
+// what the review refused on any earlier render of this episode: picture ids and video pages, never chosen again
+const banned = new Set(script.banned || []);
 for (const l of lines) for (const p of l.pictures || []) uses.set(p, (uses.get(p) || 0) + 1);
 
 const crops = ['left', 'right', 'top', 'center'];
@@ -112,7 +114,7 @@ const ATMOSPHERE = [
   [/\b(night|darkness|stars)\b/i, 'desert night stars'],
 ];
 // footage must look like Egypt: no animals or plants of other lands, no people, no towns, nothing made by AI
-const BAD_TAGS = /africa|savanna|savannah|giraffe|safari|elephant|lion|zebra|acacia|jungle|forest|tropical|waterfall|fantasy|\bai\b|generated|3d|render|animation|cartoon|people|person|woman|\bman\b|girl|boy|city|car|road|camel ride|tourist/i;
+const BAD_TAGS = /halloween|haunted|spooky|ghost|witch|pumpkin|illustration|drawing|cartoon|anime|vector|christmas|africa|savanna|savannah|giraffe|safari|elephant|lion|zebra|acacia|jungle|forest|tropical|waterfall|fantasy|\bai\b|generated|3d|render|animation|cartoon|people|person|woman|\bman\b|girl|boy|city|car|road|camel ride|tourist/i;
 const GOOD_TAGS = /desert|sand|dune|nile|egypt|river|sunrise|sunset|\bsun\b|night|stars|sky|sahara/i;
 const usedVideos = new Set();
 async function pixabayClip(line) {
@@ -123,7 +125,7 @@ async function pixabayClip(line) {
     const res = await fetch(`https://pixabay.com/api/videos/?key=${key}&q=${encodeURIComponent(hit[1])}&safesearch=true&per_page=30`, { signal: AbortSignal.timeout(30000) });
     const j = await res.json();
     for (const v of j.hits || []) {
-      if (usedVideos.has(v.id) || v.duration < 6 || BAD_TAGS.test(v.tags || '') || !GOOD_TAGS.test(v.tags || '')) continue;
+      if (usedVideos.has(v.id) || banned.has(v.pageURL) || v.duration < 6 || BAD_TAGS.test(v.tags || '') || !GOOD_TAGS.test(v.tags || '')) continue;
       const pick = ['large', 'medium'].map((k) => v.videos?.[k]).find((f) => f?.url && f.width >= 1280 && f.width > f.height);
       if (!pick) continue;
       usedVideos.add(v.id);
@@ -164,19 +166,25 @@ function sceneFor(l) {
 }
 
 // ── start over where needed ─────────────────────────────────────────
-// clips this tool made on an earlier run are planned again, so a better rule applies to them too
-let cleared = 0;
-for (const l of lines) if (l.clip && (l.clip.gapfill || ['ZALA VIP', 'Pixabay Content License'].includes(l.clip.license))) { delete l.clip; cleared++; }
-// lines the last review said show the wrong picture lose that picture
+// lines the last review said show the wrong picture lose that picture, and it is banned for this episode
 const reviewAt = (() => { const i = process.argv.indexOf('--review'); return i > 0 ? process.argv[i + 1] : ''; })();
 let rejected = 0;
 if (reviewAt && fs.existsSync(reviewAt)) {
   const rev = JSON.parse(fs.readFileSync(reviewAt, 'utf8'));
   for (const r of rev.lines || []) {
     const l = lines[r.n - 1];
-    if (l && r.fits === 'no' && (l.pictures || []).length) { l.pictures = []; rejected++; }
+    if (!l || r.fits !== 'no') continue;
+    for (const p of l.pictures || []) banned.add(p);
+    if (l.clip?.page) banned.add(l.clip.page);
+    if ((l.pictures || []).length || l.clip?.page) rejected++;
+    l.pictures = [];
+    if (l.clip?.page) delete l.clip;
   }
+  script.banned = [...banned];
 }
+// clips this tool made on an earlier run are planned again, so a better rule applies to them too
+let cleared = 0;
+for (const l of lines) if (l.clip && (l.clip.gapfill || ['ZALA VIP', 'Pixabay Content License'].includes(l.clip.license))) { delete l.clip; cleared++; }
 log(`replanned ${cleared} earlier clips, removed ${rejected} pictures the review rejected`);
 
 // ── fill ─────────────────────────────────────────────────────────────
@@ -185,7 +193,7 @@ log(`${id}: ${empty.length} of ${lines.length} lines have nothing to show`);
 const scenes = [];
 let fromLibrary = 0, fromCrops = 0, fromVideo = 0;
 for (const l of empty) {
-  const ranked = clean.map((p) => [p, score(l.en, p)]).filter(([, s]) => s >= 4).sort((a, b) => b[1] - a[1]);
+  const ranked = clean.filter((p) => !banned.has(p.id)).map((p) => [p, score(l.en, p)]).filter(([, s]) => s >= 4).sort((a, b) => b[1] - a[1]);
   const fresh = ranked.find(([p]) => (uses.get(p.id) || 0) < 2);
   if (fresh) {
     l.pictures = [fresh[0].id];
@@ -204,7 +212,7 @@ for (const l of empty) {
   const clip = await pixabayClip(l.en);
   if (clip) { l.clip = clip; fromVideo++; continue; }
   // the title scene plays over a real picture from the same chapter, blurred and dark, so it never claims to show the line
-  const near = chapterOf.get(l).lines.flatMap((x) => x.pictures || []).map((x) => byId.get(x)).filter((p) => p && !/portrait|person|man |woman/i.test(p.seen.what || ''));
+  const near = chapterOf.get(l).lines.flatMap((x) => x.pictures || []).filter((x) => !banned.has(x)).map((x) => byId.get(x)).filter((p) => p && !/portrait|person|man |woman/i.test(p.seen.what || ''));
   const bg = near.length ? near[scenes.length % near.length] : clean.find((p) => TOPIC.test(textOf(p)));
   const s = { name: `${id}-${hash(l.en)}`, style: scenes.length % 3, ...sceneFor(l), bgUrl: bg?.url || '' };
   scenes.push(s);
