@@ -28,13 +28,33 @@ async function call(url, { method = 'GET', params = {}, token = TOKEN } = {}) {
   return data;
 }
 
-/** A short Wikipedia extract about the object, so the caption has one real fact. */
-async function wikiFacts(q) {
+// the object's own words: "Pectoral of Sithathoryunet MET 16.1.3 back" -> pectoral, sithathoryunet
+const GENERIC = /^(egyptian|egypt|ancient|museum|museo|egizio|metropolitan|walters|exhibition|exhib|collection|photo|image|front|back|detail|side|view|with|from|the|and|name)$/i;
+const cleanTitle = (t) => String(t).replace(/\(.*?\)|\bMET\b[\d.\s]*|\b[A-Z]{1,3}\s?\d[\w.]*|\d{3,}|DSC\s*\d+|\b20\d\d\b|[-_,]/g, ' ').replace(/\s+/g, ' ').trim();
+const keyWords = (t) => cleanTitle(t).split(' ').filter((w) => w.length > 5 && !GENERIC.test(w)).map((w) => w.toLowerCase());
+
+/** Lines of our own episode story (facts checked by the editor) that talk about this object. */
+function storyFacts(cand) {
+  const words = keyWords(cand.title);
+  if (!words.length) return '';
+  const out = [];
+  for (const t of cand.topics || []) {
+    try {
+      const s = JSON.parse(fs.readFileSync(path.join(CONTENT, 'youtube', `${t}.json`), 'utf8'));
+      for (const l of (s.chapters || []).flatMap((c) => c.lines || [])) if (l.en && words.some((w) => l.en.toLowerCase().includes(w))) out.push(l.en);
+    } catch { /* no script */ }
+  }
+  return out.length ? `From our checked episode story:\n${out.slice(0, 6).join('\n')}` : '';
+}
+
+/** A short Wikipedia extract about the object itself (an article that shares one of its words), so the caption has a real fact. */
+async function wikiFacts(title) {
   try {
-    const term = String(q).replace(/\(.*?\)|\d{6,}|DSC\s*\d+|\b(by|in|20\d\d)\b/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 90);
+    const term = cleanTitle(title).slice(0, 90);
+    const words = keyWords(title);
     const h = { headers: { 'user-agent': 'zala-render/1.0' } };
-    const sr = await (await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=1&srsearch=${encodeURIComponent(term + ' ancient Egypt')}`, h)).json();
-    const t = sr?.query?.search?.[0]?.title; if (!t) return '';
+    const sr = await (await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=3&srsearch=${encodeURIComponent(term)}`, h)).json();
+    const t = (sr?.query?.search || []).map((x) => x.title).find((x) => words.some((w) => x.toLowerCase().includes(w.slice(0, 7)))); if (!t) return '';
     const ex = await (await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&format=json&titles=${encodeURIComponent(t)}`, h)).json();
     const p = Object.values(ex?.query?.pages || {})[0];
     return p?.extract ? `From Wikipedia (${t}): ${p.extract.slice(0, 1200)}` : '';
@@ -73,9 +93,13 @@ for (const cand of pool.slice(0, 40)) {
   measured.push({ cand, score: museum + m.colour + m.contrast * 0.5 + m.sharp * 2 + Math.min(m.w, m.h) / 100 });
 }
 measured.sort((a, b) => b.score - a.score);
-for (const { cand } of measured.slice(0, 10)) {
-  const wiki = await wikiFacts(`${cand.title} ${cand.seen?.what || ''}`);
-  const facts = [cand.title, cand.seen?.what, cand.note, wiki].filter(Boolean).join('\n');
+let judged = 0;
+for (const { cand } of measured.slice(0, 30)) {
+  const wiki = await wikiFacts(cand.title);
+  const story = storyFacts(cand);
+  if (!story && !wiki) { console.log(`[qc] ${cand.id} ${cand.title}: no real facts found about it yet, kept for later`); continue; }
+  if (++judged > 10) break;   // at most 10 full checks a day
+  const facts = [cand.title, cand.seen?.what, cand.note, story, wiki].filter(Boolean).join('\n');
   const a = await askJson(`You write one social media picture post for an Ancient Egypt history page (audience: Americans who love history and treasure).
 Use ONLY facts found in this text about the picture; never invent dates, names or numbers:
 """${facts}"""
@@ -98,6 +122,7 @@ the object is a replica, copy or souvenir. Be strict: only a picture that would 
 Return JSON {"pass": true|false, "score": 1-10, "pictureOk": true|false (false only for a problem with the picture itself), "reasons": ["..."]}` },
     { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
   ], { temperature: 0 });
+  console.log(`[qc] caption: ${a.caption}`);
   console.log(`[qc] ${cand.id} ${cand.title}: ${judge ? `${judge.pass ? 'pass' : 'fail'} ${judge.score}/10 ${(judge.reasons || []).join('; ')}` : 'no answer'}`);
   if (judge?.pass && judge.score >= 8) { pick = cand; ans = a; words = w; break; }
   // the picture is fine and only the words are weak: rewrite them from the reviewer's notes and check once more
