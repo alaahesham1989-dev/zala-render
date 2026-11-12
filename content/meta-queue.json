@@ -182,5 +182,25 @@
     ],
     "at": "2026-11-20T16:20:00.000Z",
     "done": false
+  },
+  {
+    "episode": "ZV-L01",
+    "which": "main",
+    "to": [
+      "fb"
+    ],
+    "at": "2026-11-12T13:00:00Z",
+    "done": false,
+    "note": "repost: old post had no reach"
+  },
+  {
+    "episode": "ZV-L01",
+    "which": "R1",
+    "to": [
+      "fb"
+    ],
+    "at": "2026-11-13T13:00:00Z",
+    "done": false,
+    "note": "repost: old post had no reach"
   }
 ]
