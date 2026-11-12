@@ -1,14 +1,17 @@
 name: ZALA prep (facts, clean pictures, story check, Flow shot list)
 
-# Prepares episodes before the factory renders them: a Wikipedia fact bank, the picture library cleaned of
-# unrelated stock photos, a story written only from the facts and checked line by line by an editor, and the list of
-# Google Flow shots (opening hook, reconstructions) that flow-runner.mjs makes on the owner's computer.
+# Prepares episodes before the factory renders them: the picture library, a Wikipedia fact bank, the library cleaned of
+# unrelated stock photos, a story written only from the facts and checked line by line by an editor, Mapbox places,
+# and the list of Google Flow shots and Nano Banana stills that flow-runner.mjs makes on the owner's computer.
+# Every day it keeps 3 episodes prepared ahead of the factory; the factory only takes an episode whose preparation is done.
 on:
+  schedule:
+    - cron: "30 2 * * *"
   workflow_dispatch:
     inputs:
       episodes:
-        description: "Episode ids, separated by spaces (e.g. ZV-T02 ZV-T03)"
-        required: true
+        description: "Episode ids, separated by spaces (empty = the next ones not prepared yet)"
+        required: false
         type: string
       force:
         description: "Write the story again even if the episode is prepared"
@@ -26,8 +29,9 @@ concurrency:
 jobs:
   prep:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
     env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -37,26 +41,54 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Bring scripts and picture index from R2
-        run: aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/*" --include "library/*" --include "factbank/*" --include "prep/*"
+      - name: Bring scripts, picture index and plans from R2
+        run: |
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/*" --include "library/*" --include "factbank/*" --include "prep/*" --include "schedule.json"
+          cp media/tools/treasures.json content/library/treasures.json
+          [ -f content/schedule.json ] || cp media/tools/schedule-seed.json content/schedule.json
+      - name: Which episodes
+        run: |
+          EPS="${{ inputs.episodes }}"
+          if [ -z "$EPS" ]; then
+            EPS=$(node -e '
+              const fs=require("fs");const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};
+              const ids=Object.keys(j("content/library/treasures.json")||{});
+              const plan=j("content/schedule.json")||[];
+              const waiting=ids.filter((id)=>!plan.some((p)=>p.episode===id));
+              // keep 3 prepared episodes waiting for the factory
+              const ready=waiting.filter((id)=>j(`content/youtube/${id}.json`)?.prepared).length;
+              console.log(waiting.filter((id)=>!j(`content/youtube/${id}.json`)?.prepared).slice(0,Math.max(0,3-ready)).join(" "));')
+          fi
+          echo "EPS=$EPS" >> "$GITHUB_ENV"
+          echo "To prepare: ${EPS:-nothing, 3 are ready}"
+      - name: Picture tools
+        if: env.EPS != ''
+        run: |
+          python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
       - name: Prepare
+        if: env.EPS != ''
         run: |
           set -uo pipefail
           fail=0
-          for EP in ${{ inputs.episodes }}; do
+          for EP in $EPS; do
+            # the picture library first (free sources, local picture checks), then facts, cleaning, story, shot list
+            /tmp/lib/bin/python media/tools/library_build.py "$EP" --target 220 || echo "library: $EP kept what it had"
             ok=no
             for i in 1 2 3; do node media/tools/prep.mjs "$EP" ${{ inputs.force && '--force' || '' }} && { ok=yes; break; }; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
             [ $ok = yes ] || fail=1
           done
           exit $fail
       - name: Save back to R2
-        if: always()
+        if: always() && env.EPS != ''
         run: |
           for d in youtube library factbank prep; do [ -d "content/$d" ] && aws s3 sync "content/$d" "s3://${R2_BUCKET}/render-state/content/$d" --endpoint-url "$E" --no-progress; done
           true
