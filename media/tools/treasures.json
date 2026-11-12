@@ -94,7 +94,7 @@
   "ZV-D01": {
     "title": "What Ancient Egyptians Really Ate Every Day",
     "hook": "The pyramid builders were paid in bread and beer, and their bread was full of sand.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "bread|beer|food|diet|bakery|banquet|offering table",
     "archive": "Ancient Egypt food bread beer",
     "queries": [
@@ -104,6 +104,34 @@
       "offering table ancient Egypt food",
       "Meketre bakery model",
       "ancient Egyptian fishing painting"
+    ]
+  },
+  "ZV-D11": {
+    "title": "What Ancient Egyptians Actually Did All Day",
+    "hook": "Forget the pyramids: this was a normal Tuesday 3,500 years ago.",
+    "seconds": 780,
+    "match": "daily life|farmer|scribe|village|work|field|market|deir el-medina",
+    "archive": "Ancient Egypt daily life farmer scribe",
+    "queries": [
+      "ancient Egyptian farmers painting",
+      "ancient Egyptian scribe statue",
+      "Tomb of Menna harvest",
+      "ancient Egyptian market relief",
+      "Deir el-Medina village"
+    ]
+  },
+  "ZV-D12": {
+    "title": "Ancient Egyptian Women Had Rights Most Women Waited 3,000 Years For",
+    "hook": "They could own land, sign contracts and divorce their husbands.",
+    "seconds": 780,
+    "match": "women|wife|divorce|property|queen|priestess|marriage contract",
+    "archive": "Women in ancient Egypt rights",
+    "queries": [
+      "ancient Egyptian woman statue",
+      "marriage contract papyrus demotic",
+      "ancient Egyptian priestess",
+      "Hatshepsut statue",
+      "ancient Egyptian women weaving model"
     ]
   },
   "ZV-T05": {
@@ -126,7 +154,7 @@
   "ZV-D02": {
     "title": "The Dentists of Ancient Egypt: Pain Before Painkillers",
     "hook": "4,500 years ago a man was buried with the title Chief of Teeth.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "dentist|teeth|tooth|hesy-ra|medicine|papyrus ebers|physician",
     "archive": "Ancient Egypt dentistry medicine",
     "queries": [
@@ -159,7 +187,7 @@
   "ZV-D03": {
     "title": "Why Ancient Egyptians Mummified Their Cats",
     "hook": "Millions of cats were mummified, and many were bred only to die.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "cat|bastet|animal mummy|bubastis|mummified animal",
     "archive": "Ancient Egypt cat mummies Bastet",
     "queries": [
@@ -190,7 +218,7 @@
   "ZV-D04": {
     "title": "The Ancient Egyptian Makeup That Fought Disease",
     "hook": "Their black eyeliner was not only beauty, it killed bacteria.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "kohl|makeup|cosmetic|eye paint|mirror|perfume|wig",
     "archive": "Ancient Egypt makeup kohl cosmetics",
     "queries": [
@@ -205,7 +233,7 @@
   "ZV-T08": {
     "title": "The Queen Whose Body Vanished: Hetepheres' Golden Tomb",
     "hook": "The mother of the Great Pyramid's king was buried in gold, but her coffin was empty.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "hetepheres|sneferu|khufu|giza",
     "archive": "Hetepheres I tomb furniture",
     "queries": [
@@ -222,7 +250,7 @@
   "ZV-D05": {
     "title": "How Ancient Egyptians Survived the Desert Heat",
     "hook": "No air conditioning, 45 degrees in summer, and they built cities that stayed cool.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "house|village|deir el-medina|wind catcher|linen|nile|irrigation|shaduf",
     "archive": "Ancient Egypt daily life houses heat",
     "queries": [
@@ -237,7 +265,7 @@
   "ZV-T09": {
     "title": "The Richest Tomb Before Tutankhamun: Yuya and Tjuyu",
     "hook": "Seventeen years before Carter, two commoners were found buried like kings.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "yuya|tjuyu|thuya|kv46|tiye",
     "archive": "Yuya and Tjuyu tomb KV46",
     "queries": [
@@ -254,7 +282,7 @@
   "ZV-D06": {
     "title": "The Toys Ancient Egyptian Children Played With",
     "hook": "A 3,500 year old toy cat with a moving jaw still works today.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "toy|game|senet|children|child|doll|ball|mehen",
     "archive": "Ancient Egypt toys games children",
     "queries": [
@@ -269,7 +297,7 @@
   "ZV-T10": {
     "title": "The Gold of Nubia: The Kingdom That Ruled Egypt",
     "hook": "The pharaohs got their gold from Nubia, until Nubia's kings took Egypt's throne.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "nubia|kush|meroe|taharqa|kerma|napata|amanishakheto",
     "archive": "Kingdom of Kush gold jewellery",
     "queries": [
@@ -286,7 +314,7 @@
   "ZV-D07": {
     "title": "The Ancient Egyptian Workers Who Went on Strike",
     "hook": "The first strike in recorded history happened at the tombs of the pharaohs.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "strike|workers|deir el-medina|ostraca|ramesses iii|tomb builders|turin papyrus",
     "archive": "Deir el-Medina workers strike",
     "queries": [
@@ -300,7 +328,7 @@
   "ZV-T11": {
     "title": "The Golden Falcon: Egypt's Sky God in Gold",
     "hook": "Its eyes are a single stone that glows like the sun, after four thousand years.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "falcon|horus|hierakonpolis|nekhen",
     "archive": "Golden falcon head Hierakonpolis",
     "queries": [
@@ -317,7 +345,7 @@
   "ZV-D08": {
     "title": "How Ancient Egyptians Partied: The Festival of Drunkenness",
     "hook": "Once a year they drank until they passed out, on purpose, to calm an angry goddess.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "festival|drunkenness|hathor|beer|wine|music|dance|banquet",
     "archive": "Ancient Egypt festival Hathor drunkenness",
     "queries": [
@@ -331,7 +359,7 @@
   "ZV-T12": {
     "title": "The Beetle That Pushed the Sun: Egypt's Golden Scarabs",
     "hook": "Egyptians wore a beetle over the heart so it would not betray them in the afterlife.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "scarab|khepri|heart scarab|pectoral",
     "archive": "Egyptian scarab amulets and pectorals",
     "queries": [
@@ -348,7 +376,7 @@
   "ZV-D09": {
     "title": "Love and Marriage in Ancient Egypt",
     "hook": "They wrote love poems 3,000 years ago that still sound modern.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "love|marriage|wife|husband|love poem|couple|pair statue",
     "archive": "Ancient Egypt love marriage",
     "queries": [
@@ -362,7 +390,7 @@
   "ZV-D10": {
     "title": "The Strange Ancient Egyptian Cures That Actually Worked",
     "hook": "They put moldy bread on wounds, thousands of years before penicillin.",
-    "seconds": 480,
+    "seconds": 780,
     "match": "medicine|cure|remedy|honey|papyrus|physician|edwin smith|ebers",
     "archive": "Ancient Egypt medicine remedies",
     "queries": [
