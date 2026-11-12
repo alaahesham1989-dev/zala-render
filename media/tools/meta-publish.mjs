@@ -41,6 +41,7 @@ function texts(pkg, id, which) {
 
 /** The licences' credits as the first comment under the post. A failed comment never stops the post. */
 async function creditComment(objectId, pkg, token, max) {
+  return;   // owner order 2026-11-12: no credits comments anywhere; the credits live on zalavip.com/credits
   const message = creditText(pkg, max);
   if (!message) return;
   try { await call(`${G}/${objectId}/comments`, { method: 'POST', token, params: { message } }); console.log(`credits comment on ${objectId}`); }
@@ -49,6 +50,7 @@ async function creditComment(objectId, pkg, token, max) {
 
 /** YouTube: the credits comment goes up when the video is public (a private video takes no comments). */
 async function youtubeCredits(pkg, videoId) {
+  return { platform: 'youtube', kind: 'credits', skipped: 'owner order: credits on zalavip.com/credits' };   // no comments
   const { YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN } = process.env;
   const t = await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: YOUTUBE_CLIENT_ID, client_secret: YOUTUBE_CLIENT_SECRET, refresh_token: YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) })).json();
   if (!t.access_token) throw new Error(`Google refused the token: ${t.error}`);
