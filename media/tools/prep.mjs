@@ -32,7 +32,7 @@ async function wiki(params) {
 }
 async function factBank() {
   const old = readJson(factFile, null);
-  if (old?.facts?.length >= 25 && !force) { log(`facts: ${old.facts.length} already`); return old; }
+  if (old?.facts?.length >= 25 && !force) { log(`facts: ${old.facts.length} already`); await addPlaces((old.sources || []).map((x) => x.title).filter(Boolean)); return old; }
   const titles = [];
   for (const q of spec.queries.slice(0, 8)) {
     try { for (const r of (await wiki({ action: 'query', list: 'search', srsearch: q, srlimit: 2 })).query.search) if (!titles.includes(r.title)) titles.push(r.title); } catch { /* next search */ }
@@ -46,6 +46,7 @@ async function factBank() {
     } catch { /* skip page */ }
   }
   log(`facts: ${titles.length} Wikipedia pages: ${titles.join(' | ')}`);
+  await addPlaces(titles);
   const bank = await askJson(`Build a fact bank for a history video titled "${spec.title}". Use ONLY the Wikipedia text below; never add anything from memory.
 Return JSON {"topic": "${spec.title}", "summary": "4 sentences", "facts": ["40 to 70 short facts, each one sentence with its names, dates, numbers and places exactly as in the text, focused on the treasure, the people, the discovery and why it matters"],
 "common_myths": ["claims the text says are wrong or disputed"], "sources": [{"title": "", "url": ""}]}
@@ -55,6 +56,27 @@ TEXT:${text.slice(0, 90000)}`, { temperature: 0.1 });
   fs.writeFileSync(factFile, JSON.stringify(bank, null, 2) + '\n');
   log(`facts: ${bank.facts.length} facts saved`);
   return bank;
+}
+
+// Mapbox aerial shots: every place of the story with Wikipedia coordinates in Egypt joins content/library/places.json,
+// so the director gives its first mention a satellite fly-in (wide view, then a zoom down onto the site).
+async function addPlaces(titles) {
+  const file = path.join(CONTENT, 'library', 'places.json');
+  const places = readJson(file, []);
+  let added = 0;
+  try {
+    const pages = (await wiki({ action: 'query', prop: 'coordinates', titles: titles.join('|') })).query.pages;
+    for (const pg of Object.values(pages)) {
+      const c = pg.coordinates?.[0];
+      if (!c || c.lat < 21.5 || c.lat > 32 || c.lon < 24.5 || c.lon > 37) continue;   // Egypt only (a statue's page points at its museum abroad)
+      const name = pg.title.replace(/\s*\(.*\)$/, '');
+      if (places.some((p) => p.name.toLowerCase() === name.toLowerCase())) continue;
+      places.push({ name, match: `\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, lat: Math.round(c.lat * 1e4) / 1e4, lng: Math.round(c.lon * 1e4) / 1e4, zoom: 14 });
+      added++;
+    }
+  } catch (e) { log(`places: ${e.message}`); }
+  if (added) fs.writeFileSync(file, JSON.stringify(places) + '\n');
+  log(`places: ${added} new aerial places (${places.length} in all)`);
 }
 
 // ── 2. clean the picture library ─────────────────────────────────────
@@ -157,7 +179,7 @@ ${catalog}`, { temperature: 0.7 });
 
 // ── run ──────────────────────────────────────────────────────────────
 const old = readJson(scriptFile, null);
-if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); process.exit(0); }
+if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); process.exit(0); }
 const bank = await factBank();
 const pics = await cleanLibrary();
 const story = await writeStory(bank, pics);
