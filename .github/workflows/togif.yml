@@ -1,0 +1,36 @@
+name: ZALA convert a recording to MP4
+
+# Turns a small screen recording (GIF) kept in the repo into an MP4 on R2, e.g. the TikTok review demo.
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "GIF path in the repo"
+        required: true
+        type: string
+      out:
+        description: "R2 key for the MP4"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          # each frame stays on screen long enough to read (3x slower than recorded)
+          ffmpeg -y -loglevel error -i "${{ inputs.path }}" -vf "fps=25,setpts=3*PTS,scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" -c:v libx264 -movflags +faststart out.mp4
+          ffprobe -v error -show_entries format=duration -of csv=p=0 out.mp4
+          aws s3 cp out.mp4 "s3://${{ secrets.R2_BUCKET }}/${{ inputs.out }}" --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com" --content-type video/mp4 --no-progress
