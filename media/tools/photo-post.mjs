@@ -109,7 +109,7 @@ Return JSON: {"words": "2 to 5 big words for the picture, a hook, no place or pe
 "title": "a blog title of 5 to 10 words about this object",
 "story": ["2 or 3 short paragraphs for a blog post about this object, using only the facts in the text, simple words"]}`);
   if (!a?.caption || !a?.words) { console.log('[qc] Gemini gave no words, trying later'); break; }
-  const w = String(a.words).slice(0, 40);
+  let w = String(a.words).slice(0, 40);
   execFileSync(PY, [CARD_PY, cand.url, w, card], { stdio: 'inherit' });
   const judge = await askJson([
     { text: `You are a strict quality controller for a premium history page. Look at this finished post card and its caption.
@@ -129,12 +129,18 @@ Return JSON {"pass": true|false, "score": 1-10, "pictureOk": true|false (false o
   if (judge && judge.pictureOk) {
     const fix = await askJson(`Rewrite this picture post caption. Reviewer notes: ${(judge.reasons || []).join('; ')}
 Use ONLY facts from this text: """${facts}"""
-Return JSON {"caption": "two short sentences: one specific surprising fact, then a short question about it"}`);
+The big words on the card now: "${w}".
+Return JSON {"caption": "two short sentences: one specific surprising fact, then a short question about it",
+"words": "the big words for the card, 2 to 5 words, correct English spelling (keep them if they were fine), no place or person names"}`);
     if (fix?.caption) {
-      const again = await askJson([{ text: `Strict quality check of a history post caption. Facts: """${facts}"""
+      const fw = String(fix.words || w).slice(0, 40);
+      if (fw !== w) { w = fw; execFileSync(PY, [CARD_PY, cand.url, w, card], { stdio: 'inherit' }); }
+      const again = await askJson([{ text: `Strict quality check of a history post card and its caption. Facts: """${facts}"""
 Caption: """${fix.caption}"""
-Fail it if it says anything the facts do not support, or if it is vague (it must give one specific, surprising fact).
-Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` }], { temperature: 0 });
+Fail it if the caption says anything the facts do not support or is vague (it must give one specific, surprising fact),
+or if the big words on the card are misspelled, wrong English or hard to read.
+Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
+      { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } }], { temperature: 0 });
       console.log(`[qc] ${cand.id} words rewritten: ${again ? `${again.pass ? 'pass' : 'fail'} ${again.score}/10` : 'no answer'}`);
       if (again?.pass && again.score >= 8) { pick = cand; ans = { ...a, caption: fix.caption }; words = w; break; }
     }
