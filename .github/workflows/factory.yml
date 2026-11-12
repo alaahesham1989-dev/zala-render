@@ -74,11 +74,17 @@ jobs:
               const ids=Object.keys(JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")));
               const plan=fs.existsSync("content/schedule.json")?JSON.parse(fs.readFileSync("content/schedule.json","utf8")):[];
               const st=fs.existsSync("content/factory-state.json")?JSON.parse(fs.readFileSync("content/factory-state.json","utf8")):{};
-              const next=ids.find((id)=>!plan.some((p)=>p.episode===id)&&(st[id]?.days||0)<3);
+              const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};
+              // only an episode whose preparation is finished: the story passed the editor (prep.mjs) and every
+              // Flow shot and Nano Banana still is made (flow-runner.mjs). Nothing unprepared is ever started.
+              const ready=(id)=>{const s=j(`content/youtube/${id}.json`),p=j(`content/prep/${id}.json`),f=j(`content/prep/${id}.flow.json`);
+                if(!s?.prepared||!p)return false;const made=new Set((f?.shots||[]).filter((x)=>x.url).map((x)=>x.line));
+                return (p.shots||[]).every((x)=>made.has(x.line));};
+              const next=ids.find((id)=>!plan.some((p)=>p.episode===id)&&(st[id]?.days||0)<3&&ready(id));
               console.log(next||"");')
           fi
           echo "EP=$EP" >> "$GITHUB_ENV"
-          echo "Today: ${EP:-nothing left}"
+          echo "Today: ${EP:-nothing prepared yet}"
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
         if: env.EP != ''
         run: |
@@ -136,7 +142,7 @@ jobs:
         if: always()
         run: |
           aws s3 cp media/tools/dashboard.html "s3://${R2_BUCKET}/preview/dashboard.html" --endpoint-url "$E" --content-type "text/html; charset=utf-8" --no-progress || true
-          if [ -z "${EP:-}" ]; then MSG="ZALA المصنع: مفيش حلقة جديدة في الطابور النهارده."
+          if [ -z "${EP:-}" ]; then MSG="ZALA المصنع: مفيش حلقة تحضيرها خلص النهارده (الحقائق والقصة ولقطات Flow). شغّل flow-runner على الجهاز لو فيه لقطات مستنية."
           elif [ "${PASS:-no}" = yes ]; then MSG="ZALA المصنع: $EP خلصت في ${MINUTES:-?} دقيقة بعد ${TRIES:-?} رندر، عدّت المراجعة واتجدولت:
           $(cat schedule-summary.txt 2>/dev/null)"
           else MSG="ZALA المصنع: $EP ماعدتش المراجعة بعد ${TRIES:-?} رندر. هتتعاد بكرة لوحدها (لحد 3 أيام). السبب: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
