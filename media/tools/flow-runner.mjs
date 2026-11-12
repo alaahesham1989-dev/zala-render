@@ -54,7 +54,9 @@ async function chromeUp() {
 }
 async function startChrome() {
   if (await chromeUp()) return;
-  spawn(CHROME, [`--remote-debugging-port=${PORT}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--window-size=1400,1000', FLOW], { detached: true, stdio: 'ignore' }).unref();
+  spawn(CHROME, [`--remote-debugging-port=${PORT}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check',
+    // the window works behind others: without these Chrome pauses its animations and Flow's page never finishes opening
+    '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--window-size=1400,1000', FLOW], { detached: true, stdio: 'ignore' }).unref();
   for (let i = 0; i < 30 && !(await chromeUp()); i++) await sleep(1000);
   if (!(await chromeUp())) throw new Error('Chrome did not start');
 }
@@ -111,14 +113,25 @@ async function makeShot(p, prompt, still = false) {
     await sleep(3000);
   }
   if (process.env.NO_SEND) throw new Error('not made yet (NO_SEND: nothing sent)');
-  const ok = await p.js(`(() => { const t = document.querySelector('.ProseMirror, [contenteditable=true][role=textbox], div[contenteditable=true], textarea'); if (!t) return false; t.focus(); t.click(); return true; })()`);
-  if (!ok) throw new Error('no prompt box on the page');
-  await p.send('Input.insertText', { text: still ? `Create exactly one 16:9 image (an image, not a video) with Nano Banana from this prompt, word for word, with no changes:\n${prompt}` : `Create exactly one 8-second 16:9 video (a video, not an image) from this prompt, word for word, with no changes:\n${prompt}` });
-  await sleep(800);
-  // the send arrow only answers a real mouse click (a script click is ignored by the page)
-  const pt = await p.js(`(() => { const b = [...document.querySelectorAll('button')].find((e) => e.offsetParent && /بدء الإنشاء|^Create|Send|إرسال/.test(e.getAttribute('aria-label') || '')); if (!b || b.disabled) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
-  if (!pt) throw new Error('the create button did not take the prompt');
-  for (const type of ['mousePressed', 'mouseReleased']) await p.send('Input.dispatchMouseEvent', { type, x: pt[0], y: pt[1], button: 'left', clickCount: 1 });
+  const text = still ? `Create exactly one 16:9 image (an image, not a video) with Nano Banana from this prompt, word for word, with no changes:\n${prompt}` : `Create exactly one 8-second 16:9 video (a video, not an image) from this prompt, word for word, with no changes:\n${prompt}`;
+  const box = `document.querySelector('.ProseMirror, [contenteditable=true][role=textbox], div[contenteditable=true], textarea')`;
+  const marker = JSON.stringify(prompt.slice(0, 30));
+  // type, press the arrow, then make sure it really left: the box is empty and the prompt shows in the agent's chat
+  let sent = false;
+  for (let attempt = 1; attempt <= 3 && !sent; attempt++) {
+    await sleep(3000);
+    const ok = await p.js(`(() => { const t = ${box}; if (!t) return false; t.focus(); t.click(); return true; })()`);
+    if (!ok) { await openProject(p); continue; }
+    if (!(await p.js(`(${box}.innerText || ${box}.value || '').includes(${marker})`))) await p.send('Input.insertText', { text });
+    await sleep(1500);
+    // the send arrow only answers a real mouse click (a script click is ignored by the page)
+    const pt = await p.js(`(() => { const b = [...document.querySelectorAll('button')].find((e) => e.offsetParent && /بدء الإنشاء|^Create|Send|إرسال/.test(e.getAttribute('aria-label') || '')); if (!b || b.disabled) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+    if (pt) for (const type of ['mousePressed', 'mouseReleased']) await p.send('Input.dispatchMouseEvent', { type, x: pt[0], y: pt[1], button: 'left', clickCount: 1 });
+    await sleep(6000);
+    sent = await p.js(`!(${box}?.innerText || '').includes(${marker}) && document.body.innerText.includes(${marker})`);
+    if (!sent) log(`   not sent yet (try ${attempt})`);
+  }
+  if (!sent) throw new Error('the prompt could not be sent to Flow');
   log('   sent, waiting for Flow');
   for (let i = 1; i <= 60; i++) {   // up to 20 minutes
     await sleep(20000);
