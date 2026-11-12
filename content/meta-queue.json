@@ -190,8 +190,16 @@
       "fb"
     ],
     "at": "2026-11-12T13:00:00Z",
-    "done": false,
-    "note": "repost: old post had no reach"
+    "done": "2026-11-12T12:40:00.000Z",
+    "note": "repost: old post had no reach",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "1493637549336032",
+        "url": "https://www.facebook.com/108172631323930/videos/1493637549336032"
+      }
+    ]
   },
   {
     "episode": "ZV-L01",
