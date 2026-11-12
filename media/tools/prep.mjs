@@ -177,9 +177,30 @@ ${catalog}`, { temperature: 0.7 });
   return null;
 }
 
+// ── 6. Nano Banana stills for lines nothing shows ────────────────────
+// Lines with no picture and no Flow shot would fall back to crops or title cards. For up to 8 of them where a still
+// reconstruction truly helps (a place as it looked, an object, a scene), Gemini writes a Nano Banana prompt.
+async function stills(script) {
+  const prep = readJson(prepFile, { id, shots: [] });
+  if (prep.shots.some((s) => s.kind === 'still') && !force) return;
+  const lines = script.chapters.flatMap((c) => c.lines);
+  const empty = lines.map((l, i) => ({ n: i + 1, l })).filter(({ l }) => !(l.pictures || []).length && !l.gen);
+  if (!empty.length) return;
+  const ans = await askJson(`A history video about "${spec.title}". These narration lines have no picture yet:
+${empty.map(({ n, l }) => `${n}. ${l.en}`).join('\n')}
+Pick at most 8 lines where one still image would really help the viewer (a place as it looked then, an object, a scene); skip lines about modern events, dates alone, or that only ask a question.
+For each, write a prompt for an image model: a photorealistic 16:9 still, accurate to the period (materials, clothing, architecture of that dynasty), warm torch or sun light, cinematic, no text, no logos, no modern objects, faces natural and calm.
+Return JSON {"stills": [{"n": line number, "prompt": "..."}]}`, { temperature: 0.4 });
+  const picked = (ans?.stills || []).filter((s) => empty.some((e) => e.n === s.n) && s.prompt).slice(0, 8);
+  prep.shots = prep.shots.filter((s) => s.kind !== 'still').concat(picked.map((s) => ({ n: s.n, line: lines[s.n - 1].en, kind: 'still', prompt: s.prompt, status: 'todo' })));
+  fs.mkdirSync(path.dirname(prepFile), { recursive: true });
+  fs.writeFileSync(prepFile, JSON.stringify(prep, null, 2) + '\n');
+  log(`stills: ${picked.length} Nano Banana stills planned`);
+}
+
 // ── run ──────────────────────────────────────────────────────────────
 const old = readJson(scriptFile, null);
-if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); process.exit(0); }
+if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); await stills(old); process.exit(0); }
 const bank = await factBank();
 const pics = await cleanLibrary();
 const story = await writeStory(bank, pics);
@@ -192,3 +213,4 @@ fs.writeFileSync(scriptFile, JSON.stringify({ id, series: old?.series || 'ZALA V
 fs.mkdirSync(path.dirname(prepFile), { recursive: true });
 fs.writeFileSync(prepFile, JSON.stringify({ id, title: story.title, at: new Date().toISOString(), shots }, null, 2) + '\n');
 log(`${id} prepared: "${story.title}", ${shots.length} Flow shots waiting in content/prep/${id}.json`);
+await stills(readJson(scriptFile, null));
