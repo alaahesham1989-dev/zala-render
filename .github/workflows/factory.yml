@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: zala-episode
@@ -51,6 +52,8 @@ jobs:
       FFMPEG_PATH: /usr/bin/ffmpeg
       FFPROBE_PATH: /usr/bin/ffprobe
       CHROME_PATH: /usr/bin/google-chrome
+      NO_ARABIC_COPY: "1"   # nobody reviews the Arabic copy any more: one full encode less per render
+      GH_TOKEN: ${{ github.token }}
       MANIM_PY: /tmp/manim/bin/python
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:
@@ -97,6 +100,9 @@ jobs:
           python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
           /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
           for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+          # carry on where the last run stopped: the scenes already rendered and the last review (only what it found is fixed)
+          aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
           mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
       - name: Make the episode, and fix it until the review passes
         if: env.EP != ''
@@ -112,7 +118,7 @@ jobs:
           pass=no; tries=0
           for attempt in 1 2 3; do
             tries=$attempt
-            if [ "$attempt" = 1 ]; then node media/tools/gapfill.mjs "$EP"; else node media/tools/gapfill.mjs "$EP" --review review-out/review.json; fi
+            if [ "$attempt" = 1 ]; then if [ -f review-last.json ]; then node media/tools/gapfill.mjs "$EP" --review review-last.json; else node media/tools/gapfill.mjs "$EP"; fi; else node media/tools/gapfill.mjs "$EP" --review review-out/review.json; fi
             node media/zala-render.mjs all "$EP" || continue
             /tmp/lib/bin/python media/tools/thumbs.py "media/out/${EP}/publish" "$EP" || true   # the review counts the thumbnails
             rm -rf review-out; node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
@@ -137,6 +143,9 @@ jobs:
           aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -d "media/out/$EP" ] && aws s3 sync "media/out/$EP" "s3://${R2_BUCKET}/renders/$EP" --endpoint-url "$E" --no-progress
+          # the rendered scenes stay for the next run until the episode passes
+          if [ "${PASS:-no}" = yes ]; then aws s3 rm "s3://${R2_BUCKET}/render-cache/work/$EP" --recursive --endpoint-url "$E" --quiet || true
+          elif [ -d "media/tmp/render/$EP" ]; then aws s3 sync "media/tmp/render/$EP" "s3://${R2_BUCKET}/render-cache/work/$EP" --endpoint-url "$E" --no-progress --exclude "*.ass" || true; fi
           true
       - name: Dashboard and Telegram
         if: always()
@@ -145,7 +154,12 @@ jobs:
           if [ -z "${EP:-}" ]; then MSG="ZALA المصنع: مفيش حلقة تحضيرها خلص النهارده (الحقائق والقصة ولقطات Flow). شغّل flow-runner على الجهاز لو فيه لقطات مستنية."
           elif [ "${PASS:-no}" = yes ]; then MSG="ZALA المصنع: $EP خلصت في ${MINUTES:-?} دقيقة بعد ${TRIES:-?} رندر، عدّت المراجعة واتجدولت:
           $(cat schedule-summary.txt 2>/dev/null)"
-          else MSG="ZALA المصنع: $EP ماعدتش المراجعة بعد ${TRIES:-?} رندر. هتتعاد بكرة لوحدها (لحد 3 أيام). السبب: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
+          else MSG="ZALA المصنع: $EP ماعدتش المراجعة بعد ${TRIES:-?} رندر. بيكمّل على طول من مكان ما وقف، ويصلّح اللي المراجعة لقيته بس. السبب: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
           MSG="$MSG
           اللوحة: ${VITE_MEDIA_BASE_URL}/preview/dashboard.html"
           if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          # a failed episode carries on at once (scenes and the review are kept), up to 4 runs in all; then it waits for a look
+          if [ -n "${EP:-}" ] && [ "${PASS:-no}" != yes ]; then
+            runs=$(node -e 'try{console.log(JSON.parse(require("fs").readFileSync("content/factory-state.json"))[process.env.EP].days||0)}catch{console.log(0)}')
+            if [ "$runs" -lt 4 ]; then gh workflow run factory.yml -R "$GITHUB_REPOSITORY" -f episode="$EP" && echo "next run started for $EP"; fi
+          fi
