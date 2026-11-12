@@ -8,9 +8,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 
-const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), '..', '..');
+const REPO = path.resolve(import.meta.dirname, '..', '..');   // import.meta.dirname keeps the Arabic folder name readable
 const env = {};
 try { for (const l of fs.readFileSync(path.join(REPO, '.env.local'), 'utf8').split(/\r?\n/)) { const m = l.match(/^([A-Z0-9_]+)=(.*)$/); if (m) env[m[1]] = m[2].trim().replace(/^["']|["']$/g, ''); } } catch { /* keys from the environment */ }
 const K = (n) => process.env[n] || env[n];
@@ -37,8 +37,15 @@ function r2Put(key, body, type) {
   const hmac = (k, d) => crypto.createHmac('sha256', k).update(d).digest();
   const sk = hmac(hmac(hmac(hmac(`AWS4${K('R2_SECRET_ACCESS_KEY')}`, day), 'auto'), 's3'), 'aws4_request');
   const sig = crypto.createHmac('sha256', sk).update(toSign).digest('hex');
-  return fetch(`https://${host}${uri}`, { method: 'PUT', body, headers: { ...headers, authorization: `AWS4-HMAC-SHA256 Credential=${K('R2_ACCESS_KEY_ID')}/${scope}, SignedHeaders=${names.join(';')}, Signature=${sig}` } })
-    .then(async (r) => { if (!r.ok) throw new Error(`R2 refused ${key}: ${r.status} ${await r.text()}`); });
+  // curl, not fetch: Node's own TLS is refused by R2 on this network, curl is not
+  const tmp = path.join(os.tmpdir(), `zala-put-${process.pid}`);
+  fs.writeFileSync(tmp, body);
+  const auth = `AWS4-HMAC-SHA256 Credential=${K('R2_ACCESS_KEY_ID')}/${scope}, SignedHeaders=${names.join(';')}, Signature=${sig}`;
+  const hdrs = Object.entries({ ...headers, authorization: auth }).filter(([k]) => k !== 'host').flatMap(([k, v]) => ['-H', `${k}: ${v}`]);
+  const out = execFileSync('curl', ['-sS', '-X', 'PUT', '-w', '%{http_code}', '-o', '-', '--data-binary', `@${tmp}`, ...hdrs, `https://${host}${uri}`], { encoding: 'utf8' });
+  fs.rmSync(tmp, { force: true });
+  if (!out.endsWith('200')) throw new Error(`R2 refused ${key}: ${out.slice(-300)}`);
+  return Promise.resolve();
 }
 
 // ── Chrome ──
@@ -72,14 +79,18 @@ const videos = (p) => p.js(`[...document.querySelectorAll('video')].map((v) => v
 async function makeShot(p, prompt) {
   // a fresh project for each episode keeps the gallery small; the prompt box is the page's only textarea
   const before = new Set(await videos(p));
-  const ok = await p.js(`(() => { const t = document.querySelector('textarea'); if (!t) return false; t.focus(); t.select?.(); return true; })()`);
+  const ok = await p.js(`(() => { const t = document.querySelector('.ProseMirror, [contenteditable=true][role=textbox], div[contenteditable=true], textarea'); if (!t) return false; t.focus(); t.click(); return true; })()`);
   if (!ok) throw new Error('no prompt box on the page');
-  await p.send('Input.insertText', { text: prompt });
+  await p.send('Input.insertText', { text: `Create exactly one 8-second 16:9 video (a video, not an image) from this prompt, word for word, with no changes:\n${prompt}` });
   await sleep(800);
-  const sent = await p.js(`(() => { const b = document.querySelector('button[type=submit]'); if (!b || b.disabled) return false; b.click(); return true; })()`);
+  // the send arrow only answers a real mouse click (a script click is ignored by the page)
+  const pt = await p.js(`(() => { const b = [...document.querySelectorAll('button')].find((e) => e.offsetParent && /بدء الإنشاء|^Create|Send|إرسال/.test(e.getAttribute('aria-label') || '')); if (!b || b.disabled) return null; const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+  if (pt) for (const type of ['mousePressed', 'mouseReleased']) await p.send('Input.dispatchMouseEvent', { type, x: pt[0], y: pt[1], button: 'left', clickCount: 1 });
+  const sent = !!pt;
   if (!sent) throw new Error('the create button did not take the prompt');
   log('   sent, waiting for Flow');
   for (let i = 0; i < 90; i++) {   // up to 15 minutes
+    await clickText(p, /^(تأكيد|إنشاء|Confirm|Create|Generate|متابعة|Continue)$/i);
     await sleep(10000);
     const fresh = (await videos(p)).filter((v) => !before.has(v));
     if (fresh.length) return fresh[0];
@@ -103,27 +114,48 @@ async function settings(p) {
 const args = process.argv.slice(2);
 await startChrome();
 if (args.includes('--login')) { log(`Chrome is open (profile ${PROFILE}). Sign in to Flow with the Korean account in that window, then close it.`); process.exit(0); }
+// --put <episode> <shot number> <file.mp4>: puts a shot already made (for example downloaded by hand) in its place
+if (args[0] === '--put') {
+  const [, ep, n, file] = args;
+  const prep = await (await fetch(`${BASE}/render-state/content/prep/${ep}.json?t=${Date.now()}`)).json();
+  const s = prep.shots.find((x) => String(x.n) === String(n));
+  let done = { id: ep, shots: [] };
+  try { done = await (await fetch(`${BASE}/render-state/content/prep/${ep}.flow.json?t=${Date.now()}`)).json(); } catch { /* first */ }
+  const data = fs.readFileSync(file);
+  const key = `vault/flow/${ep}/${s.n}-${crypto.createHash('sha1').update(s.prompt).digest('hex').slice(0, 8)}.mp4`;
+  await r2Put(key, data, 'video/mp4');
+  done.shots = done.shots.filter((d) => d.line !== s.line).concat({ n: s.n, line: s.line, url: `${BASE}/${key}`, bytes: data.length, at: new Date().toISOString() });
+  await r2Put(`render-state/content/prep/${ep}.flow.json`, Buffer.from(JSON.stringify(done, null, 2)), 'application/json');
+  log(`put ${key}`); process.exit(0);
+}
 const p = await page();
 for (const ep of args.filter((a) => /^ZV-/.test(a))) {
   const prep = await (await fetch(`${BASE}/render-state/content/prep/${ep}.json?t=${Date.now()}`)).json();
   let done = { id: ep, shots: [] };
   try { done = await (await fetch(`${BASE}/render-state/content/prep/${ep}.flow.json?t=${Date.now()}`)).json(); } catch { /* first run */ }
-  const todo = prep.shots.filter((s) => !done.shots.some((d) => d.line === s.line && d.url));
+  const todo = prep.shots.filter((s) => !done.shots.some((d) => d.line === s.line && d.url)).slice(0, Number(process.env.LIMIT || 99));   // LIMIT=1 for a test
   log(`${ep}: ${todo.length} of ${prep.shots.length} shots to make`);
   if (!todo.length) continue;
   // a new project per episode
-  await p.send('Page.navigate', { url: FLOW });
-  await sleep(6000);
-  const signedIn = await p.js(`!/sign in|تسجيل الدخول/i.test(document.body.innerText.slice(0, 2000))`);
+  const projectFile = path.join(PROFILE, 'zala-project.txt');
+  const here = await p.js('location.href');
+  if (!/\/project\//.test(here)) {
+    await p.send('Page.navigate', { url: fs.existsSync(projectFile) ? fs.readFileSync(projectFile, 'utf8').trim() : FLOW });
+    await sleep(8000);
+  }
+  const signedIn = await p.js(`!location.href.includes('accounts.google') && !location.pathname.startsWith('/about')`);
   if (!signedIn) throw new Error('Flow is not signed in: run with --login and sign in with the Korean account');
-  await clickText(p, /^(add_2\s*)?(مشروع جديد|New project)$/i);
-  await sleep(6000);
-  await settings(p);
+  const url = await p.js('location.href');
+  if (/\/project\//.test(url)) fs.writeFileSync(projectFile, url);
+  else throw new Error('no Flow project open: open one project in the Flow window and run again');
   for (const s of todo) {
     log(` shot ${s.n} (${s.kind})`);
     try {
       const src = await makeShot(p, s.prompt);
-      const data = Buffer.from(await p.js(`fetch(${JSON.stringify(src)}).then((r) => r.arrayBuffer()).then((b) => { let s = ''; const u = new Uint8Array(b); for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode(...u.subarray(i, i + 32768)); return btoa(s); })`), 'base64');
+      // the page cannot read its own video (it redirects to Google's video servers), so Node downloads it with the window's cookies
+      const { cookies } = await p.send('Network.getCookies', { urls: [src] }).then((m) => m.result);
+      const res = await fetch(src, { headers: { cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; '), 'user-agent': 'Mozilla/5.0' }, redirect: 'follow' });
+      const data = Buffer.from(await res.arrayBuffer());
       if (data.length < 100000) throw new Error(`the video is only ${data.length} bytes`);
       const key = `vault/flow/${ep}/${s.n}-${crypto.createHash('sha1').update(s.prompt).digest('hex').slice(0, 8)}.mp4`;
       await r2Put(key, data, 'video/mp4');
