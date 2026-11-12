@@ -208,8 +208,16 @@
       "fb"
     ],
     "at": "2026-11-12T13:00:00Z",
-    "done": false,
-    "note": "repost: old post had no reach"
+    "done": "2026-11-12T13:01:10.285Z",
+    "note": "repost: old post had no reach",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1689969152656690",
+        "url": "https://www.facebook.com/reel/1689969152656690"
+      }
+    ]
   },
   {
     "episode": "ZV-OLD-S002",
