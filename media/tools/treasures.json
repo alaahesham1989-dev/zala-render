@@ -211,5 +211,22 @@
       "scarab amulet lapis",
       "Egyptian scarab jewelry"
     ]
+  },
+  "ZV-L11": {
+    "title": "Ramesses II: The Ambush at Kadesh and the World's First Peace Treaty",
+    "hook": "Ramesses II walked into a trap at Kadesh, and turned it into the most famous battle of the ancient world.",
+    "seconds": 600,
+    "match": "ramesses|ramses|kadesh|hittite|muwatalli|hattusili|abu simbel|ramesseum",
+    "archive": "Ramesses II Kadesh",
+    "queries": [
+      "Ramesses II statue",
+      "Battle of Kadesh relief",
+      "Ramesseum",
+      "Abu Simbel Ramesses",
+      "Hittite peace treaty Kadesh",
+      "Ramesses II chariot relief",
+      "Luxor temple Ramesses II",
+      "Ramesses II mummy"
+    ]
   }
 }
