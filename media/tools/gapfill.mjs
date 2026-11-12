@@ -176,9 +176,10 @@ if (reviewAt && fs.existsSync(reviewAt)) {
     if (!l || r.fits !== 'no') continue;
     for (const p of l.pictures || []) banned.add(p);
     if (l.clip?.page) banned.add(l.clip.page);
+    if (l.clip?.prep) banned.add(l.clip.url);
     if ((l.pictures || []).length || l.clip?.page) rejected++;
     l.pictures = [];
-    if (l.clip?.page) delete l.clip;
+    if (l.clip?.page || l.clip?.prep) delete l.clip;
   }
   script.banned = [...banned];
 }
@@ -186,6 +187,20 @@ if (reviewAt && fs.existsSync(reviewAt)) {
 let cleared = 0;
 for (const l of lines) if (l.clip && (l.clip.gapfill || ['ZALA VIP', 'Pixabay Content License'].includes(l.clip.license))) { delete l.clip; cleared++; }
 log(`replanned ${cleared} earlier clips, removed ${rejected} pictures the review rejected`);
+
+// shots made in preparation (prep.mjs + flow-runner.mjs: Google Flow) go on their lines first, labelled as reconstructions
+let fromPrep = 0;
+try {
+  const prep = JSON.parse(fs.readFileSync(path.join(BASE, 'prep', `${id}.json`), 'utf8'));
+  for (const sh of prep.shots || []) {
+    const l = lines.find((x) => x.en === sh.line) || lines[sh.n - 1];
+    if (!l || sh.status !== 'ready' || !sh.url || banned.has(sh.url)) continue;
+    l.clip = { url: sh.url, what: sh.kind || 'reconstruction', credit: 'AI reconstruction made with Google Flow', license: 'AI reconstruction (ZALA VIP)', recon: true, prep: true };
+    l.pictures = [];
+    fromPrep++;
+  }
+} catch { /* not prepared */ }
+log(`prepared Flow shots placed: ${fromPrep}`);
 
 // ── fill ─────────────────────────────────────────────────────────────
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);
