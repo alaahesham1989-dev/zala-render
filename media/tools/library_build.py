@@ -94,6 +94,24 @@ def met(query, limit=40):
     return out
 
 
+def cleveland(query, limit=40):
+    """Cleveland Museum of Art open access: CC0 photographs of its ancient Egyptian collection, print size (2400+ px)."""
+    j = get_json("https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&cc0=1&limit=" + str(limit) + "&q=" + urllib.parse.quote(query))
+    out = []
+    for a in j.get("data") or []:
+        culture = " ".join(a.get("culture") or [])
+        # ancient Egypt only: no Islamic, Coptic or later pieces from Egypt
+        if "Egypt" not in culture or re.search(r"Fatimid|Mamluk|Ottoman|Islamic|Coptic|Byzantine|Ayyubid|Tulunid", culture):
+            continue
+        img = (a.get("images") or {}).get("print") or (a.get("images") or {}).get("web") or {}
+        if not img.get("url") or min(int(img.get("width") or 0), int(img.get("height") or 0)) < 900:
+            continue
+        title = " ".join(x for x in [a.get("title"), a.get("creation_date"), a.get("technique")] if x)[:160]
+        out.append({"title": title, "url": img["url"], "source_url": a.get("url"), "license": "CC0 (public domain)",
+                    "author": "The Cleveland Museum of Art", "source": "Cleveland Museum of Art Open Access"})
+    return out
+
+
 def pixabay(query, limit=30):
     key = os.environ.get("PIXABAY_API_KEY")
     if not key:
@@ -196,7 +214,7 @@ def main():
     eyes = Eyes()
     found = []
     for q in spec["queries"]:
-        for src in (met, commons, pixabay):
+        for src in (met, cleveland, commons, pixabay):
             found += [c for c in src(q) if c["source_url"] not in have]
         have |= {c["source_url"] for c in found}
     log(f"{len(found)} candidates from {len(spec['queries'])} searches")
