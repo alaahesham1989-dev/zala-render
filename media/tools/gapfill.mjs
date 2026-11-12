@@ -191,10 +191,11 @@ log(`replanned ${cleared} earlier clips, removed ${rejected} pictures the review
 // shots made in preparation (prep.mjs + flow-runner.mjs: Google Flow) go on their lines first, labelled as reconstructions
 let fromPrep = 0;
 try {
-  const prep = JSON.parse(fs.readFileSync(path.join(BASE, 'prep', `${id}.json`), 'utf8'));
-  for (const sh of prep.shots || []) {
+  // the shot list comes from prep.mjs, the finished videos from flow-runner.mjs (prep/<id>.flow.json)
+  const made = JSON.parse(fs.readFileSync(path.join(BASE, 'prep', `${id}.flow.json`), 'utf8')).shots || [];
+  for (const sh of made) {
     const l = lines.find((x) => x.en === sh.line) || lines[sh.n - 1];
-    if (!l || sh.status !== 'ready' || !sh.url || banned.has(sh.url)) continue;
+    if (!l || !sh.url || banned.has(sh.url)) continue;
     l.clip = { url: sh.url, what: sh.kind || 'reconstruction', credit: 'AI reconstruction made with Google Flow', license: 'AI reconstruction (ZALA VIP)', recon: true, prep: true };
     l.pictures = [];
     fromPrep++;
