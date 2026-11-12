@@ -134,7 +134,7 @@ async function editor(story, bank, pics) {
   const lines = story.chapters.flatMap((c) => c.lines);
   const ans = await askJson(`You are a strict editor for a history channel. Check this story about "${spec.title}" line by line against the FACT BANK.
 A line is bad if: it says something the fact bank does not support (an invented name, date, number, object or event); it talks about something that is not part of this story (cars, planes, fish, Halloween, European cities, modern people); it uses an unrelated picture as a metaphor; or its pictures (described after it) do not show what it says.
-Return JSON {"bad": [{"n": line number, "why": "short reason"}]} (empty when all lines are good).
+Return JSON {"bad": [{"n": line number, "why": "short reason", "only": "picture" when the words are fine and only the pictures do not fit, else "words"}]} (empty when all lines are good).
 FACT BANK: ${JSON.stringify(bank.facts)}
 STORY:
 ${lines.map((l, i) => `${i + 1}. ${l.en}${(l.pictures || []).length ? `  [pictures: ${l.pictures.map((p) => byId.get(p)?.seen?.what || p).join(' / ')}]` : l.gen ? '  [generated shot]' : ''}`).join('\n')}`, { temperature: 0 });
@@ -192,13 +192,17 @@ ${catalog}`, { temperature: 0.5 });
     }
     const n = spoken(s);
     if (n < words * 0.7) { feedback = `\nYour last attempt had only ${n} words; write more by using more facts, never by inventing.`; log(`story ${attempt}: ${n} words, too short`); continue; }
-    const bad = await editor(s, bank, pics);
+    let bad = await editor(s, bank, pics);
     if (!bad) { log(`story ${attempt}: the editor gave no answer`); continue; }
     log(`story ${attempt}: ${lines.length} lines, ${n} words, ${lines.filter((l) => l.gen).length} generated shots, ${bad.length} bad lines`);
     bad.forEach((b) => log(`   line ${b.n}: ${b.why}`));
     if (!bad.length) return s;
-    // fix only the lines the editor refused (rewrite from the facts, or drop), then ask the editor once more
     const flat = s.chapters.flatMap((c) => c.lines);
+    // a line whose words are right but whose picture does not fit keeps its words: the picture goes (gapfill finds another)
+    for (const b of bad.filter((x) => x.only === 'picture')) { const l = flat[b.n - 1]; if (l) l.pictures = []; }
+    bad = bad.filter((x) => x.only !== 'picture');
+    if (!bad.length) return s;
+    // fix only the lines the editor refused (rewrite from the facts, or drop), then ask the editor once more
     const fix = await askJson(`An editor refused some lines of this story. For each refused line, rewrite it so every claim is in the FACT BANK (keep it about the same subject), or return "" to drop it.
 Return JSON {"lines": [{"n": number, "en": "new line or empty"}]}
 REFUSED: ${JSON.stringify(bad.map((b) => ({ n: b.n, line: flat[b.n - 1]?.en, why: b.why })))}
@@ -209,6 +213,16 @@ FACT BANK: ${JSON.stringify(bank.facts)}`, { temperature: 0.3 });
       const again = await editor(s, bank, pics);
       log(`story ${attempt}: after fixing ${fix.lines.length} lines, the editor finds ${again ? again.length : '?'} bad lines`);
       if (again && !again.length && spoken(s) >= words * 0.7) return s;
+      // the review fixes, it does not throw a story away: lines still unsupported are dropped, wrong pictures removed,
+      // and the story is kept when enough of it is left
+      if (again) {
+        const left = s.chapters.flatMap((c) => c.lines);
+        for (const b of again) { const l = left[b.n - 1]; if (!l) continue; if (b.only === 'picture') l.pictures = []; else l.drop = true; }
+        for (const c of s.chapters) c.lines = c.lines.filter((l) => !l.drop);
+        s.chapters = s.chapters.filter((c) => c.lines.length);
+        log(`story ${attempt}: dropped ${again.filter((b) => b.only !== 'picture').length} unsupported lines, ${spoken(s)} words left`);
+        if (spoken(s) >= words * 0.6) return s;
+      }
     }
     feedback = `\nAn editor rejected your last attempt for these lines, so avoid these mistakes:\n${bad.map((b) => `- "${lines[b.n - 1]?.en || ''}": ${b.why}`).join('\n')}`;
   }
@@ -236,6 +250,9 @@ STORY:
 ${chapters}`, { temperature: 0.6 });
   if (!ans?.titles?.length || !Array.isArray(ans.reels)) { log('packaging: no answer, keeping the story as it is'); return script; }
   const reels = ans.reels.filter((r) => script.chapters[r.chapter - 1] && Number.isInteger(r.from) && r.from >= 0 && r.from < script.chapters[r.chapter - 1].lines.length - 2).slice(0, 3);
+  // Gemini sometimes returns titles as objects ({title: ...}): keep plain text only
+  ans.titles = ans.titles.map((t) => (typeof t === 'string' ? t : t?.title || t?.text || '')).filter(Boolean);
+  if (!ans.titles.length) { log('packaging: no usable title, keeping the story as it is'); return script; }
   const title = String(ans.titles[ans.best] || ans.titles[0]).slice(0, 90);
   log(`packaging: "${title}" | thumbnail "${ans.thumbnailText}" | shorts: ${reels.map((r) => `ch${r.chapter}@${r.from} "${r.hook}"`).join(' ; ')}`);
   Object.assign(script, { title, thumbnailText: ans.thumbnailText || script.thumbnailText, titleIdeas: ans.titles, packaged: true });
