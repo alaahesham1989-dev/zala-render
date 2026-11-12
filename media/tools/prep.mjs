@@ -165,6 +165,31 @@ ${catalog}`, { temperature: 0.7 });
       if (!l.gen?.prompt || l.pictures.length) delete l.gen;
     }
     if (!lines[0].gen) log(`story ${attempt}: first line has no hook shot`);
+    // a busy Gemini often answers with a short story: grow the same story chapter by chapter instead of starting over
+    for (let grow = 1; grow <= 3 && spoken(s) < words * 0.8; grow++) {
+      const have = spoken(s);
+      const g = await askJson(`${STORY_RULES}
+
+This story is too short: ${have} spoken words, it needs ${words}. Rewrite it LONGER and return the whole story in the same JSON shape.
+Keep every chapter, its order, the title, the reels and every existing line (you may polish wording). Add new lines inside each chapter
+(about ${Math.round(words / 24 / Math.max(1, s.chapters.length))} lines per chapter) using facts from the FACT BANK that the story does not use yet.
+Never invent anything. New lines may use pictures from the catalog only when they truly fit; otherwise leave pictures empty.
+
+STORY: ${JSON.stringify(s)}
+
+FACT BANK:
+${JSON.stringify(bank).slice(0, 40000)}
+
+PICTURE CATALOG (id | type | title | what is visible):
+${catalog}`, { temperature: 0.5 });
+      if (!g?.chapters?.length || spoken(g) <= have) { log(`story ${attempt}: growing did not help (${g ? spoken(g) : 0} words)`); break; }
+      for (const l of g.chapters.flatMap((c) => c.lines || [])) {
+        l.pictures = (l.pictures || []).filter((p) => known.has(p));
+        if (!l.gen?.prompt || l.pictures.length) delete l.gen;
+      }
+      log(`story ${attempt}: grown from ${have} to ${spoken(g)} words`);
+      Object.assign(s, g);
+    }
     const n = spoken(s);
     if (n < words * 0.8) { feedback = `\nYour last attempt had only ${n} words; write more by using more facts, never by inventing.`; log(`story ${attempt}: ${n} words, too short`); continue; }
     const bad = await editor(s, bank, pics);
