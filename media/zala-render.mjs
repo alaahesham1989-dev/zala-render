@@ -1608,7 +1608,7 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
     fs.writeFileSync(assEn, masterAss(tl, script, { arabic: false, data }), 'utf8');
     await finalPass({ chain, mix, ass: assEn, out: master, tl });
     results.push(inspect(master));
-    if (tl.flat.some((f) => f.ar)) {
+    if (tl.flat.some((f) => f.ar) && !process.env.NO_ARABIC_COPY) {   // the factory skips it: nobody reviews it now
       log('Final: Arabic review copy');
       const assAr = path.join(work, 'captions-ar.ass');
       fs.writeFileSync(assAr, masterAss(tl, script, { arabic: true }), 'utf8');
