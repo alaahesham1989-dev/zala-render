@@ -74,6 +74,38 @@
       "Second Intermediate Period gold jewelry"
     ]
   },
+  "ZV-L11": {
+    "title": "Ramesses II: The Ambush at Kadesh and the World's First Peace Treaty",
+    "hook": "Ramesses II walked into a trap at Kadesh, and turned it into the most famous battle of the ancient world.",
+    "seconds": 600,
+    "match": "ramesses|ramses|kadesh|hittite|muwatalli|hattusili|abu simbel|ramesseum",
+    "archive": "Ramesses II Kadesh",
+    "queries": [
+      "Ramesses II statue",
+      "Battle of Kadesh relief",
+      "Ramesseum",
+      "Abu Simbel Ramesses",
+      "Hittite peace treaty Kadesh",
+      "Ramesses II chariot relief",
+      "Luxor temple Ramesses II",
+      "Ramesses II mummy"
+    ]
+  },
+  "ZV-D01": {
+    "title": "What Ancient Egyptians Really Ate Every Day",
+    "hook": "The pyramid builders were paid in bread and beer, and their bread was full of sand.",
+    "seconds": 480,
+    "match": "bread|beer|food|diet|bakery|banquet|offering table",
+    "archive": "Ancient Egypt food bread beer",
+    "queries": [
+      "ancient Egyptian bread",
+      "Egyptian tomb painting banquet",
+      "ancient Egyptian beer brewing model",
+      "offering table ancient Egypt food",
+      "Meketre bakery model",
+      "ancient Egyptian fishing painting"
+    ]
+  },
   "ZV-T05": {
     "title": "Valley of the Golden Mummies",
     "hook": "A donkey's leg fell into a hole in the desert, and beneath it lay mummies covered in gold.",
@@ -89,6 +121,20 @@
       "Graeco-Roman Egyptian mummy portrait gold",
       "gilded mummy Egypt",
       "Egyptian mummy mask gold Roman"
+    ]
+  },
+  "ZV-D02": {
+    "title": "The Dentists of Ancient Egypt: Pain Before Painkillers",
+    "hook": "4,500 years ago a man was buried with the title Chief of Teeth.",
+    "seconds": 480,
+    "match": "dentist|teeth|tooth|hesy-ra|medicine|papyrus ebers|physician",
+    "archive": "Ancient Egypt dentistry medicine",
+    "queries": [
+      "Hesy-Ra panel",
+      "ancient Egyptian dental bridge",
+      "Ebers papyrus",
+      "ancient Egyptian surgical instruments Kom Ombo",
+      "ancient Egyptian physician"
     ]
   },
   "ZV-T06": {
@@ -110,6 +156,20 @@
       "Egyptian gold diadem"
     ]
   },
+  "ZV-D03": {
+    "title": "Why Ancient Egyptians Mummified Their Cats",
+    "hook": "Millions of cats were mummified, and many were bred only to die.",
+    "seconds": 480,
+    "match": "cat|bastet|animal mummy|bubastis|mummified animal",
+    "archive": "Ancient Egypt cat mummies Bastet",
+    "queries": [
+      "cat mummy ancient Egypt",
+      "Bastet statue",
+      "Gayer-Anderson cat",
+      "Bubastis temple",
+      "animal mummies Saqqara"
+    ]
+  },
   "ZV-T07": {
     "title": "The Dagger From Space: Tutankhamun's Iron Blade",
     "hook": "Buried with the boy king was a blade made of iron that fell from the sky.",
@@ -125,6 +185,21 @@
       "Egyptian Museum Cairo Tutankhamun",
       "Amarna letters",
       "Tutankhamun treasure gold"
+    ]
+  },
+  "ZV-D04": {
+    "title": "The Ancient Egyptian Makeup That Fought Disease",
+    "hook": "Their black eyeliner was not only beauty, it killed bacteria.",
+    "seconds": 480,
+    "match": "kohl|makeup|cosmetic|eye paint|mirror|perfume|wig",
+    "archive": "Ancient Egypt makeup kohl cosmetics",
+    "queries": [
+      "ancient Egyptian kohl pot",
+      "ancient Egyptian cosmetic spoon",
+      "ancient Egyptian mirror",
+      "ancient Egyptian wig",
+      "Nefertiti bust",
+      "perfume bottle ancient Egypt"
     ]
   },
   "ZV-T08": {
@@ -144,6 +219,21 @@
       "Sneferu Bent Pyramid"
     ]
   },
+  "ZV-D05": {
+    "title": "How Ancient Egyptians Survived the Desert Heat",
+    "hook": "No air conditioning, 45 degrees in summer, and they built cities that stayed cool.",
+    "seconds": 480,
+    "match": "house|village|deir el-medina|wind catcher|linen|nile|irrigation|shaduf",
+    "archive": "Ancient Egypt daily life houses heat",
+    "queries": [
+      "Deir el-Medina village",
+      "ancient Egyptian house model",
+      "shaduf irrigation",
+      "ancient Egyptian linen",
+      "Nile inundation",
+      "ancient Egyptian sandals"
+    ]
+  },
   "ZV-T09": {
     "title": "The Richest Tomb Before Tutankhamun: Yuya and Tjuyu",
     "hook": "Seventeen years before Carter, two commoners were found buried like kings.",
@@ -159,6 +249,21 @@
       "Queen Tiye",
       "Yuya chair",
       "Valley of the Kings"
+    ]
+  },
+  "ZV-D06": {
+    "title": "The Toys Ancient Egyptian Children Played With",
+    "hook": "A 3,500 year old toy cat with a moving jaw still works today.",
+    "seconds": 480,
+    "match": "toy|game|senet|children|child|doll|ball|mehen",
+    "archive": "Ancient Egypt toys games children",
+    "queries": [
+      "ancient Egyptian toy",
+      "senet game board",
+      "ancient Egyptian doll",
+      "mehen game",
+      "ancient Egyptian ball",
+      "children ancient Egypt relief"
     ]
   },
   "ZV-T10": {
@@ -178,6 +283,20 @@
       "Nubian pharaohs"
     ]
   },
+  "ZV-D07": {
+    "title": "The Ancient Egyptian Workers Who Went on Strike",
+    "hook": "The first strike in recorded history happened at the tombs of the pharaohs.",
+    "seconds": 480,
+    "match": "strike|workers|deir el-medina|ostraca|ramesses iii|tomb builders|turin papyrus",
+    "archive": "Deir el-Medina workers strike",
+    "queries": [
+      "Deir el-Medina",
+      "ostracon ancient Egypt",
+      "tomb builders village",
+      "Turin strike papyrus",
+      "ancient Egyptian workers tools"
+    ]
+  },
   "ZV-T11": {
     "title": "The Golden Falcon: Egypt's Sky God in Gold",
     "hook": "Its eyes are a single stone that glows like the sun, after four thousand years.",
@@ -193,6 +312,20 @@
       "Edfu temple Horus",
       "falcon pectoral Egypt",
       "Egyptian gold falcon"
+    ]
+  },
+  "ZV-D08": {
+    "title": "How Ancient Egyptians Partied: The Festival of Drunkenness",
+    "hook": "Once a year they drank until they passed out, on purpose, to calm an angry goddess.",
+    "seconds": 480,
+    "match": "festival|drunkenness|hathor|beer|wine|music|dance|banquet",
+    "archive": "Ancient Egypt festival Hathor drunkenness",
+    "queries": [
+      "Hathor temple Dendera",
+      "ancient Egyptian musicians painting",
+      "ancient Egyptian wine jar",
+      "ancient Egyptian dancers",
+      "banquet scene Nebamun"
     ]
   },
   "ZV-T12": {
@@ -212,21 +345,32 @@
       "Egyptian scarab jewelry"
     ]
   },
-  "ZV-L11": {
-    "title": "Ramesses II: The Ambush at Kadesh and the World's First Peace Treaty",
-    "hook": "Ramesses II walked into a trap at Kadesh, and turned it into the most famous battle of the ancient world.",
-    "seconds": 600,
-    "match": "ramesses|ramses|kadesh|hittite|muwatalli|hattusili|abu simbel|ramesseum",
-    "archive": "Ramesses II Kadesh",
+  "ZV-D09": {
+    "title": "Love and Marriage in Ancient Egypt",
+    "hook": "They wrote love poems 3,000 years ago that still sound modern.",
+    "seconds": 480,
+    "match": "love|marriage|wife|husband|love poem|couple|pair statue",
+    "archive": "Ancient Egypt love marriage",
     "queries": [
-      "Ramesses II statue",
-      "Battle of Kadesh relief",
-      "Ramesseum",
-      "Abu Simbel Ramesses",
-      "Hittite peace treaty Kadesh",
-      "Ramesses II chariot relief",
-      "Luxor temple Ramesses II",
-      "Ramesses II mummy"
+      "ancient Egyptian couple statue",
+      "pair statue ancient Egypt",
+      "Chester Beatty papyrus love poems",
+      "Rahotep and Nofret",
+      "ancient Egyptian family relief"
+    ]
+  },
+  "ZV-D10": {
+    "title": "The Strange Ancient Egyptian Cures That Actually Worked",
+    "hook": "They put moldy bread on wounds, thousands of years before penicillin.",
+    "seconds": 480,
+    "match": "medicine|cure|remedy|honey|papyrus|physician|edwin smith|ebers",
+    "archive": "Ancient Egypt medicine remedies",
+    "queries": [
+      "Edwin Smith papyrus",
+      "Ebers papyrus",
+      "ancient Egyptian medical instruments",
+      "honey jar ancient Egypt",
+      "Imhotep statue"
     ]
   }
 }
