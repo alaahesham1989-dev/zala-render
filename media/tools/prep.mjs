@@ -166,7 +166,7 @@ ${catalog}`, { temperature: 0.7 });
     }
     if (!lines[0].gen) log(`story ${attempt}: first line has no hook shot`);
     // a busy Gemini often answers with a short story: grow the same story chapter by chapter instead of starting over
-    for (let grow = 1; grow <= 3 && spoken(s) < words * 0.8; grow++) {
+    for (let grow = 1; grow <= 3 && spoken(s) < words * 0.7; grow++) {
       const have = spoken(s);
       const g = await askJson(`${STORY_RULES}
 
@@ -191,12 +191,25 @@ ${catalog}`, { temperature: 0.5 });
       Object.assign(s, g);
     }
     const n = spoken(s);
-    if (n < words * 0.8) { feedback = `\nYour last attempt had only ${n} words; write more by using more facts, never by inventing.`; log(`story ${attempt}: ${n} words, too short`); continue; }
+    if (n < words * 0.7) { feedback = `\nYour last attempt had only ${n} words; write more by using more facts, never by inventing.`; log(`story ${attempt}: ${n} words, too short`); continue; }
     const bad = await editor(s, bank, pics);
     if (!bad) { log(`story ${attempt}: the editor gave no answer`); continue; }
     log(`story ${attempt}: ${lines.length} lines, ${n} words, ${lines.filter((l) => l.gen).length} generated shots, ${bad.length} bad lines`);
     bad.forEach((b) => log(`   line ${b.n}: ${b.why}`));
     if (!bad.length) return s;
+    // fix only the lines the editor refused (rewrite from the facts, or drop), then ask the editor once more
+    const flat = s.chapters.flatMap((c) => c.lines);
+    const fix = await askJson(`An editor refused some lines of this story. For each refused line, rewrite it so every claim is in the FACT BANK (keep it about the same subject), or return "" to drop it.
+Return JSON {"lines": [{"n": number, "en": "new line or empty"}]}
+REFUSED: ${JSON.stringify(bad.map((b) => ({ n: b.n, line: flat[b.n - 1]?.en, why: b.why })))}
+FACT BANK: ${JSON.stringify(bank.facts)}`, { temperature: 0.3 });
+    if (fix?.lines?.length) {
+      for (const f of fix.lines) { const l = flat[f.n - 1]; if (l) { if (f.en) { l.en = f.en; delete l.ar; } else l.drop = true; } }
+      for (const c of s.chapters) c.lines = c.lines.filter((l) => !l.drop);
+      const again = await editor(s, bank, pics);
+      log(`story ${attempt}: after fixing ${fix.lines.length} lines, the editor finds ${again ? again.length : '?'} bad lines`);
+      if (again && !again.length && spoken(s) >= words * 0.7) return s;
+    }
     feedback = `\nAn editor rejected your last attempt for these lines, so avoid these mistakes:\n${bad.map((b) => `- "${lines[b.n - 1]?.en || ''}": ${b.why}`).join('\n')}`;
   }
   return null;
