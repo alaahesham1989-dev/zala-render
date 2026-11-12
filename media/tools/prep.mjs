@@ -225,7 +225,19 @@ Return JSON {"stills": [{"n": line number, "prompt": "..."}]}`, { temperature: 0
 
 // ── run ──────────────────────────────────────────────────────────────
 const old = readJson(scriptFile, null);
-if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); await stills(old); process.exit(0); }
+if (old?.prepared && !force) { log(`${id} is prepared already (${old.prepared.at})`); await factBank(); await cleanLibrary(); await stills(old); process.exit(0); }
+// a story written and voiced before the factory (handWritten) is kept word for word: the preparation only cleans its
+// library, adds its places and plans Nano Banana stills for the lines that have no picture
+if (old?.handWritten) {
+  await factBank(); await cleanLibrary();
+  fs.mkdirSync(path.dirname(prepFile), { recursive: true });
+  if (!fs.existsSync(prepFile)) fs.writeFileSync(prepFile, JSON.stringify({ id, title: old.title, at: new Date().toISOString(), shots: [] }, null, 2) + '\n');
+  await stills(old);
+  old.prepared = { at: new Date().toISOString(), shots: readJson(prepFile, { shots: [] }).shots.length, kept: 'hand written story' };
+  fs.writeFileSync(scriptFile, JSON.stringify(old, null, 2) + '\n', 'utf8');
+  log(`${id} prepared (story kept)`);
+  process.exit(0);
+}
 const bank = await factBank();
 const pics = await cleanLibrary();
 const story = await writeStory(bank, pics);
