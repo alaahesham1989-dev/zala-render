@@ -103,7 +103,7 @@ if (dry) { console.log('[photo] dry run, nothing posted'); process.exit(0); }
 execFileSync('aws', ['s3', 'cp', card, `s3://${process.env.R2_BUCKET}/${key}`, '--endpoint-url', `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, '--content-type', 'image/jpeg', '--no-progress'], { stdio: 'inherit' });
 const imageUrl = `${BASE}/${key}`;
 
-const done = { id: pick.id, at: new Date().toISOString(), words, caption, image: imageUrl };
+const done = { id: pick.id, at: new Date().toISOString(), words, caption, image: imageUrl, credit };   // shown on zalavip.com/credits
 // Facebook
 try {
   const { access_token: pageToken } = await call(`${G}/${PAGE}?fields=access_token`);
