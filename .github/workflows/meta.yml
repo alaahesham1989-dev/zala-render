@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       episode:
-        description: "Episode id"
+        description: "queue = post what the schedule says is due (waits up to 5 hours); or an episode id to post one video now"
         required: true
-        default: ZV-L01
+        default: queue
         type: string
       which:
         description: "main, R1, R2 or R3"
@@ -40,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
+      MODE: ${{ (github.event_name == 'schedule' || inputs.episode == 'queue') && 'queue' || 'one' }}
       META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -55,26 +56,26 @@ jobs:
         with:
           node-version: 22
       - name: Wait on the server for the next post that is due within 5 hours
-        if: github.event_name == 'schedule'
+        if: env.MODE == 'queue'
         run: |
-          s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<5*3600e3).sort((a,b)=>a-b)[0];console.log(w?Math.ceil(w/1000)+30:0)")
+          s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const due=q.some(x=>!x.done&&Date.parse(x.at)<=n);const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<5*3600e3).sort((a,b)=>a-b)[0];console.log(!due&&w?Math.ceil(w/1000)+30:0)")
           echo "waiting $s seconds"; if [ "$s" -gt 0 ]; then sleep "$s"; git pull -q --rebase || true; fi
       - name: Video tools for the full episode on Instagram
-        if: github.event_name == 'workflow_dispatch' && inputs.which == 'main' && contains(inputs.to, 'ig')
+        if: env.MODE == 'one' && inputs.which == 'main' && contains(inputs.to, 'ig')
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Bring the package text from R2 (no video files)
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then eps="${{ inputs.episode }}"; else eps=$(node -e "const q=require('./content/meta-queue.json');console.log([...new Set(q.filter(x=>!x.done&&Date.parse(x.at)<=Date.now()).map(x=>x.episode))].join(' '))"); fi
+          if [ "$MODE" = "one" ]; then eps="${{ inputs.episode }}"; else eps=$(node -e "const q=require('./content/meta-queue.json');console.log([...new Set(q.filter(x=>!x.done&&Date.parse(x.at)<=Date.now()).map(x=>x.episode))].join(' '))"); fi
           for ep in $eps; do
             mkdir -p "publish/$ep"
             aws s3 cp "s3://${R2_BUCKET}/renders/${ep}/publish/${ep}.youtube.json" "publish/$ep/" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
           done
       - name: Publish one
-        if: github.event_name == 'workflow_dispatch'
+        if: env.MODE == 'one'
         run: node media/tools/meta-publish.mjs "publish/${{ inputs.episode }}" "${{ inputs.episode }}" "${{ inputs.which }}" --to "${{ inputs.to }}"
       - name: Publish what is due
-        if: github.event_name == 'schedule'
+        if: env.MODE == 'queue'
         run: |
           set -euo pipefail
           node media/tools/meta-publish.mjs --queue content/meta-queue.json
