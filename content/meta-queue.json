@@ -71,7 +71,14 @@
       "yt:24VKUQfhR_M"
     ],
     "at": "2026-11-12T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-12T17:12:24.708Z",
+    "results": [
+      {
+        "platform": "youtube",
+        "kind": "credits",
+        "skipped": "owner order: credits on zalavip.com/credits"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
