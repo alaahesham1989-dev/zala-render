@@ -156,7 +156,7 @@ jobs:
           if [ -z "${EP:-}" ]; then MSG="ZALA المصنع: مفيش حلقة تحضيرها خلص النهارده (الحقائق والقصة ولقطات Flow). شغّل flow-runner على الجهاز لو فيه لقطات مستنية."
           elif [ "${PASS:-no}" = yes ]; then MSG="ZALA المصنع: $EP خلصت في ${MINUTES:-?} دقيقة بعد ${TRIES:-?} رندر، عدّت المراجعة واتجدولت:
           $(cat schedule-summary.txt 2>/dev/null)"
-          else MSG="ZALA المصنع: $EP ماعدتش المراجعة بعد ${TRIES:-?} رندر. بيكمّل على طول من مكان ما وقف، ويصلّح اللي المراجعة لقيته بس. السبب: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
+          else MSG="ZALA المصنع: $EP لسه بتتظبط (المراجعة لقت حاجات بتتصلّح لوحدها بعد ${TRIES:-?} رندر، وبيكمّل على طول). اللي بيتصلّح: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
           MSG="$MSG
           اللوحة: ${VITE_MEDIA_BASE_URL}/preview/dashboard.html"
           if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
