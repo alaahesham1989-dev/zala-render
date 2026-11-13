@@ -160,7 +160,7 @@ async function makeShot(p, prompt, still = false) {
       const link = p.media.get(id)?.[still ? 'image' : 'video'];
       if (link) return link;
     }
-    const fail = await p.js(`/(couldn.t generate|could not generate|violat|policy|تعذّر إنشاء|فشل الإنشاء)/i.test(document.body.innerText.slice(-3000)) ? document.body.innerText.slice(-300) : ''`);
+    const fail = await p.js(`/(couldn.t generate|could not generate|violat|policy|تعذّر إنشاء|فشل الإنشاء|insufficient credit|not enough credit|out of credit|no credits|add more credit|buy more credit|upgrade.*credit)/i.test(document.body.innerText.slice(-3000)) ? document.body.innerText.slice(-300) : ''`);
     if (fail) throw new Error(`Flow refused: ${fail.replace(/\s+/g, ' ').slice(0, 200)}`);
   }
   throw new Error('Flow took more than 20 minutes');
@@ -205,6 +205,11 @@ if (args.includes('--pending')) {
   }
   log(`prepared on the server: ${episodes.join(' ') || 'none'}`);
 }
+// checked against our own saved ledger first, so a day with no credits left skips straight to stills (free, unlimited)
+// instead of waiting out a 20-minute timeout on every single video shot
+let noCredits = false;
+try { const ledger = await (await fetch(`${BASE}/render-state/content/flow-credits.json?t=${Date.now()}`)).json(); noCredits = (ledger.remaining ?? 999) < 24; if (noCredits) log(`only ${ledger.remaining} Flow credits left (resets ${ledger.resetAt}): skipping video shots, stills still run`); } catch { /* no ledger yet */ }
+
 const p = await page();
 for (const ep of episodes) {
   const prep = await (await fetch(`${BASE}/render-state/content/prep/${ep}.json?t=${Date.now()}`)).json();
@@ -227,9 +232,10 @@ for (const ep of episodes) {
   else throw new Error('no Flow project open: open one project in the Flow window and run again');
   await openProject(p);   // a fresh load, so Flow sends its media list with the signed links
   for (const s of todo) {
+    const still = s.kind === 'still';
+    if (!still && noCredits) { log(` shot ${s.n} (${s.kind}): skipped, no Flow credits left today`); continue; }
     log(` shot ${s.n} (${s.kind})`);
     try {
-      const still = s.kind === 'still';
       const src = await makeShot(p, s.prompt, still);
       // the page cannot read its own video (it redirects to Google's video servers), so Node downloads it with the window's cookies
       const { cookies } = await p.send('Network.getCookies', { urls: [src] }).then((m) => m.result);
@@ -245,7 +251,10 @@ for (const ep of episodes) {
       await r2Put(`render-state/content/prep/${ep}.flow.json`, Buffer.from(JSON.stringify(done, null, 2)), 'application/json');
       await spend(ep, s.n, still ? 'still' : 'video', still ? 0 : 24);
       log(`   ready: ${key} (${Math.round(data.length / 1e5) / 10} MB)`);
-    } catch (e) { log(`   failed: ${e.message}`); }
+    } catch (e) {
+      log(`   failed: ${e.message}`);
+      if (!still && /credit/i.test(e.message)) { noCredits = true; log('   no Flow credits left today: skipping the rest of the video shots, stills still run'); }
+    }
   }
 }
 p.close();
