@@ -12,6 +12,10 @@ on:
         description: "How many shorts"
         required: false
         default: "3"
+      redo:
+        description: "Make these scheduled shorts again (id:youtubeId, space separated), same publish time"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -85,17 +89,24 @@ jobs:
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
           COUNT="${{ inputs.count }}"; COUNT="${COUNT:-3}"
+          REDO="${{ inputs.redo }}"
           out=""
-          for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT") && break; echo "plan: Gemini busy, waiting 5 minutes"; sleep 300; done
+          if [ -z "$REDO" ]; then
+            for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT") && break; echo "plan: Gemini busy, waiting 5 minutes"; sleep 300; done
+          fi
           echo "$out"
           ids=$(echo "$out" | grep -o 'SHORT_IDS:.*' | cut -d: -f2)
+          [ -n "$REDO" ] && ids=$(for p in $REDO; do echo -n "${p%%:*} "; done)
           made=""
           for id in $ids; do
             echo "=== $id"
+            node media/tools/shorts.mjs restore "$id"
             /tmp/lib/bin/python media/tools/library_build.py "$id" --target 30 || { echo "$id: no library"; continue; }
             node media/tools/direct.mjs "$id" || { echo "$id: director stopped"; continue; }
             node media/zala-render.mjs all "$id" || { echo "$id: render stopped"; continue; }
-            node media/tools/shorts.mjs package "$id" && node media/tools/shorts.mjs schedule "$id" && made="$made $id"
+            yt=""; for p in $REDO; do [ "${p%%:*}" = "$id" ] && yt="${p#*:}"; done
+            if [ -n "$REDO" ]; then node media/tools/shorts.mjs package "$id" && node media/tools/shorts.mjs redo "$id" "$yt" && made="$made $id"
+            else node media/tools/shorts.mjs package "$id" && node media/tools/shorts.mjs schedule "$id" && made="$made $id"; fi
           done
           echo "MADE=$made" >> "$GITHUB_ENV"
       - name: Save work back to R2 and the queue to git
