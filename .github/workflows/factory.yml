@@ -1,6 +1,9 @@
 name: ZALA factory (every day, from library to schedule)
 
-# Every morning at 07:00 Cairo: takes the next episode of media/tools/treasures.json that is not scheduled yet,
+# Every morning: takes the next episode of media/tools/treasures.json whose PREP stage is complete (prep.yml + Flow).
+# 2 MAKE (line/make.sh) and 3 QUALITY (line/quality.sh) run in turn until the check passes, then the episode lands in
+# the R2 outbox (outbox.mjs) and the publishing file (publisher.mjs) schedules it, links its map places and writes its blog article.
+# Older notes: takes the next episode of media/tools/treasures.json that is not scheduled yet,
 # builds its picture library, writes and directs the story, fills the empty lines, renders, and reviews it.
 # When the review stops it, the factory fixes it by itself: the rejected pictures are replaced and it renders again
 # (up to 3 renders). When the review passes: new thumbnails, then the episode goes into the next free days on
@@ -66,6 +69,7 @@ jobs:
           set -euo pipefail
           aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
           git checkout -- content/meta-queue.json   # the queue lives in git; the copy on R2 is old
+          git checkout -- content/outbox.json 2>/dev/null || true   # so does the outbox list
           cp media/tools/treasures.json content/library/treasures.json
           [ -f content/schedule.json ] || cp media/tools/schedule-seed.json content/schedule.json
       - name: Which episode today
@@ -106,40 +110,27 @@ jobs:
           aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
           aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
           mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
-      - name: Make the episode, and fix it until the review passes
+      - name: 2 and 3 — Make (director, editor, voice, render) and Quality (check and fix), into the outbox
         if: env.EP != ''
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
           t0=$(date +%s)
           node -e 'const fs=require("fs"),f="content/factory-state.json",s=fs.existsSync(f)?JSON.parse(fs.readFileSync(f)):{};const e=process.env.EP;s[e]={...(s[e]||{}),days:((s[e]||{}).days||0)+1,started:new Date().toISOString()};fs.writeFileSync(f,JSON.stringify(s,null,2))'
-          /tmp/lib/bin/python media/tools/library_build.py "$EP" --target 220 || exit 1
-          # Gemini is sometimes busy for a while: wait and try again instead of giving up the day
-          ok=no; for i in 1 2 3 4; do node media/zala-render.mjs story "$EP" && { ok=yes; break; }; echo "story: Gemini busy, waiting 10 minutes"; sleep 600; done; [ $ok = yes ] || exit 1
-          ok=no; for i in 1 2 3 4; do node media/tools/direct.mjs "$EP" && { ok=yes; break; }; echo "director: Gemini busy, waiting 10 minutes"; sleep 600; done; [ $ok = yes ] || exit 1
-          pass=no; tries=0
-          for attempt in 1 2 3; do
-            tries=$attempt
-            if [ "$attempt" = 1 ]; then if [ -f review-last.json ]; then node media/tools/gapfill.mjs "$EP" --review review-last.json; else node media/tools/gapfill.mjs "$EP"; fi; else node media/tools/gapfill.mjs "$EP" --review review-out/review.json; fi
-            node media/zala-render.mjs all "$EP" || continue
-            /tmp/lib/bin/python media/tools/thumbs.py "media/out/${EP}/publish" "$EP" || true   # the review counts the thumbnails
-            rm -rf review-out; node media/tools/review-render.mjs "media/out/${EP}/publish" "content/youtube/${EP}.json" review-out
-            if node -e 'process.exit(JSON.parse(require("fs").readFileSync("review-out/verdict.json")).pass?0:1)'; then pass=yes; break; fi
-            echo "Review stopped render $attempt, fixing and trying again"
-          done
-          echo "PASS=$pass" >> "$GITHUB_ENV"; echo "TRIES=$tries" >> "$GITHUB_ENV"; echo "MINUTES=$(( ($(date +%s)-t0)/60 ))" >> "$GITHUB_ENV"
-          aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress || true
-      - name: Thumbnails and schedule
+          last=""; [ -f review-last.json ] && last=review-last.json
+          bash media/tools/line/run.sh "$EP" episode "$last" || true
+          echo "MINUTES=$(( ($(date +%s)-t0)/60 ))" >> "$GITHUB_ENV"
+          rm -rf review-out; [ -d "quality-$EP" ] && cp -r "quality-$EP" review-out
+          [ -d review-out ] && aws s3 sync review-out "s3://${R2_BUCKET}/renders/${EP}/review" --endpoint-url "$E" --no-progress || true
+      - name: 4 — Publishing (YouTube, Facebook, Instagram, the map and the blog)
         if: env.EP != '' && env.PASS == 'yes'
         run: |
-          set -euo pipefail
-          node media/tools/autopublish.mjs "media/out/${EP}/publish" "$EP" content/meta-queue.json
-          node media/tools/blog-feed.mjs episode "$EP" || echo "blog article failed"   # the episode on the zalavip.com blog, from its publish day
-          node media/tools/atlas-link.mjs all || echo "map links failed"   # every episode on YouTube shows on its ZALA Guide map places
+          set -uo pipefail
+          node media/tools/publisher.mjs || echo "publishing tried again next run"
           node -e 'const fs=require("fs"),f="content/factory-state.json",s=JSON.parse(fs.readFileSync(f));const e=process.env.EP;s[e]={...s[e],scheduled:new Date().toISOString(),renders:Number(process.env.TRIES),minutes:Number(process.env.MINUTES)};fs.writeFileSync(f,JSON.stringify(s,null,2))'
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull --rebase --autostash -q || true
-          git add -f content/meta-queue.json && git commit -qm "factory: $EP scheduled" && git push -q || echo "queue push failed"
+          git add -f content/meta-queue.json content/outbox.json && git commit -qm "factory: $EP into the outbox and scheduled" && git push -q || echo "queue push failed"
       - name: Save work back to R2, even after a failure
         if: always() && env.EP != ''
         run: |
