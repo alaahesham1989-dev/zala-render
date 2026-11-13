@@ -26,3 +26,31 @@ export async function askJson(prompt, { temperature = 0.7, rounds = 3 } = {}) {
   }
   return null;
 }
+
+const IMAGE_MODELS = (process.env.GEMINI_IMAGE_MODELS || 'gemini-2.5-flash-image').split(',').map((m) => m.trim()).filter(Boolean);
+
+/** Nano Banana (Gemini's own image model), called directly — no browser, no Flow, runs on the server.
+ * Returns { base64, mime } or null when every model and key refused. */
+export async function generateImage(prompt, { rounds = 2 } = {}) {
+  for (let round = 1; round <= rounds; round++) {
+    for (const model of IMAGE_MODELS) {
+      for (const key of KEYS) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } }),
+            signal: AbortSignal.timeout(120000),
+          });
+          const data = await res.json();
+          const part = data?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData || p.inline_data);
+          const inline = part?.inlineData || part?.inline_data;
+          if (res.ok && inline?.data) return { base64: inline.data, mime: inline.mimeType || inline.mime_type || 'image/png' };
+          console.log(`  ${model}: ${res.status} ${data.error?.status || ''}`);
+          if (res.status === 503) break;
+        } catch (e) { console.log(`  ${model}: ${e.name}`); }
+      }
+    }
+    await sleep(20000 * round);
+  }
+  return null;
+}
