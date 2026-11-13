@@ -120,6 +120,9 @@ Return JSON {"topic": "", "queries": ["3 Wikipedia search queries"]}`, { tempera
     const specs = readJson(specFile, {});
     specs[id] = { title: s.title, hook: s.hook, seconds: 55, match: topic.split(/\s+/).filter((w) => w.length > 3).join('|') || topic, archive: topic, queries: [...new Set([...(s.queries || []), ...s.lines.flatMap((l) => l.queries || [])])].slice(0, 10) };
     fs.writeFileSync(specFile, JSON.stringify(specs, null, 2) + '\n');
+    // kept apart too: the workflow puts back the episode list (treasures.json) at the start of every run
+    const own = readJson(path.join(CONTENT, 'shorts-specs.json'), {}); own[id] = specs[id];
+    fs.writeFileSync(path.join(CONTENT, 'shorts-specs.json'), JSON.stringify(own, null, 2) + '\n');
     // a place from the ZALA Guide map: the first line flies down onto it (Mapbox)
     if (place?.lat && place?.lng) {
       const pf = path.join(CONTENT, 'library', 'places.json');
@@ -173,6 +176,17 @@ function schedule(id, at) {
 /** Puts back the short's own checked script when an older render replaced it with a long story. */
 function restore(id) {
   const bk = path.join(CONTENT, 'youtube', `${id}.before-library.json`);
+  // the picture library needs the short's entry in treasures.json (the workflow resets that file)
+  const specFile = path.join(CONTENT, 'library', 'treasures.json');
+  const specs = readJson(specFile, {});
+  if (!specs[id]) {
+    const own = readJson(path.join(CONTENT, 'shorts-specs.json'), {})[id];
+    const sc = readJson(fs.existsSync(bk) ? bk : path.join(CONTENT, 'youtube', `${id}.json`), {});
+    const topic = state.made.find((m) => m.id === id)?.topic || sc.title || id;
+    specs[id] = own || { title: sc.title, hook: sc.reels?.[0]?.hook || sc.title, seconds: 55, match: topic.split(/\s+/).filter((w) => w.length > 3).join('|') || topic, archive: topic, queries: [topic, sc.title].filter(Boolean) };
+    fs.writeFileSync(specFile, JSON.stringify(specs, null, 2) + '\n');
+    log(`${id}: picture library entry back`);
+  }
   if (fs.existsSync(bk) && readJson(bk, {}).verticalOnly) { fs.copyFileSync(bk, path.join(CONTENT, 'youtube', `${id}.json`)); fs.rmSync(bk); log(`${id}: its own script is back`); }
 }
 
