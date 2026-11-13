@@ -1,8 +1,9 @@
 name: ZALA shorts (standalone, one topic each)
 
-# Every day: three Shorts made from scratch, each its own topic (a mystery, strange daily life, a place from the
-# ZALA Guide map), facts checked by an editor, its own small picture library, the director, the voice and a vertical
-# render. Scheduled at 13:00, 19:00 and 23:30 UTC on YouTube, Facebook and Instagram, between the episodes.
+# Every day: three standalone Shorts, each its own topic (a mystery, strange daily life, a place from the ZALA Guide map).
+# The same line as every video: 1 prep (shorts.mjs plan), 2 make (line/make.sh), 3 quality (line/quality.sh, fixes and
+# makes again), then the outbox on R2 (outbox.mjs) and the publishing file (publisher.mjs): YouTube, Facebook,
+# Instagram at 13:00, 19:00 and 23:30 UTC, the map place and a blog article.
 on:
   schedule:
     - cron: "17 0 * * *"
@@ -12,10 +13,6 @@ on:
         description: "How many shorts"
         required: false
         default: "3"
-      redo:
-        description: "Make these scheduled shorts again (id:youtubeId, space separated), same publish time"
-        required: false
-        default: ""
 
 permissions:
   contents: write
@@ -67,6 +64,7 @@ jobs:
           set -euo pipefail
           aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
           git checkout -- content/meta-queue.json
+          git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
           cp media/tools/treasures.json content/library/treasures.json
           echo "EP=shorts" >> "$GITHUB_ENV"
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
@@ -84,43 +82,41 @@ jobs:
           aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
           aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
           mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
-      - name: Make the shorts
+      - name: 1 — Prep (topic, facts from Wikipedia or the map, script, the editor, title and hook)
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
           COUNT="${{ inputs.count }}"; COUNT="${COUNT:-3}"
-          REDO="${{ inputs.redo }}"
           out=""
-          if [ -z "$REDO" ]; then
-            for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT") && break; echo "plan: Gemini busy, waiting 5 minutes"; sleep 300; done
-          fi
+          for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT") && break; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
           echo "$out"
           ids=$(echo "$out" | grep -o 'SHORT_IDS:.*' | cut -d: -f2 || true)
-          if [ -n "$REDO" ]; then ids=$(for p in $REDO; do echo -n "${p%%:*} "; done); fi
+          echo "IDS=$ids" >> "$GITHUB_ENV"
+      - name: 2 and 3 — Make (pictures, director, voice, render) and Quality (check and fix), into the outbox
+        run: |
+          set -uo pipefail
+          exec > >(tee -a run.log) 2>&1
           made=""
-          for id in $ids; do
+          for id in ${IDS:-}; do
             echo "=== $id"
-            node media/tools/shorts.mjs restore "$id"
-            /tmp/lib/bin/python media/tools/library_build.py "$id" --target 30 || { echo "$id: no library"; continue; }
-            node media/tools/direct.mjs "$id" || { echo "$id: director stopped"; continue; }
-            node media/zala-render.mjs all "$id" || { echo "$id: render stopped"; continue; }
-            yt=""; for p in $REDO; do [ "${p%%:*}" = "$id" ] && yt="${p#*:}"; done
-            if [ -n "$REDO" ]; then node media/tools/shorts.mjs package "$id" && node media/tools/shorts.mjs redo "$id" "$yt" && made="$made $id"
-            else node media/tools/shorts.mjs package "$id" && node media/tools/shorts.mjs schedule "$id" && made="$made $id"; fi
+            node media/tools/shorts.mjs restore "$id" || true
+            bash media/tools/line/run.sh "$id" short && made="$made $id"
           done
           echo "MADE=$made" >> "$GITHUB_ENV"
+      - name: 4 — Publishing (YouTube, Facebook, Instagram, the map and the blog)
+        run: node media/tools/publisher.mjs || echo "publishing tried again next run"
       - name: Save work back to R2 and the queue to git
         if: always()
         run: |
           aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
-          for id in ${MADE:-}; do aws s3 sync "media/out/$id" "s3://${R2_BUCKET}/renders/$id" --endpoint-url "$E" --no-progress; done
+          for id in ${IDS:-}; do [ -d "media/out/$id" ] && aws s3 sync "media/out/$id" "s3://${R2_BUCKET}/renders/$id" --endpoint-url "$E" --no-progress; [ -d "quality-$id" ] && aws s3 sync "quality-$id" "s3://${R2_BUCKET}/renders/$id/review" --endpoint-url "$E" --no-progress; done; true
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull --rebase --autostash -q || true
-          git add -f content/meta-queue.json content/shorts-state.json && git commit -qm "shorts: ${MADE:-none}" && git push -q || true
+          git add -f content/meta-queue.json content/shorts-state.json content/outbox.json && git commit -qm "shorts: ${MADE:-none}" && git push -q || true
       - name: Telegram
         if: always()
         run: |
           n=$(echo ${MADE:-} | wc -w)
-          MSG="ZALA الشورتس: اتعمل واتجدول $n شورت مستقل النهارده (كل واحد موضوع لوحده)."
+          MSG="ZALA الشورتس: $n شورت مستقل عدّى التحضير والتصنيع والجودة واتجدول النهارده."
           if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
