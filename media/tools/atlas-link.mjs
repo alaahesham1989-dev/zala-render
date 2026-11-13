@@ -19,7 +19,8 @@ const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8'))
 export function addVideo(slug, v) {
   if (!slug || !v?.url) return;
   const all = readJson(FILE, {});
-  const list = all[slug] ||= [];
+  // a video made again replaces its older copy (same episode id)
+  const list = all[slug] = (all[slug] || []).filter((x) => !v.episode || x.episode !== v.episode || x.url === v.url);
   if (list.some((x) => x.url === v.url)) return;
   list.push({ url: v.url, title: v.title, kind: v.kind, at: v.at || new Date().toISOString(), episode: v.episode });
   fs.writeFileSync(FILE, JSON.stringify(all, null, 2) + '\n');
