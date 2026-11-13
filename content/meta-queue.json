@@ -88,7 +88,21 @@
       "ig"
     ],
     "at": "2026-11-13T16:00:00Z",
-    "done": false
+    "done": "2026-11-13T16:51:59.003Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1627843285211889",
+        "url": "https://www.facebook.com/reel/1627843285211889"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18103319246345668",
+        "url": "https://www.instagram.com/reel/DfsGdALiZI_/"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
@@ -97,7 +111,14 @@
       "yt:jXx5dSTTLyk"
     ],
     "at": "2026-11-13T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-13T16:51:59.004Z",
+    "results": [
+      {
+        "platform": "youtube",
+        "kind": "credits comment (disabled)",
+        "id": "jXx5dSTTLyk"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
@@ -419,8 +440,22 @@
       "ig"
     ],
     "at": "2026-11-13T13:00:00Z",
-    "done": false,
-    "youtube": "https://youtu.be/6tsbs20flsk"
+    "done": "2026-11-13T16:53:37.033Z",
+    "youtube": "https://youtu.be/6tsbs20flsk",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1463330615983793",
+        "url": "https://www.facebook.com/reel/1463330615983793"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18121715945096108",
+        "url": "https://www.instagram.com/reel/DfsGqHujhU4/"
+      }
+    ]
   },
   {
     "episode": "ZV-S202611122",
