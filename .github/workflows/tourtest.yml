@@ -38,6 +38,10 @@ jobs:
           node-version: 22
       - name: Tools
         run: sudo apt-get update -y && sudo apt-get install -y ffmpeg && cd media && npm ci
+      - name: Read-only sync of the real tour counter (never pushed back; avoids colliding with the real pipeline's next id)
+        run: |
+          mkdir -p content
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress || true
       - name: Prep and flight
         run: |
           mkdir -p content/youtube content/library
