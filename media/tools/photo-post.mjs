@@ -50,11 +50,13 @@ async function episodeBlogSlug(episodeId) {
   } catch { return null; }
 }
 
-/** Builds the post as a short real article: hook, 3 fact paragraphs, then watch/read more + follow + the site. */
+/** Builds the post as a short real article: hook, 3 fact paragraphs, a real question (not "like if"/"tag a friend",
+ * which Facebook and Instagram actually push down), then watch/read more + follow + the site. */
 function buildCaption(a, { videoUrl, blogUrl, tags }) {
   const article = (Array.isArray(a.article) ? a.article : [a.article]).filter(Boolean).join('\n\n');
   const more = videoUrl ? `🎥 Watch the full story: ${videoUrl}` : `📖 Read the full story: ${blogUrl}`;
-  return [a.hook, article, more, '🔔 Follow us for a true story from Ancient Egypt every day.', `🌐 ${SITE}`, tags].filter(Boolean).join('\n\n');
+  const engage = a.engage ? `💬 ${a.engage}` : null;
+  return [a.hook, article, engage, more, '🔔 Follow us for a true story from Ancient Egypt every day.', `🌐 ${SITE}`, tags].filter(Boolean).join('\n\n');
 }
 
 // ── take the next ready item off the queue photo-prep.mjs filled ahead of time ──
@@ -64,7 +66,7 @@ const pick = queue[0];
 if (!pick) { console.log('[photo] the queue is empty, nothing to post today (run photo-prep.mjs to fill it)'); process.exit(0); }
 
 const day = new Date().toISOString().slice(0, 10);
-const ans = { hook: pick.hook, article: pick.article };
+const ans = { hook: pick.hook, article: pick.article, engage: pick.engage };
 const words = pick.words;
 const title = `${String(pick.hook || pick.topic).slice(0, 100)}`;
 const slug = `${slugOf(title)}-${day}`;

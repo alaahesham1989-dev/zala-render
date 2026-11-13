@@ -1,5 +1,7 @@
 // Puts a finished episode that passed the review into the next free places of the weekly plan, with no one asked:
-//   the long video on the next free Monday or Thursday, its three reels on the next free days in between, 16:00 UTC (18:00 Cairo).
+//   the long video on the next free Monday or Thursday, its three reels on the next free days in between, 20:00 UTC
+//   (owner's order 2026-11-13: publish inside the US audience's best afternoon window, noon to 6pm US time, not
+//   Cairo's evening — 20:00 UTC is 3pm US Eastern / 22:00 Cairo).
 // YouTube: uploaded now as private with a publish time (YouTube makes them public on time).
 // Facebook and Instagram: added to content/meta-queue.json, which meta.yml publishes when due (Instagram gets reels only).
 // The plan is kept in content/schedule.json; places already taken in the queue are never used twice.
@@ -24,9 +26,9 @@ try {
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
 } catch { /* no script: the reels take the episode's first sentence */ }
 
-// a kind of long video has its own hour (episodes 16:00 UTC, virtual tours 18:00 UTC on Saturday); only that hour is
-// counted as taken, so the shorts at 13:00, 19:00 and 23:30 never push a long video away
-const HOUR = Number(process.env.AP_HOUR || 16);
+// a kind of long video has its own hour (episodes 20:00 UTC, virtual tours 21:00 UTC on Saturday, both inside the
+// US audience's noon-6pm window); only that hour is counted as taken, so a different kind never pushes this one away
+const HOUR = Number(process.env.AP_HOUR || 20);
 const hh = `${String(HOUR).padStart(2, '0')}:00`;
 const taken = new Set([...plan.map((p) => p.at), ...queue.map((q) => q.at)].filter((t) => String(t).slice(11, 16) === hh).map((t) => String(t).slice(0, 10)));
 const LONG_DAYS = (process.env.AP_DAYS || '1,4').split(',').map(Number);   // Monday, Thursday (tours: Saturday)

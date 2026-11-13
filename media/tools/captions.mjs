@@ -17,13 +17,17 @@ export function hashtags(pkg) {
   return [...new Set(['#AncientEgypt', '#Egypt', '#History', ...own])].slice(0, 6).join(' ');
 }
 
+// owner's order 2026-11-13: ask a real question so people comment, never "like if"/"tag a friend" (Facebook and
+// Instagram actually push that kind of post down, the opposite of what we want)
+const ENGAGE = '💬 What part of this true story surprised you most?';
+
 /** which: 'main' or 'R1'..'R3'. Two or three short lines about the subject, then the hashtags. */
 export function postText(pkg, which) {
   const story = sentences(storyOf(pkg));
-  if (which === 'main') return `${pkg.title}\n\n${story.slice(0, 2).join(' ')}\n\n${hashtags(pkg)}`;
+  if (which === 'main') return `${pkg.title}\n\n${story.slice(0, 2).join(' ')}\n\n${ENGAGE}\n\n${hashtags(pkg)}`;
   const reel = (pkg.reels || []).find((r) => r.id === `${pkg.id}-${which}`) || {};
   const about = reel.sub || story[0] || '';
-  return `${reel.title || pkg.title}\n\n${about}\n\n${hashtags(pkg)}`;
+  return `${reel.title || pkg.title}\n\n${about}\n\n${ENGAGE}\n\n${hashtags(pkg)}`;
 }
 
 /** Credits for the first comment: music, sources, picture and video credits, the AI note. */

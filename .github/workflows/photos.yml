@@ -1,21 +1,26 @@
 name: ZALA picture post
 
-# One picture post a day on Facebook and Instagram at 15:00 UTC (10:00 in New York, 17:00 in Cairo).
-# GitHub's timer runs late, so two early runs wait on the server for 15:00; the second finds today done and stops.
+# One picture post a day on Facebook and Instagram at 18:00 UTC (1pm US Eastern, inside the US audience's best
+# afternoon window, noon to 6pm — owner's order 2026-11-13; was 15:00 UTC / 10am US Eastern, too early for them).
+# GitHub's timer runs late, so two early runs wait on the server for 18:00; the second finds today done and stops.
 # This workflow only PUBLISHES the next ready item from content/photo-queue.json — photo-prep.yml fills that
 # queue ahead of time from our own checked episode stories, with a real photo already found and quality-checked.
 on:
   schedule:
-    - cron: "13 9 * * *"
-    - cron: "37 11 * * *"
+    - cron: "13 12 * * *"
+    - cron: "37 14 * * *"
   workflow_dispatch:
     inputs:
       now:
-        description: "Post now instead of waiting for 15:00 UTC"
+        description: "Post now instead of waiting for 18:00 UTC"
         type: boolean
         default: false
       dry:
         description: "Quality check only, post nothing"
+        type: boolean
+        default: false
+      force:
+        description: "Post again even if one already went out today"
         type: boolean
         default: false
 
@@ -47,15 +52,15 @@ jobs:
       - name: Already posted today?
         run: |
           d=$(node -e "const f='content/photo-posts.json';const s=require('fs').existsSync(f)?require('./'+f):[];console.log(s.some(x=>!x.refused&&String(x.at).slice(0,10)===new Date().toISOString().slice(0,10))?'yes':'no')")
-          if [ "${{ inputs.dry }}" = "true" ]; then d=no; fi   # a quality test runs any time
+          if [ "${{ inputs.dry }}" = "true" ] || [ "${{ inputs.force }}" = "true" ]; then d=no; fi   # a quality test, or an explicit extra post, runs any time
           echo "DONE_TODAY=$d" >> "$GITHUB_ENV"; echo "posted today: $d"
       - name: The episode schedule (so a post can link to its own video when one is already public)
         if: env.DONE_TODAY == 'no'
         run: aws s3 cp "s3://${R2_BUCKET}/render-state/content/schedule.json" content/schedule.json --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress || echo "no schedule yet"
-      - name: Wait for 15:00 UTC
+      - name: Wait for 18:00 UTC
         if: env.DONE_TODAY == 'no' && !inputs.now
         run: |
-          s=$(( $(date -u -d "15:00" +%s) - $(date -u +%s) )); echo "waiting $s seconds"
+          s=$(( $(date -u -d "18:00" +%s) - $(date -u +%s) )); echo "waiting $s seconds"
           if [ "$s" -gt 0 ] && [ "$s" -lt 19000 ]; then sleep "$s"; fi
       - name: Post
         if: env.DONE_TODAY == 'no'

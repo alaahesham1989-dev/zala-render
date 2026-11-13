@@ -147,13 +147,13 @@ function packageOf(id) {
   log(`package ${id}`);
 }
 
-// three daily slots for standalone shorts, between the 16:00 UTC episode slot: 13:00, 19:00 and 23:30 UTC
-// (morning, afternoon and evening in the USA); each short takes the next free slot
+// three daily slots for standalone shorts (owner's order 2026-11-13: the US audience's best afternoon window,
+// noon to 6pm US Eastern, not Cairo's evening): 17:00, 19:00, 22:00 UTC = noon, 2pm, 5pm US Eastern
 function schedule(id, at) {
   const queueFile = path.join(REPO, 'content', 'meta-queue.json');
   const queue = readJson(queueFile, []);
   if (queue.some((q) => q.episode === id)) { log(`${id} scheduled already`); return; }
-  const slots = ['13:00', '19:00', '23:30'];
+  const slots = ['17:00', '19:00', '22:00'];
   const taken = new Set(queue.map((q) => q.at));
   let when = at || null;
   for (let d = 1; d < 60 && !when; d++) {

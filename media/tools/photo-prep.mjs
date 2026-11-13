@@ -78,6 +78,7 @@ Return JSON {"hook": "one short specific opening line or question",
 "article": ["paragraph 1: the single most surprising fact", "paragraph 2: more real context, a different fact", "paragraph 3: why it matters today or how it would feel to see it in person"],
 "words": "2 to 5 big words for the picture card, no place or person names",
 "searchQuery": "a precise English search phrase for a real museum photo of the exact object or scene this moment is about",
+"engage": "one short, specific question tied to THIS exact story that invites a real comment (never 'like if' or 'tag a friend', a genuine question only, e.g. what they would have done, or what detail surprised them)",
 "tags": ["3 to 5 hashtags without #"]}`);
   if (!beat?.article || !beat?.searchQuery) { console.log(`[prep] ${topicId}: no usable moment found yet, trying again later`); continue; }
   const article = (Array.isArray(beat.article) ? beat.article : [beat.article]).join('\n\n');
@@ -121,7 +122,7 @@ setting, natural lighting, no text, no watermark, no people's faces. A believabl
   const cardUrl = await uploadCard(card, `prep/photo/${topicId}-${day}.jpg`);
   queue.push({
     topic: topicId, queuedAt: new Date().toISOString(), hook: beat.hook, article: beat.article, words, tags: beat.tags || [],
-    cardUrl, isAI, sourceUrl: pick?.source_url || null, author: pick?.author || null, license: pick?.license || null,
+    engage: beat.engage || null, cardUrl, isAI, sourceUrl: pick?.source_url || null, author: pick?.author || null, license: pick?.license || null,
   });
   fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
   claimed.add(topicId);

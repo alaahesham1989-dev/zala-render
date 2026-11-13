@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // THE PUBLISHING FILE — organises posting for everything waiting in the outbox (outbox.mjs), one kind at a time:
-//   episode     long video Monday/Thursday 16:00 UTC, its 3 reels on the days between (autopublish.mjs)
-//   tour        virtual tour Saturday 18:00 UTC (autopublish.mjs, no reels: its short version is its own short)
-//   short       standalone short or short tour in the daily short slots 13:00, 19:00, 23:30 UTC (shorts.mjs)
+//   episode     long video Monday/Thursday 20:00 UTC, its 3 reels on the days between (autopublish.mjs)
+//   tour        virtual tour Saturday 21:00 UTC (autopublish.mjs, no reels: its short version is its own short)
+//   short       standalone short or short tour in the daily short slots 17:00, 19:00, 22:00 UTC (shorts.mjs)
+//   all times: the US audience's best afternoon window, noon to 6pm US Eastern (owner's order 2026-11-13)
 // YouTube gets it private with a publish time; Facebook and Instagram from content/meta-queue.json (meta.yml).
 // Then, for every video: its ZALA Guide map places get the link (atlas-link.mjs) and the blog gets an article that
 // links back to the map place (blog-feed.mjs), so video, map and blog all point to each other.
@@ -42,7 +43,7 @@ async function publish(item) {
     node([tool('autopublish.mjs'), dir, item.id, QUEUE]);
     node([tool('atlas-link.mjs'), 'episode', item.id]);
   } else if (item.kind === 'tour') {
-    node([tool('autopublish.mjs'), dir, item.id, QUEUE], { AP_HOUR: '18', AP_DAYS: '6', AP_REELS: '0' });
+    node([tool('autopublish.mjs'), dir, item.id, QUEUE], { AP_HOUR: '21', AP_DAYS: '6', AP_REELS: '0' });
     const main = readJson(path.join(CONTENT, 'schedule.json'), []).find((p) => p.episode === item.id && p.which === 'main');
     if (item.place && main) addVideo(item.place, { url: main.youtube, title: item.title, kind: 'tour', at: main.at, episode: item.id });
   } else {
