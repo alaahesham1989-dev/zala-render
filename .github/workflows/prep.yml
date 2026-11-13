@@ -6,7 +6,7 @@ name: ZALA prep (facts, clean pictures, story check, Flow shot list)
 # Every day it keeps 3 episodes prepared ahead of the factory; the factory only takes an episode whose preparation is done.
 on:
   schedule:
-    - cron: "30 2 * * *"
+    - cron: "41 1 * * *"
   workflow_dispatch:
     inputs:
       episodes:
