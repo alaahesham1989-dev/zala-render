@@ -140,6 +140,8 @@ async function base() {
   for (const [k, v] of Object.entries(treasures || {})) titles[k] = v.title;
   for (const m of shorts?.made || []) titles[m.id] = m.title;
   for (const o of outbox || []) titles[o.id] = o.title;
+  for (const p of plan || []) if (p.which === 'main' && p.title) titles[p.episode] = p.title;
+  for (const p of plan || []) if (p.title) titles[p.episode] ||= p.title;
   return (data = { rows, plan: plan || [], queue: queue || [], outbox: outbox || [], shorts: shorts?.made || [], tours, treasures: treasures || {}, runs: runs?.workflow_runs || [], titles });
 }
 const status = (r) => r.err ? '<span class="no">فيه مشكلة</span>' : r.done ? '<span class="ok">اتنشر</span>' : '<span class="wait">متجدول</span>';
