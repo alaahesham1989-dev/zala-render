@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { askJson, generateImage } from './gemini-lite.mjs';
-import { findOpenPhoto } from './library-harvest.mjs';
+import { findOpenPhoto } from '../library-harvest.mjs';
 import { CONTENT, REPO } from '../lib/paths.mjs';
 
 const dry = process.argv.includes('--dry');
