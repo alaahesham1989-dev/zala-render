@@ -256,8 +256,22 @@
       "ig"
     ],
     "at": "2026-11-13T12:00:00Z",
-    "done": false,
-    "note": "older episode already public on YouTube"
+    "done": "2026-11-13T12:02:15.922Z",
+    "note": "older episode already public on YouTube",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "2157333778992526",
+        "url": "https://www.facebook.com/reel/2157333778992526"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18000328962043904",
+        "url": "https://www.instagram.com/reel/DfrlSrCpflm/"
+      }
+    ]
   },
   {
     "episode": "ZV-L03",
