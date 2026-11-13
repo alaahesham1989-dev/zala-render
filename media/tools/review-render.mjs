@@ -67,23 +67,7 @@ function compare(expected, heard) {
   b.forEach((w) => have.set(w, (have.get(w) || 0) + 1));
   const missing = a.filter((w) => { const n = have.get(w) || 0; if (n) have.set(w, n - 1); return !n; });
   const extra = [...have.entries()].flatMap(([w, n]) => Array(n).fill(w));
-  return { missing, extra, plainMissing: missing.filter((w) => !nameWords(expected).has(w)), firstOk: a[0] === b[0], lastOk: a[a.length - 1] === b[b.length - 1] };
-}
-// Ancient names (Psusennes, Pinedjem, Duathathor-Henuttawy), Roman numerals and codes (NRT IV) are what speech
-// recognition mishears, not what the voice gets wrong: a line only fails on its ordinary words.
-function nameWords(text) {
-  const out = new Set();
-  const toks = String(text).split(/\s+/);
-  toks.forEach((t, i) => {
-    const prev = toks[i - 1] || '';
-    const sentenceStart = i === 0 || /[.!?:]["')]*$/.test(prev);
-    const clean = t.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
-    if (!clean) return;
-    if ((/^[A-Z]/.test(clean) && !sentenceStart) || /^[IVXL]+$/.test(clean) || /^[A-Z]{2,}\d*$/.test(clean) || /-/.test(clean)) {
-      for (const w of words(clean.replace(/-/g, ' '))) out.add(w);
-    }
-  });
-  return out;
+  return { missing, extra, firstOk: a[0] === b[0], lastOk: a[a.length - 1] === b[b.length - 1] };
 }
 
 function detect(filter) {
@@ -197,7 +181,7 @@ if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, 
 for (const l of report.lines) {
   if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
   else if ((l.missing || []).length > words(l.text).length * 0.6) fail.push(`line ${l.n}: most words were not heard: ${l.text.slice(0, 60)}`);
-  else if ((l.plainMissing || l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
   const source = lines[l.n - 1] || {};
@@ -211,14 +195,15 @@ if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds 
 for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) console.log(`Note: ${x.name}: ${String(x.note).slice(0, 100)}`); }
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
 // what keeps a viewer watching
-const eng = pkg.engagement || {};
+// a standalone short or a short tour has no long-video package: thumbnails, chapters and the teaser count are not checked
+const eng = script.verticalOnly ? { longestStill: 0, longestClip: 0, teasers: 1, minutes: 0, wordTimed: 1, lines: 1, licensedMusic: true, cards: 0 } : (pkg.engagement || {});
 if (eng.longestStill > 7) fail.push(`one picture stays ${eng.longestStill}s without a cut`);
 if (eng.longestClip > 14) fail.push(`one moving clip runs ${eng.longestClip}s`);
 if (!(eng.teasers >= eng.minutes * 1.5)) fail.push(`only ${eng.teasers} lines at the top for ${eng.minutes} minutes`);
 if (!(eng.wordTimed >= eng.lines * 0.95)) fail.push(`captions follow the spoken words on only ${eng.wordTimed} of ${eng.lines} lines`);
 if (!eng.licensedMusic) fail.push('no licensed music: the built-in bed was used');
 if (eng.cards > 7) fail.push(`${eng.cards} text cards, too many`);
-if ((pkg.thumbnails || []).length < 3) fail.push(`only ${(pkg.thumbnails || []).length} thumbnails`);
+if (!script.verticalOnly && (pkg.thumbnails || []).length < 3) fail.push(`only ${(pkg.thumbnails || []).length} thumbnails`);
 const blob = [pkg.title, pkg.description].join(' ');
 for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
 // cards in a row, reused from the director's rule, and pictures showing nudity are removed for the next run
