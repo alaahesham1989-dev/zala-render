@@ -1294,6 +1294,7 @@ async function finalPass({ chain, mix, ass, out, tl, crf = 19 }) {
 
 // ── vertical reels ───────────────────────────────────────────────────────────
 function pickReels(script, flat) {
+  if (script.noReels) return [];   // a long virtual tour: its short version is its own video
   const plan = script.reels?.length ? script.reels
     : script.verticalOnly ? [{ chapter: 1, title: script.title, hook: script.thumbnailText || script.title }]
     : [1, Math.ceil(script.chapters.length / 2) + 1, script.chapters.length - 1]
