@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { postText, creditText } from './captions.mjs';
+import { postText } from './captions.mjs';
 
 const G = 'https://graph.facebook.com/v21.0';
 const TOKEN = process.env.META_SYSTEM_USER_TOKEN;
@@ -39,27 +39,10 @@ function texts(pkg, id, which) {
   return { isMain, file: isMain ? pkg.file : reel.file, title: isMain ? pkg.title : reel.title, text, ig: text.slice(0, 2200) };
 }
 
-/** The licences' credits as the first comment under the post. A failed comment never stops the post. */
-async function creditComment(objectId, pkg, token, max) {
-  return;   // owner order 2026-11-12: no credits comments anywhere; the credits live on zalavip.com/credits
-  const message = creditText(pkg, max);
-  if (!message) return;
-  try { await call(`${G}/${objectId}/comments`, { method: 'POST', token, params: { message } }); console.log(`credits comment on ${objectId}`); }
-  catch (e) { console.log(`credits comment failed on ${objectId}: ${e.message}`); }
-}
-
-/** YouTube: the credits comment goes up when the video is public (a private video takes no comments). */
-async function youtubeCredits(pkg, videoId) {
-  return { platform: 'youtube', kind: 'credits', skipped: 'owner order: credits on zalavip.com/credits' };   // no comments
-  const { YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN } = process.env;
-  const t = await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: YOUTUBE_CLIENT_ID, client_secret: YOUTUBE_CLIENT_SECRET, refresh_token: YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) })).json();
-  if (!t.access_token) throw new Error(`Google refused the token: ${t.error}`);
-  const res = await fetch('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet', { method: 'POST', headers: { Authorization: `Bearer ${t.access_token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ snippet: { videoId, topLevelComment: { snippet: { textOriginal: creditText(pkg, 9000) } } } }) });
-  const d = await res.json();
-  if (!res.ok) throw new Error(`YouTube refused the comment: ${d.error?.message || res.status}`);
-  return { platform: 'youtube', kind: 'credits comment', id: d.id };
-}
+/** Owner's standing order (repeated 2026-11-13): never a comment, never any mention of the source, on anything we
+ * post — not Facebook, not Instagram, not YouTube. Both are now permanent no-ops; nothing is ever sent. */
+async function creditComment() { /* disabled by the owner: no comments, ever */ }
+async function youtubeCredits(_pkg, videoId) { return { platform: 'youtube', kind: 'credits comment (disabled)', id: videoId }; }
 
 async function toFacebook(pkg, id, which) {
   const t = texts(pkg, id, which);
