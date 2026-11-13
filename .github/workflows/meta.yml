@@ -59,11 +59,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           today=$(date -u +%Y-%m-%d); hour=$(date -u +%H)
-          for w in "shorts.yml 03" "prep.yml 04" "factory.yml 07"; do
+          # one waiting run per group: a new start would push out a waiting one, so only start when nothing waits
+          waiting=0; for w in shorts.yml prep.yml factory.yml; do k=$(gh run list -R "$GITHUB_REPOSITORY" -w $w -L 5 --json status --jq '[.[]|select(.status=="queued" or .status=="pending" or .status=="waiting")]|length' || echo 1); waiting=$((waiting+k)); done
+          [ "$waiting" -gt 0 ] && { echo "watchdog: a run is waiting already"; exit 0; }
+          for w in "shorts.yml 03" "factory.yml 07"; do
             set -- $w
             [ "$hour" -lt "$2" ] && continue
             n=$(gh run list -R "$GITHUB_REPOSITORY" -w "$1" -L 20 --json createdAt --jq "[.[]|select(.createdAt>=\"$today\")]|length" || echo 1)
-            if [ "$n" = "0" ]; then echo "watchdog: $1 did not run today, starting it"; gh workflow run "$1" -R "$GITHUB_REPOSITORY" || true; fi
+            if [ "$n" = "0" ]; then echo "watchdog: $1 did not run today, starting it"; gh workflow run "$1" -R "$GITHUB_REPOSITORY" || true; break; fi
           done
       - uses: actions/setup-node@v4
         with:
