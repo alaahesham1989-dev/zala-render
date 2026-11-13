@@ -8,6 +8,12 @@ import { spawnSync } from 'node:child_process';
 import { FFMPEG, ff, durationOf } from '../lib/ff.mjs';
 import { keyFor, markSpent } from '../lib/gemini-keys.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
+import { CONTENT } from '../lib/paths.mjs';
+
+// Ancient Egypt and hieroglyph vocabulary is unusual for a TTS voice and for Whisper alike: a mismatch on one of
+// these words should never fail a line the way a real missing sentence does. content/youtube/hard-words.json grows
+// by itself (gapfill.mjs adds a word there whenever a line is rewritten over it), shared by every future episode.
+const HARD_WORDS = (() => { try { return new Set(JSON.parse(fs.readFileSync(path.join(CONTENT, 'youtube', 'hard-words.json'), 'utf8')).words.map((w) => w.toLowerCase())); } catch { return new Set(); } })();
 
 const [publish, scriptFile, out] = process.argv.slice(2);
 if (!process.env.CI) throw new Error('This review runs on the cloud server only.');
@@ -61,12 +67,19 @@ function sheet(frames, columns, rows, target) {
 }
 
 const words = (s) => numerals(String(s)).toLowerCase().replace(/(\d),(\d)/g, '$1$2').replace(/[^a-z0-9' ]+/g, ' ').split(/\s+/).filter(Boolean);
+// a name or a hieroglyph/Egyptological term in the ORIGINAL (not lowercased) line: capitalised anywhere (not only at the
+// very start), hyphenated (Ny-Maat-Ra, Ptah-Hotep), or already known from content/youtube/hard-words.json
+function hardWordsIn(expected) {
+  const caps = [...String(expected).matchAll(/\b[A-Z][a-zA-Z']*(?:-[A-Z][a-zA-Z']*)*\b/g)].flatMap((m) => m[0].split('-'));
+  return new Set([...caps.map((w) => w.toLowerCase()), ...HARD_WORDS]);
+}
 function compare(expected, heard) {
   const a = words(expected), b = words(heard);
+  const hard = hardWordsIn(expected);
   const have = new Map();
   b.forEach((w) => have.set(w, (have.get(w) || 0) + 1));
-  const missing = a.filter((w) => { const n = have.get(w) || 0; if (n) have.set(w, n - 1); return !n; });
-  const extra = [...have.entries()].flatMap(([w, n]) => Array(n).fill(w));
+  const missing = a.filter((w) => { const n = have.get(w) || 0; if (n) have.set(w, n - 1); return !n; }).filter((w) => !hard.has(w));
+  const extra = [...have.entries()].flatMap(([w, n]) => Array(n).fill(w)).filter((w) => !hard.has(w));
   return { missing, extra, firstOk: a[0] === b[0], lastOk: a[a.length - 1] === b[b.length - 1] };
 }
 
