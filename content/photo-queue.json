@@ -1,27 +1,5 @@
 [
   {
-    "topic": "ZV-L03",
-    "queuedAt": "2026-11-13T15:18:48.052Z",
-    "hook": "Did you know the man who built Egypt's first stone pyramid was so brilliant he became a god?",
-    "article": [
-      "Forty-seven hundred years ago, a commoner named Imhotep stepped into the court of Pharaoh Djoser and imagined something humanity had never seen. By stacking six limestone mastabas one above the other, he erected the Step Pyramid, the very first monumental stone structure in human history.",
-      "Yet Imhotep was far more than an architect, authoring the world's earliest surgical textbook two thousand years before Hippocrates was born. Instead of relying on superstition, he systematically documented forty-eight medical cases, prescribed honey for open wounds, and provided the first recorded description of the human brain.",
-      "He became one of only two mortals elevated to the ranks of full deities in the entire three-thousand-year history of ancient Egypt. To this day, the resting place of this master architect and healer has never been found, leaving his ultimate tomb hidden somewhere beneath the desert sands."
-    ],
-    "words": "STONE PYRAMID ETERNAL SECRETS",
-    "tags": [
-      "ancientegypt",
-      "history",
-      "archaeology",
-      "pyramids"
-    ],
-    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-L03-2026-11-13.jpg",
-    "isAI": false,
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pyramid_of_Djoser_2010.jpg",
-    "author": "Wknight94 talk",
-    "license": "CC BY-SA 3.0"
-  },
-  {
     "topic": "ZV-L04",
     "queuedAt": "2026-11-13T15:19:14.348Z",
     "hook": "Imagine going out to look for a stray goat and accidentally dropping straight into a secret cavern of forty ancient kings.",
