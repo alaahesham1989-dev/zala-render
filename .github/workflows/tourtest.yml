@@ -6,7 +6,7 @@ on:
       place:
         description: "Map place slug"
         required: false
-        default: "giza-pyramids"
+        default: "giza-pyramids karnak"
 
 concurrency:
   group: zala-tourtest
@@ -41,7 +41,7 @@ jobs:
       - name: Prep and flight
         run: |
           mkdir -p content/youtube content/library
-          out=$(node media/tools/tour-prep.mjs "${{ inputs.place }}"); echo "$out"
-          ids=$(echo "$out" | grep -o 'TOUR_IDS:.*' | cut -d: -f2 || true)
+          out=""; for p in ${{ inputs.place }}; do out="$out $(node media/tools/tour-prep.mjs "$p")"; done; echo "$out"
+          ids=$(echo "$out" | grep -o "TOUR_IDS:[A-Z0-9 -]*" | cut -d: -f2 | xargs || true)
           for id in $ids; do node media/tools/tour-flight.mjs "$id"; done
           for id in $ids; do cp "content/youtube/$id.json" "$id.json"; aws s3 cp "$id.json" "s3://${R2_BUCKET}/preview/tourtest/$id.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress; done
