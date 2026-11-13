@@ -56,8 +56,10 @@ await directEpisode(script, clean, tools);
 fs.writeFileSync(ITEMS, all.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
 const seenPlaces = new Set();
 for (const l of script.chapters.flatMap((c) => c.lines)) {
+  // a map fly-in set by the writer (a place short opens on its place) stays even when the line does not name it
+  const asked = l.map && places.find((p) => p.name === l.map && !seenPlaces.has(p.name));
   delete l.map;
-  const place = !l.noMap && places.find((p) => !seenPlaces.has(p.name) && new RegExp(p.match).test(l.en));
+  const place = !l.noMap && (asked || places.find((p) => !seenPlaces.has(p.name) && new RegExp(p.match).test(l.en)));
   if (place) { seenPlaces.add(place.name); l.map = place.name; }
 }
 fs.writeFileSync(scriptFile, JSON.stringify(script, null, 2) + '\n', 'utf8');
