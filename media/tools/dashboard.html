@@ -5,74 +5,248 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة مصنع ZALA</title>
 <style>
-:root{--bg:#0b0b0d;--card:#16161a;--line:#2a2a30;--gold:#d4af37;--ok:#4ade80;--no:#f87171;--wait:#fbbf24;--text:#ece8e0;--mute:#9a968e}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif;padding:16px}
-h1{color:var(--gold);margin:0 0 4px;font-size:24px}h2{font-size:18px;margin:26px 0 10px;color:var(--gold)}
-.sub{color:var(--mute);font-size:13px;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+:root{--bg:#0b0b0d;--card:#16161a;--card2:#1d1d22;--line:#2a2a30;--gold:#d4af37;--ok:#4ade80;--no:#f87171;--wait:#fbbf24;--blue:#7cb6ff;--text:#ece8e0;--mute:#9a968e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif}
+header{position:sticky;top:0;z-index:5;background:rgba(11,11,13,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:12px 16px 0}
+h1{color:var(--gold);margin:0;font-size:21px}
+.sub{color:var(--mute);font-size:12.5px;margin:2px 0 10px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav button{flex:none;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+nav button.on{background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+nav .n{display:inline-block;min-width:20px;margin-inline-start:6px;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px}
+nav button.on .n{background:rgba(0,0,0,.18)}
+main{padding:16px;max-width:1100px;margin:0 auto}
+section{display:none}section.on{display:block}
+h2{font-size:17px;margin:4px 0 12px;color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:26px;color:var(--gold);line-height:1.2}.stat span{color:var(--mute);font-size:13px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
-.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.row:last-child{border:0}
-.ok{color:var(--ok)}.no{color:var(--no)}.wait{color:var(--wait)}.mute{color:var(--mute)}
-a{color:var(--gold)}img.thumb{width:100%;border-radius:8px;margin-top:8px;aspect-ratio:16/9;object-fit:cover;background:#000}
-.reels{display:flex;gap:6px;margin-top:6px}.reels img{width:32%;border-radius:6px;aspect-ratio:9/16;object-fit:cover;background:#000}
-ul{margin:6px 0;padding-inline-start:18px;color:var(--no);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.row{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.row:last-child{border:0}
+@media (max-width:560px){.row{grid-template-columns:1fr auto}.row .t{grid-column:1/-1;color:var(--mute);font-size:12.5px}}
+.ok{color:var(--ok)}.no{color:var(--no)}.wait{color:var(--wait)}.mute{color:var(--mute)}.blue{color:var(--blue)}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line);color:var(--mute);margin-inline-start:6px}
+a{color:var(--gold)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+details>summary{cursor:pointer;list-style:none;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"▾";color:var(--gold);transition:transform .2s}details[open]>summary::after{transform:rotate(180deg)}
+details>.body{padding:0 14px 10px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit;font-size:14px}
+img.thumb{width:100%;border-radius:8px;margin-top:8px;aspect-ratio:16/9;object-fit:cover;background:#000}
+.reels{display:flex;gap:6px;margin-top:6px}.reels a{width:32%}.reels img{width:100%;border-radius:6px;aspect-ratio:9/16;object-fit:cover;background:#000}
+ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13px}
+.empty{color:var(--mute);padding:10px 0}
+.line{font-size:13px;color:var(--mute)}
 </style>
 </head>
 <body>
-<h1>لوحة مصنع ZALA</h1>
-<div class="sub">بتتحدث لوحدها كل ما تفتحها. <span id="now"></span></div>
+<header>
+  <h1>لوحة مصنع ZALA</h1>
+  <div class="sub">بتتحدث لوحدها كل ما تفتحها · <span id="now"></span></div>
+  <nav id="tabs">
+    <button data-t="home">نظرة عامة</button>
+    <button data-t="plan">الجدول<span class="n" id="n-plan"></span></button>
+    <button data-t="eps">الحلقات<span class="n" id="n-eps"></span></button>
+    <button data-t="shorts">الشورتس<span class="n" id="n-shorts"></span></button>
+    <button data-t="tours">الجولات<span class="n" id="n-tours"></span></button>
+    <button data-t="outbox">الصندوق<span class="n" id="n-outbox"></span></button>
+    <button data-t="runs">التشغيلات</button>
+  </nav>
+</header>
+<main>
+  <section id="home">
+    <div class="stats" id="stats"></div>
+    <h2>اللي جاي قريب</h2>
+    <div class="card" id="next"><div class="empty">بيحمّل...</div></div>
+    <h2 style="margin-top:18px">آخر تشغيلات</h2>
+    <div class="card" id="lastRuns"><div class="empty">بيحمّل...</div></div>
+  </section>
 
-<h2>الجدول الجاي</h2>
-<div class="card" id="plan">بيحمّل...</div>
+  <section id="plan">
+    <div class="filters">
+      <select id="fWhere"><option value="">كل الأماكن</option><option value="يوتيوب">يوتيوب</option><option value="فيسبوك">فيسبوك</option><option value="إنستجرام">إنستجرام</option></select>
+      <select id="fKind"><option value="">كل الأنواع</option><option value="episode">حلقات وريلز</option><option value="short">شورتس</option><option value="tour">جولات</option><option value="old">فيديوهات قديمة</option></select>
+      <select id="fWhen"><option value="next">الجاي بس</option><option value="all">الجاي واللي فات (أسبوع)</option></select>
+    </div>
+    <div id="days"><div class="empty">بيحمّل...</div></div>
+  </section>
 
-<h2>الحلقات</h2>
-<div class="grid" id="episodes">بيحمّل...</div>
+  <section id="eps">
+    <div class="filters">
+      <select id="fEp"><option value="">كل الحلقات</option><option value="scheduled">متجدولة</option><option value="ready">عدّت الجودة</option><option value="fixing">بتتصلح</option><option value="waiting">لسه في الطريق</option></select>
+    </div>
+    <div class="grid" id="epCards"><div class="empty">بيحمّل...</div></div>
+  </section>
 
-<h2>آخر تشغيلات السيرفر</h2>
-<div class="card" id="runs">بيحمّل...</div>
+  <section id="shorts"><div id="shortList"><div class="empty">بيحمّل...</div></div></section>
+  <section id="tours"><div id="tourList"><div class="empty">بيحمّل...</div></div></section>
+  <section id="outbox"><div class="card" id="outList"><div class="empty">بيحمّل...</div></div></section>
+  <section id="runs"><div id="runGroups"><div class="empty">بيحمّل...</div></div></section>
+</main>
 
 <script>
 const REPO = 'alaahesham1989-dev/zala-render';
 const MEDIA = location.origin;
+const RAW = `https://raw.githubusercontent.com/${REPO}/main/content`;
+const STATE = `${MEDIA}/render-state/content`;
 const get = async (u) => { try { const r = await fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now()); return r.ok ? r.json() : null; } catch { return null; } };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const cairo = (t) => new Date(t).toLocaleString('ar-EG', { timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-const NAMES = { main: 'الحلقة', R1: 'ريل 1', R2: 'ريل 2', R3: 'ريل 3' };
-const PLACES = { fb: 'فيسبوك', ig: 'إنستجرام' };
+const tz = { timeZone: 'Africa/Cairo' };
+const cairo = (t) => new Date(t).toLocaleString('ar-EG', { ...tz, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const hour = (t) => new Date(t).toLocaleString('ar-EG', { ...tz, hour: 'numeric', minute: '2-digit' });
+const dayKey = (t) => new Date(t).toLocaleDateString('en-CA', tz);
+const dayName = (k) => { const today = dayKey(Date.now()), tom = dayKey(Date.now() + 864e5); const n = new Date(k + 'T12:00:00Z').toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' }); return k === today ? `النهارده · ${n}` : k === tom ? `بكرة · ${n}` : n; };
+const kindOf = (id) => /^ZV-S\d/.test(id) ? 'short' : /^ZV-V\d+S$/.test(id) ? 'tour' : /^ZV-V\d/.test(id) ? 'tour' : /^ZV-OLD/.test(id) ? 'old' : 'episode';
+const KIND = { episode: 'حلقة', short: 'شورت', tour: 'جولة', old: 'قديم' };
+const WHICH = { main: 'الفيديو الطويل', R1: 'ريل 1', R2: 'ريل 2', R3: 'ريل 3' };
+const PLACE = { fb: 'فيسبوك', ig: 'إنستجرام' };
 document.getElementById('now').textContent = 'آخر تحديث: ' + cairo(Date.now());
 
-(async () => {
-  const [queue, plan] = await Promise.all([
-    get(`https://raw.githubusercontent.com/${REPO}/main/content/meta-queue.json`),
-    get(`${MEDIA}/render-state/content/schedule.json`),
+// ── tabs (remembered) ──
+const loaded = {};
+function show(t) {
+  document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+  document.querySelectorAll('main section').forEach((s) => s.classList.toggle('on', s.id === t));
+  try { localStorage.setItem('zalaTab', t); } catch {}
+  history.replaceState(null, '', '#' + t);
+  if (!loaded[t] && LOAD[t]) { loaded[t] = true; LOAD[t](); }
+}
+document.getElementById('tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.t); });
+
+// ── data ──
+let data;
+async function base() {
+  if (data) return data;
+  const [queue, plan, outbox, shorts, tours, treasures, runs] = await Promise.all([
+    get(`${RAW}/meta-queue.json`), get(`${STATE}/schedule.json`), get(`${RAW}/outbox.json`),
+    get(`${STATE}/shorts-state.json`), get(`${STATE}/tours-state.json`), get(`${STATE}/library/treasures.json`),
+    get(`https://api.github.com/repos/${REPO}/actions/runs?per_page=40`),
   ]);
   const rows = [];
-  for (const q of queue || []) rows.push({ at: q.at, ep: q.episode, which: q.which, where: q.to.map((x) => PLACES[x]).join(' + '), done: q.done, err: (q.results || []).some((r) => r.error) });
-  for (const p of plan || []) rows.push({ at: p.at, ep: p.episode, which: p.which, where: 'يوتيوب', link: p.youtube, done: Date.parse(p.at) < Date.now() });
-  rows.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-  const upcoming = rows.filter((r) => Date.parse(r.at) > Date.now() - 2 * 86400000);
-  document.getElementById('plan').innerHTML = upcoming.length ? upcoming.map((r) => `<div class="row"><span>${cairo(r.at)}</span><span>${esc(r.ep)} · ${NAMES[r.which] || r.which}</span><span>${r.where}</span><span class="${r.err ? 'no' : r.done ? 'ok' : 'wait'}">${r.err ? 'وقع' : r.done ? 'اتنشر' : 'متجدول'}${r.link ? ` · <a href="${r.link}" target="_blank">فتح</a>` : ''}</span></div>`).join('') : '<span class="mute">مفيش حاجة متجدولة</span>';
-
-  const known = new Set(['ZV-L01', 'ZV-L08', 'ZV-L11']);
-  const t = await get(`${MEDIA}/render-state/content/library/treasures.json`);
-  Object.keys(t || {}).forEach((k) => known.add(k));
-  const cards = [];
-  for (const id of known) {
-    const root = `${MEDIA}/renders/${id}`;
-    const [pkg, v] = await Promise.all([get(`${root}/publish/${id}.youtube.json`), get(`${root}/review/verdict.json`)]);
-    const state = !pkg ? '<b class="wait">لسه في الطريق</b>' : v?.pass ? '<b class="ok">عدّى المراجعة</b>' : '<b class="no">المراجع وقفه</b>';
-    const sched = (plan || []).filter((p) => p.episode === id).length ? ' · <b class="ok">متجدول</b>' : '';
-    cards.push(`<div class="card"><b>${esc(pkg?.title || (t || {})[id]?.title || id)}</b><div class="mute">${id} · ${state}${sched}</div>
-      ${v && !v.pass ? `<ul>${(v.reasons || []).slice(0, 4).map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
-      ${pkg ? `<a href="${root}/publish/${esc(pkg.file)}" target="_blank"><img class="thumb" loading="lazy" src="${root}/publish/${esc(pkg.thumbnail)}?t=${Date.now()}" alt=""></a>
-      <div class="reels">${(pkg.reels || []).map((r) => `<a href="${root}/publish/${esc(r.file)}" target="_blank" style="width:32%"><img loading="lazy" src="${root}/publish/${esc(r.file.replace('.mp4', '_cover.jpg'))}?t=${Date.now()}" alt="" style="width:100%"></a>`).join('')}</div>` : ''}</div>`);
+  for (const q of queue || []) {
+    const to = (q.to || []).filter((x) => !String(x).startsWith('yt:'));
+    if (!to.length) continue;   // the YouTube comment step is not a post
+    rows.push({ at: q.at, ep: q.episode, which: q.which, where: to.map((x) => PLACE[x] || x).join(' + '), done: q.done, err: (q.results || []).some((r) => r.error), link: q.youtube });
   }
-  document.getElementById('episodes').innerHTML = cards.join('');
+  for (const p of plan || []) rows.push({ at: p.at, ep: p.episode, which: p.which, where: 'يوتيوب', link: p.youtube, done: Date.parse(p.at) < Date.now() });
+  for (const q of queue || []) if (q.youtube && kindOf(q.episode) !== 'episode' && !(plan || []).some((p) => p.youtube === q.youtube)) rows.push({ at: q.at, ep: q.episode, which: q.which, where: 'يوتيوب', link: q.youtube, done: Date.parse(q.at) < Date.now() });
+  rows.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const titles = {};
+  for (const [k, v] of Object.entries(treasures || {})) titles[k] = v.title;
+  for (const m of shorts?.made || []) titles[m.id] = m.title;
+  for (const o of outbox || []) titles[o.id] = o.title;
+  return (data = { rows, plan: plan || [], queue: queue || [], outbox: outbox || [], shorts: shorts?.made || [], tours, treasures: treasures || {}, runs: runs?.workflow_runs || [], titles });
+}
+const status = (r) => r.err ? '<span class="no">فيه مشكلة</span>' : r.done ? '<span class="ok">اتنشر</span>' : '<span class="wait">متجدول</span>';
+const rowHtml = (r, d, withDay) => `<div class="row"><span class="t">${withDay ? cairo(r.at) : hour(r.at)}</span>
+  <span>${esc(d.titles[r.ep] || r.ep)}<span class="tag">${KIND[kindOf(r.ep)]}${r.which && r.which !== 'main' && kindOf(r.ep) === 'episode' ? ' · ' + (WHICH[r.which] || r.which) : ''}</span><div class="line">${r.where}</div></span>
+  <span>${status(r)}${r.link ? ` · <a href="${esc(r.link)}" target="_blank">فتح</a>` : ''}</span></div>`;
+const runLabel = (r) => r.status !== 'completed' ? '<span class="wait">شغال / مستني</span>' : r.conclusion === 'success' ? '<span class="ok">نجح</span>' : r.conclusion === 'cancelled' ? '<span class="mute">اتلغى</span>' : '<span class="no">وقع</span>';
+const RUN_NAMES = [['ZALA factory', 'مصنع الحلقات'], ['ZALA shorts', 'الشورتس'], ['ZALA prep', 'التحضير'], ['ZALA virtual tours', 'الجولات'], ['ZALA tour flight test', 'تجربة طيران الجولة'],
+  ['ZALA Meta', 'النشر على فيسبوك وإنستجرام'], ['ZALA picture post', 'بوست الصورة'], ['ZALA insights', 'تقرير الأرقام'], ['ZALA blog article', 'المدونة'],
+  ['ZALA comment replies', 'الرد على الكومنتات'], ['ZALA YouTube', 'يوتيوب']];
+const RUNNAME = (n) => RUN_NAMES.find(([k]) => n.startsWith(k))?.[1] || n;
 
-  const runs = await get(`https://api.github.com/repos/${REPO}/actions/runs?per_page=12`);
-  const label = (r) => r.status !== 'completed' ? '<span class="wait">شغال دلوقتي</span>' : r.conclusion === 'success' ? '<span class="ok">نجح</span>' : r.conclusion === 'cancelled' ? '<span class="mute">اتلغى</span>' : '<span class="no">وقع</span>';
-  document.getElementById('runs').innerHTML = (runs?.workflow_runs || []).map((r) => `<div class="row"><span>${cairo(r.created_at)}</span><span>${esc(r.name)}</span><span>${label(r)} · <a href="${r.html_url}" target="_blank">تفاصيل</a></span></div>`).join('') || '<span class="mute">مش قادر أقرا التشغيلات</span>';
-})();
+const LOAD = {
+  async home() {
+    const d = await base();
+    const now = Date.now(), week = now + 7 * 864e5;
+    const next = d.rows.filter((r) => Date.parse(r.at) > now);
+    const today = d.rows.filter((r) => dayKey(r.at) === dayKey(now));
+    const st = [
+      [today.filter((r) => r.done).length + ' / ' + today.length, 'منشورات النهارده (اتنشر / الكل)'],
+      [next.filter((r) => Date.parse(r.at) < week).length, 'متجدول الأسبوع ده'],
+      [d.outbox.filter((o) => !o.scheduled).length, 'في الصندوق مستني نشر'],
+      [d.shorts.filter((m) => Date.parse(m.at) > now - 7 * 864e5).length, 'شورتس اتعملت الأسبوع ده'],
+      [(d.tours?.done || []).length, 'جولات افتراضية'],
+      [d.runs.filter((r) => r.status !== 'completed').length, 'تشغيلات شغالة دلوقتي'],
+    ];
+    document.getElementById('stats').innerHTML = st.map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+    document.getElementById('next').innerHTML = next.slice(0, 8).map((r) => rowHtml(r, d, true)).join('') || '<div class="empty">مفيش حاجة متجدولة</div>';
+    document.getElementById('lastRuns').innerHTML = d.runs.slice(0, 6).map((r) => `<div class="row"><span class="t">${cairo(r.created_at)}</span><span>${esc(RUNNAME(r.name))}</span><span>${runLabel(r)} · <a href="${r.html_url}" target="_blank">تفاصيل</a></span></div>`).join('') || '<div class="empty">مش قادر أقرا التشغيلات</div>';
+    document.getElementById('n-plan').textContent = next.length;
+    document.getElementById('n-outbox').textContent = d.outbox.filter((o) => !o.scheduled).length || '';
+    document.getElementById('n-shorts').textContent = d.shorts.length || '';
+    document.getElementById('n-tours').textContent = (d.tours?.done || []).length || '';
+  },
+  async plan() {
+    const d = await base();
+    const draw = () => {
+      const w = document.getElementById('fWhere').value, k = document.getElementById('fKind').value, all = document.getElementById('fWhen').value === 'all';
+      const from = all ? Date.now() - 7 * 864e5 : Date.now() - 3 * 3600e3;
+      const rows = d.rows.filter((r) => Date.parse(r.at) > from && (!w || r.where.includes(w)) && (!k || kindOf(r.ep) === k));
+      const by = {};
+      for (const r of rows) (by[dayKey(r.at)] ||= []).push(r);
+      const today = dayKey(Date.now());
+      document.getElementById('days').innerHTML = Object.entries(by).map(([day, list]) =>
+        `<details ${day === today ? 'open' : ''}><summary><span>${dayName(day)}</span><span class="mute">${list.length} منشور${list.some((r) => r.err) ? ' · <span class="no">فيه مشكلة</span>' : ''}</span></summary><div class="body">${list.map((r) => rowHtml(r, d)).join('')}</div></details>`).join('') || '<div class="empty">مفيش حاجة بالاختيار ده</div>';
+    };
+    ['fWhere', 'fKind', 'fWhen'].forEach((x) => document.getElementById(x).addEventListener('change', draw));
+    draw();
+  },
+  async eps() {
+    const d = await base();
+    const ids = [...new Set(['ZV-L01', 'ZV-L08', 'ZV-L11', ...Object.keys(d.treasures)])].filter((id) => kindOf(id) === 'episode');
+    const cards = await Promise.all(ids.map(async (id) => {
+      const root = `${MEDIA}/renders/${id}`;
+      const [pkg, v, prep] = await Promise.all([get(`${root}/publish/${id}.youtube.json`), get(`${root}/review/verdict.json`), get(`${STATE}/youtube/${id}.json`)]);
+      const scheduled = d.plan.some((p) => p.episode === id);
+      const st = scheduled ? 'scheduled' : pkg && v?.pass ? 'ready' : pkg ? 'fixing' : 'waiting';
+      const label = { scheduled: '<b class="ok">متجدولة</b>', ready: '<b class="ok">عدّت الجودة</b>', fixing: '<b class="wait">بتتصلح</b>', waiting: prep?.prepared ? '<b class="blue">اتحضرت · مستنية المصنع</b>' : '<b class="mute">لسه بتتحضر</b>' }[st];
+      const when = d.plan.find((p) => p.episode === id && p.which === 'main');
+      return { st, html: `<div class="card"><b>${esc(pkg?.title || prep?.title || d.titles[id] || id)}</b><div class="mute">${id} · ${label}${when ? ` · ${cairo(when.at)}` : ''}</div>
+        ${v && !v.pass ? `<details style="margin-top:8px"><summary>اللي بيتصلح (${(v.reasons || []).length})</summary><div class="body"><ul class="reasons">${(v.reasons || []).slice(0, 8).map((r) => `<li>${esc(r)}</li>`).join('')}</ul></div></details>` : ''}
+        ${pkg ? `<a href="${root}/publish/${esc(pkg.file)}" target="_blank"><img class="thumb" loading="lazy" src="${root}/publish/${esc(pkg.thumbnail)}" alt=""></a>
+        <div class="reels">${(pkg.reels || []).map((r) => `<a href="${root}/publish/${esc(r.file)}" target="_blank"><img loading="lazy" src="${root}/publish/${esc(r.file.replace('.mp4', '_cover.jpg'))}" alt=""></a>`).join('')}</div>` : ''}</div>` };
+    }));
+    const order = { fixing: 0, ready: 1, scheduled: 2, waiting: 3 };
+    cards.sort((a, b) => order[a.st] - order[b.st]);
+    document.getElementById('n-eps').textContent = cards.length;
+    const draw = () => { const f = document.getElementById('fEp').value; document.getElementById('epCards').innerHTML = cards.filter((c) => !f || c.st === f).map((c) => c.html).join('') || '<div class="empty">مفيش حلقات بالاختيار ده</div>'; };
+    document.getElementById('fEp').addEventListener('change', draw);
+    draw();
+  },
+  async shorts() {
+    const d = await base();
+    const by = {};
+    for (const m of [...d.shorts].reverse()) (by[dayKey(m.at)] ||= []).push(m);
+    const KINDS = { mystery: 'لغز', daily: 'الحياة اليومية', place: 'مكان من الخريطة', promo: 'إعلان زالا' };
+    document.getElementById('shortList').innerHTML = Object.entries(by).map(([day, list], i) => `<details ${i === 0 ? 'open' : ''}><summary><span>اتعملت ${dayName(day)}</span><span class="mute">${list.length} شورت</span></summary><div class="body">${list.map((m) => {
+      const q = d.queue.find((x) => x.episode === m.id);
+      return `<div class="row"><span class="t">${q ? cairo(q.at) : '—'}</span><span>${esc(m.title)}<span class="tag">${KINDS[m.kind] || m.kind}</span></span><span>${q ? (q.done ? '<span class="ok">اتنشر</span>' : '<span class="wait">متجدول</span>') : '<span class="mute">ماتجدولش</span>'}${q?.youtube ? ` · <a href="${esc(q.youtube)}" target="_blank">يوتيوب</a>` : ''} · <a href="${MEDIA}/renders/${m.id}/publish/${m.id}.mp4" target="_blank">الفيديو</a></span></div>`;
+    }).join('')}</div></details>`).join('') || '<div class="empty">لسه مفيش شورتس</div>';
+  },
+  async tours() {
+    const d = await base();
+    const list = d.outbox.filter((o) => kindOf(o.id) === 'tour');
+    const done = d.tours?.done || [];
+    document.getElementById('tourList').innerHTML = `<details open><summary><span>الجولات اللي اتعملت</span><span class="mute">${list.length}</span></summary><div class="body">${list.map((o) => `<div class="row"><span class="t">${o.landed ? cairo(o.landed) : ''}</span><span>${esc(o.title)}<span class="tag">${o.kind === 'tour-short' ? 'جولة قصيرة' : 'جولة طويلة'}</span><div class="line">${esc(o.place || '')}</div></span><span>${o.scheduled ? '<span class="ok">متجدولة</span>' : '<span class="wait">في الصندوق</span>'} · <a href="${MEDIA}/outbox/${o.id}/${o.id}.mp4" target="_blank">الفيديو</a>${o.place ? ` · <a href="https://www.zalavip.com/atlas?p=${esc(o.place)}" target="_blank">الخريطة</a>` : ''}</span></div>`).join('') || '<div class="empty">لسه مفيش جولات خلصت</div>'}</div></details>
+      <details><summary><span>الأماكن اللي اتحضرت لها جولة</span><span class="mute">${done.length}</span></summary><div class="body">${done.map((s) => `<div class="row"><span class="t"></span><span>${esc(s)}</span><span><a href="https://www.zalavip.com/atlas?p=${esc(s)}" target="_blank">الخريطة</a></span></div>`).join('') || '<div class="empty">لسه</div>'}</div></details>`;
+  },
+  async outbox() {
+    const d = await base();
+    const list = [...d.outbox].reverse();
+    document.getElementById('outList').innerHTML = list.map((o) => `<div class="row"><span class="t">${o.landed ? cairo(o.landed) : ''}</span><span>${esc(o.title)}<span class="tag">${KIND[kindOf(o.id)]}</span><div class="line">${o.id} · الجودة عدّت بعد ${o.rounds || 1} مرة${o.blog === 'done' ? ' · المقالة اتعملت' : o.blog === 'retry' ? ' · المقالة هتتعمل تاني' : ''}</div></span><span>${o.scheduled ? '<span class="ok">اتجدول</span>' : '<span class="wait">مستني النشر</span>'} · <a href="${MEDIA}/outbox/${o.id}/${o.id}.mp4" target="_blank">الفيديو</a></span></div>`).join('') || '<div class="empty">الصندوق فاضي لسه (أول فيديو على الخط الجديد هيظهر هنا)</div>';
+  },
+  async runs() {
+    const d = await base();
+    const by = {};
+    for (const r of d.runs) (by[RUNNAME(r.name)] ||= []).push(r);
+    document.getElementById('runGroups').innerHTML = Object.entries(by).map(([n, list]) => {
+      const last = list[0];
+      return `<details><summary><span>${esc(n)}</span><span>${runLabel(last)} <span class="mute">· ${cairo(last.created_at)}</span></span></summary><div class="body">${list.map((r) => `<div class="row"><span class="t">${cairo(r.created_at)}</span><span class="mute">${r.event === 'schedule' ? 'لوحده في ميعاده' : 'اتشغّل يدوي'}</span><span>${runLabel(r)} · <a href="${r.html_url}" target="_blank">تفاصيل</a></span></div>`).join('')}</div></details>`;
+    }).join('') || '<div class="empty">مش قادر أقرا التشغيلات</div>';
+  },
+};
+let start = (location.hash || '').slice(1);
+try { start = start || localStorage.getItem('zalaTab') || ''; } catch {}
+show(LOAD[start] ? start : 'home');
+if (start !== 'home') LOAD.home();   // the counts on the tabs
 </script>
 </body>
 </html>
