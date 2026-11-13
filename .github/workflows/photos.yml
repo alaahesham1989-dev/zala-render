@@ -2,6 +2,8 @@ name: ZALA picture post
 
 # One picture post a day on Facebook and Instagram at 15:00 UTC (10:00 in New York, 17:00 in Cairo).
 # GitHub's timer runs late, so two early runs wait on the server for 15:00; the second finds today done and stops.
+# This workflow only PUBLISHES the next ready item from content/photo-queue.json — photo-prep.yml fills that
+# queue ahead of time from our own checked episode stories, with a real photo already found and quality-checked.
 on:
   schedule:
     - cron: "13 9 * * *"
@@ -27,11 +29,9 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 60
     env:
       META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
@@ -39,7 +39,6 @@ jobs:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
-      LIB_PY: /tmp/p/bin/python
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,13 +49,9 @@ jobs:
           d=$(node -e "const f='content/photo-posts.json';const s=require('fs').existsSync(f)?require('./'+f):[];console.log(s.some(x=>!x.refused&&String(x.at).slice(0,10)===new Date().toISOString().slice(0,10))?'yes':'no')")
           if [ "${{ inputs.dry }}" = "true" ]; then d=no; fi   # a quality test runs any time
           echo "DONE_TODAY=$d" >> "$GITHUB_ENV"; echo "posted today: $d"
-      - name: Tools and the picture index
+      - name: The episode schedule (so a post can link to its own video when one is already public)
         if: env.DONE_TODAY == 'no'
-        run: |
-          python3 -m venv /tmp/p && /tmp/p/bin/pip install --quiet pillow
-          mkdir -p media/brand/fonts content/library && curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
-          aws s3 cp "s3://${R2_BUCKET}/render-state/content/library/items.jsonl" content/library/ --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
-          aws s3 sync "s3://${R2_BUCKET}/render-state/content/youtube" content/youtube --exclude "*" --include "ZV-*.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress   # episode stories: checked facts for the captions
+        run: aws s3 cp "s3://${R2_BUCKET}/render-state/content/schedule.json" content/schedule.json --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress || echo "no schedule yet"
       - name: Wait for 15:00 UTC
         if: env.DONE_TODAY == 'no' && !inputs.now
         run: |
@@ -68,4 +63,4 @@ jobs:
           node media/tools/photo-post.mjs ${{ inputs.dry && '--dry' || '' }}
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull -q --rebase --autostash || true
-          git add -f content/photo-posts.json && git commit -qm "photo: daily picture post" && git push -q || echo "state push failed"
+          git add -f content/photo-posts.json content/photo-queue.json && git commit -qm "photo: daily picture post" && git push -q || echo "state push failed"
