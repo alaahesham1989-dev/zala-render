@@ -135,9 +135,12 @@ for (const { cand } of measured.slice(0, 30)) {
 to be read under a photo. This is NOT a quick caption or a question-and-answer: it is a small piece of writing people actually read to learn
 something, so they follow the page for more. Use ONLY facts found in this text; never invent dates, names or numbers:
 """${facts}"""
+Write for curious readers, not scholars: skip bibliographic details (whose dictionary, whose textbook, which exercise number, how many authors cite it) and
+skip exact findspot/excavation bookkeeping unless it IS the surprise. Each paragraph makes its own point; never repeat the same number or phrase from an
+earlier paragraph. Paragraph 3 must connect to the reader today (what it would feel like, what it still means, a question to picture), not a trivia aside.
 Return JSON: {"words": "2 to 5 big words for the picture card, a hook, no place or person names, e.g. 3,300 YEARS OF GOLD",
 "hook": "one short, specific opening line or question that makes people stop scrolling (not generic)",
-"article": ["paragraph 1 (2 to 3 sentences): the single most surprising true fact about this object", "paragraph 2 (2 to 3 sentences): more real context or history behind it", "paragraph 3 (1 to 2 sentences): a detail most people miss, or why it still matters today"],
+"article": ["paragraph 1 (2 to 3 sentences): the single most surprising true fact about this object", "paragraph 2 (2 to 3 sentences): more real context or history behind it, a different fact than paragraph 1", "paragraph 3 (1 to 2 sentences): why it still matters or how it would feel to see it in person, not a citation or trivia aside"],
 "tags": ["3 to 5 hashtags without #"],
 "title": "a blog article title of 5 to 10 words about this object"}`);
   if (!a?.article || !a?.words || !a?.hook) { console.log('[qc] Gemini gave no words, trying later'); break; }
@@ -164,10 +167,12 @@ Return JSON {"pass": true|false, "score": 1-10, "pictureOk": true|false (false o
   if (judge && judge.pictureOk) {
     const fix = await askJson(`Rewrite this Facebook/Instagram article. Reviewer notes: ${(judge.reasons || []).join('; ')}
 It must read like a short real article (a hook line, then 3 short paragraphs of real facts, 2 to 3 sentences each), never a quick caption or a bare question.
+Write for curious readers, not scholars: skip bibliographic details and exact findspot bookkeeping. Each paragraph makes its own point; never repeat a
+number or phrase from an earlier paragraph. Paragraph 3 connects to the reader today, not a citation or trivia aside.
 Use ONLY facts from this text: """${facts}"""
 The big words on the card now: "${w}".
 Return JSON {"hook": "one short specific opening line or question",
-"article": ["paragraph 1: the single most surprising fact", "paragraph 2: more real context", "paragraph 3: a detail most people miss or why it matters today"],
+"article": ["paragraph 1: the single most surprising fact", "paragraph 2: more real context, a different fact than paragraph 1", "paragraph 3: why it matters today or how it would feel to see it in person"],
 "words": "the big words for the card, 2 to 5 words, correct English spelling (keep them if they were fine), no place or person names"}`);
     if (fix?.article) {
       const fw = String(fix.words || w).slice(0, 40);
