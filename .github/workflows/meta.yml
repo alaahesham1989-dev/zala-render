@@ -30,6 +30,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: zala-meta
@@ -52,6 +53,18 @@ jobs:
       YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+      - name: Watchdog (GitHub sometimes skips a daily schedule; start it if it has not run today)
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          today=$(date -u +%Y-%m-%d); hour=$(date -u +%H)
+          for w in "shorts.yml 03" "prep.yml 04" "factory.yml 07"; do
+            set -- $w
+            [ "$hour" -lt "$2" ] && continue
+            n=$(gh run list -R "$GITHUB_REPOSITORY" -w "$1" -L 20 --json createdAt --jq "[.[]|select(.createdAt>=\"$today\")]|length" || echo 1)
+            if [ "$n" = "0" ]; then echo "watchdog: $1 did not run today, starting it"; gh workflow run "$1" -R "$GITHUB_REPOSITORY" || true; fi
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 22
