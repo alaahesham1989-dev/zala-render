@@ -71,7 +71,9 @@ def main():
     url, text, out = sys.argv[1], sys.argv[2], sys.argv[3]
     # --trim l,t,r,b (each 0 to 0.3): a second try at a picture the reviewer flagged for something at one edge
     # (a museum label, a reflection, someone in the background) — cut that edge off instead of giving the picture up
-    trim = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4].startswith("--trim=") else None
+    rest = sys.argv[4:]
+    trim = next((a for a in rest if a.startswith("--trim=")), None)
+    ai = "--ai" in rest   # no real photo existed: label this one honestly instead of passing it off as a real photo
     img = fetch(url)
     if img is None:
         raise SystemExit(f"could not fetch {url}")
@@ -98,6 +100,16 @@ def main():
     c = Image.alpha_composite(c, pill)
     d = ImageDraw.Draw(c)
     d.text((x, 892 - b[1]), t, font=f, fill=GOLD, stroke_width=2, stroke_fill=(0, 0, 0))
+    if ai:
+        af = ImageFont.truetype(FONT, 22)
+        at = "AI RECONSTRUCTION"
+        ab = d.textbbox((0, 0), at, font=af)
+        aw, ah = ab[2] - ab[0], ab[3] - ab[1]
+        ap = Image.new("RGBA", c.size, (0, 0, 0, 0))
+        ImageDraw.Draw(ap).rounded_rectangle((1080 - aw - 44, 40, 1080 - 20, 40 + ah + 20), radius=14, fill=(0, 0, 0, 170))
+        c = Image.alpha_composite(c, ap)
+        d = ImageDraw.Draw(c)
+        d.text((1080 - aw - 32, 50 - ab[1]), at, font=af, fill=(255, 255, 255))
     if text.strip():
         words(d, c, text, (60, 955, 1020, 1270), 140)
     c.convert("RGB").save(out, "JPEG", quality=92)
