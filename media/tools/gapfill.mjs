@@ -15,6 +15,7 @@ import crypto from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { CONTENT, ROOT, TMP } from '../lib/paths.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
+import { askJson } from './gemini-lite.mjs';
 
 const id = process.argv[2];
 const dry = process.argv.includes('--dry');
@@ -182,6 +183,19 @@ if (reviewAt && fs.existsSync(reviewAt)) {
     if (l.clip?.page || l.clip?.prep) delete l.clip;
   }
   script.banned = [...banned];
+  // a line the voice does not match is re-rendered with the exact same words every time and fails the exact same way:
+  // rewrite it in plainer, easy-to-pronounce spoken English (keeping the same meaning) so the next voice actually matches
+  const bad = (rev.lines || []).filter((r) => lines[r.n - 1] && (r.heard === undefined || (r.missing || []).length >= 4 || (r.extra || []).length >= 4));
+  if (bad.length) {
+    const fix = await askJson(`A text-to-speech voice could not clearly match these spoken lines to their written words (hard names, foreign spellings, or awkward phrasing).
+Rewrite each line in plain, natural spoken American English a voice reads cleanly: same meaning and facts, same rough length, but avoid foreign
+transliterated spellings, hyphenated names and tongue-twisting phrasing; spell a hard name the simple common way or describe it instead if needed.
+Return JSON {"lines": [{"n": number, "en": "the rewritten line"}]}
+LINES: ${JSON.stringify(bad.map((r) => ({ n: r.n, en: lines[r.n - 1].en, heard: r.heard })))}`, { temperature: 0.3 });
+    let fixed = 0;
+    for (const f of fix?.lines || []) { const l = lines[f.n - 1]; if (l && f.en) { l.en = f.en; delete l.ar; fixed++; } }
+    log(`rewrote ${fixed} of ${bad.length} lines the voice could not match`);
+  }
 }
 // clips this tool made on an earlier run are planned again, so a better rule applies to them too
 let cleared = 0;
