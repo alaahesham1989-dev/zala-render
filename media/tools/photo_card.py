@@ -4,10 +4,10 @@ Usage: python photo_card.py <picture url> <words> <out.jpg>
 import os
 import sys
 
-from PIL import ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(__file__))
-from thumbs import FONT, GOLD, colourfulness, cover, fetch, words  # noqa: E402
+from thumbs import FONT, GOLD, colourfulness, cover, fetch, scrim, words  # noqa: E402
 
 
 def measures(img):
@@ -52,16 +52,24 @@ def main():
     if img is None:
         raise SystemExit(f"could not fetch {url}")
     c = cover(img, 1080, 1350, 0.35)
-    d = ImageDraw.Draw(c)
-    f = ImageFont.truetype(FONT, 46)
+    c = scrim(c, 760)   # a gentle dark gradient under the words, instead of hard black boxes on top of the picture
+    c = c.convert("RGBA")
+    f = ImageFont.truetype(FONT, 36)
     t = "ANCIENT EGYPT"
-    b = d.textbbox((0, 0), t, font=f)
-    x = (1080 - (b[2] - b[0])) / 2
-    d.rectangle((x - 14, 900 - 8, x + (b[2] - b[0]) + 14, 900 + (b[3] - b[1]) + 14), fill=(0, 0, 0))
-    d.text((x, 900 - b[1] // 2), t, font=f, fill=GOLD)
+    probe = ImageDraw.Draw(c)
+    b = probe.textbbox((0, 0), t, font=f)
+    tw, th = b[2] - b[0], b[3] - b[1]
+    x = (1080 - tw) / 2
+    # a small translucent pill behind the eyebrow tag, so it stays crisp this high up even before the gradient deepens
+    pill = Image.new("RGBA", c.size, (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pill)
+    pd.rounded_rectangle((x - 22, 878, x + tw + 22, 878 + th + 28), radius=22, fill=(10, 10, 10, 150))
+    c = Image.alpha_composite(c, pill)
+    d = ImageDraw.Draw(c)
+    d.text((x, 892 - b[1]), t, font=f, fill=GOLD, stroke_width=2, stroke_fill=(0, 0, 0))
     if text.strip():
-        words(d, c, text, (60, 975, 1020, 1300), 150)
-    c.save(out, "JPEG", quality=92)
+        words(d, c, text, (60, 955, 1020, 1270), 140)
+    c.convert("RGB").save(out, "JPEG", quality=92)
     print("[card]", out)
 
 
