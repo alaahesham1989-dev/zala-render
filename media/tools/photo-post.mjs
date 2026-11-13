@@ -190,7 +190,30 @@ Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
     }
     continue;   // a good picture stays for another day
   }
-  if (judge) used.add(cand.id);   // refused pictures are not tried again on another day
+  // the owner's rule applies here too: a framing problem (a label, a reflection, someone in the background, a cut
+  // edge) gets fixed by cropping that edge off, not dropped. Only a real content problem (the wrong object, a
+  // replica, AI art) is not something cropping can repair, since no edit changes what the picture actually shows.
+  if (judge) {
+    const why = (judge.reasons || []).join(' ').toLowerCase();
+    const fixableEdge = /label|reflection|background|corner|cut off|cropped|case|display|glare|people|crowd|exhibit/.test(why);
+    const wrongObject = /replica|souvenir|exhibition|fantasy|ai.generated|wrong object|does not (clearly )?show|misidentif/.test(why);
+    if (fixableEdge && !wrongObject) {
+      const top = /label|text at the top|above/.test(why) ? 0.22 : 0.1;
+      const left = /left|reflection on the left/.test(why) ? 0.16 : 0.08;
+      const right = /right/.test(why) ? 0.16 : 0.08;
+      const bottom = /bottom|cut off at the bottom/.test(why) ? 0.14 : 0.06;
+      execFileSync(PY, [CARD_PY, cand.url, w, card, `--trim=${left},${top},${right},${bottom}`], { stdio: 'inherit' });
+      const retried = await askJson([
+        { text: `Strict quality check, after cropping the edge the last reviewer flagged. Facts: """${facts}"""\nHook: """${a.hook}"""\nArticle: """${article}"""
+Fail it only if the object itself is still not clearly the real thing (wrong object, a replica, modern exhibition display, AI art), or the card's words are hard to read.
+Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
+        { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
+      ], { temperature: 0 });
+      console.log(`[qc] ${cand.id} cropped and rechecked: ${retried ? `${retried.pass ? 'pass' : 'fail'} ${retried.score}/10 ${(retried.reasons || []).join('; ')}` : 'no answer'}`);
+      if (retried?.pass && retried.score >= 7) { pick = cand; ans = a; words = w; break; }
+    }
+    used.add(cand.id);   // a real content problem, or the crop did not fix it either: not tried again today
+  }
 }
 const refused = pool.filter((c) => used.has(c.id) && !state.some((s) => s.id === c.id)).map((c) => c.id);
 if (refused.length && !dry) state.push(...refused.map((id) => ({ id, refused: true, at: new Date().toISOString() })));
