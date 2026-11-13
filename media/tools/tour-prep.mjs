@@ -2,7 +2,8 @@
 // STAGE 1 — PREP for a ZALA VIRTUAL TOUR of one place on the ZALA Guide map (zalavip.com/atlas).
 // A tour is a video that travels on the map from the airport to the place, lands on it, then walks the viewer through
 // 3 to 4 stops, each with a small story or secret, a "how it looked" moment (labelled as a reconstruction) and visit tips.
-// Two videos per place: the long tour (6 to 8 minutes, Saturday) and a short tour (45 to 55 s, a daily short slot).
+// Two videos per place (owner's names): the DETAILED tour (جولة مفصلة, 6 to 8 minutes, Saturday) and the QUICK tour
+// (جولة سريعة, 45 to 55 s, a daily short slot).
 //   - facts: the place's own page on the map (history, facts, visit tips) + Wikipedia; an editor drops any line they do not support
 //   - the route: Mapbox Directions from the nearest airport (driving), or a flight line when it is far
 //   - writes content/youtube/<id>.json (long, kind tour) and <id>S.json (short, kind tour-short), the picture library
@@ -109,11 +110,11 @@ sentences, at most 30 words. Give each line 2 to 4 short English picture search 
 
 async function write(place, facts, way, kind) {
   const short = kind === 'tour-short';
-  const len = short ? 'The SHORT tour: 7 lines in ONE chapter (45 to 55 seconds). Line 1 is a shocking question over the flight ("flight": true); then 2 stops in 4 lines, 1 line how it looked ("recon": true), last line: the full tour is on our channel.'
-    : 'The LONG tour: about 950 spoken words, 40 to 46 lines in 5 to 6 chapters.';
+  const len = short ? 'The QUICK TOUR (the fast version): 7 lines in ONE chapter (45 to 55 seconds). Line 1 is a shocking question over the flight ("flight": true); then 2 stops in 4 lines, 1 line how it looked ("recon": true), last line: the full detailed tour is on our channel.'
+    : 'The DETAILED TOUR (the full version): about 950 spoken words, 40 to 46 lines in 5 to 6 chapters.';
   const s = await askJson(`${TOUR_RULES}\n${len}\nPLACE: ${place.name.en} (${place.governorate?.en || ''})\nROUTE: ${way.summary}
-Return JSON {"title": "a tour title people click, max 60 characters, e.g. Inside the ... | Virtual Tour", "thumbnailText": "2 to 4 words",
-"description": "two sentences", "tags": ["5 tags"], "hook": "3 to 6 words shown big at the start", "badge": "VIRTUAL TOUR",
+Return JSON {"title": "a tour title people click, max 60 characters, e.g. Inside the ... | ${short ? 'Quick Tour' : 'Full Virtual Tour'}", "thumbnailText": "2 to 4 words",
+"description": "two sentences", "tags": ["5 tags"], "hook": "3 to 6 words shown big at the start", "badge": "${short ? 'QUICK TOUR' : 'FULL TOUR'}",
 "chapters": [{"title": "", "lines": [{"en": "", "flight": false, "recon": false, "queries": [""]}]}]}
 TEXT:\n${facts.slice(0, 32000)}`, { temperature: 0.7 });
   const lines = s?.chapters?.flatMap((c) => c.lines || []) || [];
@@ -157,7 +158,7 @@ async function prep(slug) {
       chapters: s.chapters.map((c) => ({ title: c.title, lines: c.lines.map(({ queries, ...l }) => l) })),
       route: { mode: way.mode, summary: way.summary, legs: way.legs, to: { lat: place.lat, lng: place.lng, name: place.name.en } },
       prepared: { at: new Date().toISOString(), kind },
-      ...(k === 'short' ? { verticalOnly: true, reels: [{ chapter: 1, from: 0, title: s.title, hook: s.hook, badge: 'VIRTUAL TOUR', sub: s.description }] } : { noReels: true }),
+      ...(k === 'short' ? { verticalOnly: true, reels: [{ chapter: 1, from: 0, title: s.title, hook: s.hook, badge: 'QUICK TOUR', sub: s.description }] } : { noReels: true }),
     };
     writeJson(path.join(CONTENT, 'youtube', `${id}.json`), script);
     specs[id] = { title: s.title, hook: s.hook, seconds: k === 'long' ? 420 : 55, match: place.name.en.replace(/[^\w\s]/g, ' ').split(/\s+/).filter((w) => w.length > 3).join('|') || place.name.en,
