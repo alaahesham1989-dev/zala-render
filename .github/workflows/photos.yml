@@ -4,8 +4,8 @@ name: ZALA picture post
 # GitHub's timer runs late, so two early runs wait on the server for 15:00; the second finds today done and stops.
 on:
   schedule:
-    - cron: "0 10 * * *"
-    - cron: "0 12 * * *"
+    - cron: "13 9 * * *"
+    - cron: "37 11 * * *"
   workflow_dispatch:
     inputs:
       now:
