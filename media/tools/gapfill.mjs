@@ -218,12 +218,17 @@ try {
 log(`prepared Flow shots placed: ${fromPrep}`);
 
 // ── fill ─────────────────────────────────────────────────────────────
+// the opening of a short decides if people stop scrolling: its first line prefers a sharp, rich, golden photograph or
+// a reconstruction, never an old drawing, scan or black-and-white plate (owner rule: a professional opening frame)
+const openingBoost = (l, p) => (!script.verticalOnly || l !== lines[0]) ? 0
+  : (p.shine ? 3 : 0) + (p.recon ? 2 : 0) + (/photo/i.test(p.seen?.type || '') ? 2 : 0)
+    - (/drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.what || ''} ${p.title || ''}`) ? 8 : 0);
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);
 log(`${id}: ${empty.length} of ${lines.length} lines have nothing to show`);
 const scenes = [];
 let fromLibrary = 0, fromCrops = 0, fromVideo = 0;
 for (const l of empty) {
-  const ranked = clean.filter((p) => !banned.has(p.id)).map((p) => [p, score(l.en, p)]).filter(([, s]) => s >= 4).sort((a, b) => b[1] - a[1]);
+  const ranked = clean.filter((p) => !banned.has(p.id)).map((p) => [p, score(l.en, p)]).filter(([, s]) => s >= 4).map(([p, s]) => [p, s + openingBoost(l, p)]).sort((a, b) => b[1] - a[1]);
   const fresh = ranked.find(([p]) => (uses.get(p.id) || 0) < 2);
   if (fresh) {
     l.pictures = [fresh[0].id];
