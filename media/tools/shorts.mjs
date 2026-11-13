@@ -146,13 +146,13 @@ function packageOf(id) {
 
 // three daily slots for standalone shorts, between the 16:00 UTC episode slot: 13:00, 19:00 and 23:30 UTC
 // (morning, afternoon and evening in the USA); each short takes the next free slot
-function schedule(id) {
+function schedule(id, at) {
   const queueFile = path.join(REPO, 'content', 'meta-queue.json');
   const queue = readJson(queueFile, []);
   if (queue.some((q) => q.episode === id)) { log(`${id} scheduled already`); return; }
   const slots = ['13:00', '19:00', '23:30'];
   const taken = new Set(queue.map((q) => q.at));
-  let when = null;
+  let when = at || null;
   for (let d = 1; d < 60 && !when; d++) {
     const date = new Date(Date.now() + d * 86400e3).toISOString().slice(0, 10);
     for (const s of slots) { const t = `${date}T${s}:00Z`; if (!taken.has(t)) { when = t; break; } }
@@ -161,16 +161,42 @@ function schedule(id) {
   const r = spawnSync(process.execPath, [path.join(REPO, 'media', 'tools', 'youtube-upload.mjs'), dir, id, 'R1', '--privacy', 'private', '--publish-at', when], { encoding: 'utf8' });
   const line = (r.stdout || '').split('\n').find((l) => l.startsWith('RESULT:'));
   if (r.status !== 0 || !line) throw new Error(`YouTube upload of ${id} failed: ${(r.stderr || r.stdout || '').slice(-300)}`);
-  queue.push({ episode: id, which: 'R1', to: ['fb', 'ig'], at: when, done: false });
-  fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2) + '\n');
   const url = JSON.parse(line.slice(7)).url || '';
+  queue.push({ episode: id, which: 'R1', to: ['fb', 'ig'], at: when, done: false, youtube: url });
+  fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2) + '\n');
   log(`${id} at ${when}: ${url}`);
   // a place short shows on its place on the ZALA Guide map from its publish time
   const made = state.made.find((m) => m.id === id);
   if (made?.place && url) addVideo(made.place, { url, title: made.title, kind: 'short', at: when, episode: id });
 }
 
+/** Puts back the short's own checked script when an older render replaced it with a long story. */
+function restore(id) {
+  const bk = path.join(CONTENT, 'youtube', `${id}.before-library.json`);
+  if (fs.existsSync(bk) && readJson(bk, {}).verticalOnly) { fs.copyFileSync(bk, path.join(CONTENT, 'youtube', `${id}.json`)); fs.rmSync(bk); log(`${id}: its own script is back`); }
+}
+
+/** A short scheduled with a wrong render: the new render takes the same time; the old YouTube video is deleted first. */
+async function redo(id, yt) {
+  const queueFile = path.join(REPO, 'content', 'meta-queue.json');
+  const queue = readJson(queueFile, []);
+  const q = queue.find((x) => x.episode === id && !x.done);
+  if (!q) throw new Error(`${id} is not waiting in the queue`);
+  const old = yt || String(q.youtube || '').match(/youtu\.be\/([\w-]{11})/)?.[1];
+  if (old) {
+    const { YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN } = process.env;
+    const tok = await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: YOUTUBE_CLIENT_ID, client_secret: YOUTUBE_CLIENT_SECRET, refresh_token: YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) })).json();
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${old}`, { method: 'DELETE', headers: { Authorization: `Bearer ${tok.access_token}` } });
+    log(`${id}: old YouTube video ${old} ${r.ok ? 'deleted' : `not deleted (${r.status})`}`);
+  }
+  queue.splice(queue.indexOf(q), 1);
+  fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2) + '\n');
+  schedule(id, q.at);
+}
+
 if (cmd === 'plan') await plan(Number(arg) || 3);
 else if (cmd === 'package') packageOf(arg);
 else if (cmd === 'schedule') schedule(arg);
-else throw new Error('usage: plan <n> | package <id> | schedule <id>');
+else if (cmd === 'restore') restore(arg);
+else if (cmd === 'redo') await redo(arg, process.argv[4]);
+else throw new Error('usage: plan <n> | package <id> | schedule <id> | restore <id> | redo <id> [youtube id]');
