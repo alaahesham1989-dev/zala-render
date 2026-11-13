@@ -145,15 +145,26 @@ jobs:
         if: always()
         run: |
           aws s3 cp media/tools/dashboard.html "s3://${R2_BUCKET}/preview/dashboard.html" --endpoint-url "$E" --content-type "text/html; charset=utf-8" --no-progress || true
-          if [ -z "${EP:-}" ]; then MSG="ZALA المصنع: مفيش حلقة تحضيرها خلص النهارده (الحقائق والقصة ولقطات Flow). شغّل flow-runner على الجهاز لو فيه لقطات مستنية."
-          elif [ "${PASS:-no}" = yes ]; then MSG="ZALA المصنع: $EP خلصت في ${MINUTES:-?} دقيقة بعد ${TRIES:-?} رندر، عدّت المراجعة واتجدولت:
+          # owner's order: Telegram is for things he needs to know, not engineering noise. The review fixing itself and
+          # retrying is the system working as designed, so a round that is not final stays silent. Only three cases talk:
+          # it actually finished and got scheduled, it is truly stuck after every retry today, or there was nothing ready.
+          MSG=""
+          runs=0; [ -n "${EP:-}" ] && runs=$(node -e 'try{console.log(JSON.parse(require("fs").readFileSync("content/factory-state.json"))[process.env.EP].days||0)}catch{console.log(0)}')
+          if [ -z "${EP:-}" ]; then
+            MSG="ZALA المصنع: مفيش حلقة تحضيرها خلص النهارده. شغّل flow-runner على الجهاز لو فيه لقطات مستنية."
+          elif [ "${PASS:-no}" = yes ]; then
+            MSG="ZALA المصنع: $EP خلصت في ${MINUTES:-?} دقيقة بعد ${TRIES:-?} رندر، عدّت المراجعة واتجدولت:
           $(cat schedule-summary.txt 2>/dev/null)"
-          else MSG="ZALA المصنع: $EP لسه بتتظبط (المراجعة لقت حاجات بتتصلّح لوحدها بعد ${TRIES:-?} رندر، وبيكمّل على طول). اللي بيتصلّح: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل")}')"; fi
-          MSG="$MSG
+          elif [ "$runs" -ge 4 ]; then
+            MSG="ZALA المصنع: $EP محتاج نظرة منك. اتصلّح وترندر 4 مرات ولسه المراجعة مش راضية عنه. اللي لسه واقف قدامه: $(node -e 'try{console.log((JSON.parse(require("fs").readFileSync("review-out/verdict.json")).reasons||[]).slice(0,3).join(" | "))}catch{console.log("وقع قبل المراجعة، شوف التفاصيل في اللوحة")}')"
+          fi
+          # a round that is still fixing itself (runs < 4, PASS != yes) sends nothing: it will try again on its own
+          if [ -n "$MSG" ]; then
+            MSG="$MSG
           اللوحة: ${VITE_MEDIA_BASE_URL}/preview/dashboard.html"
-          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+            if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          fi
           # a failed episode carries on at once (scenes and the review are kept), up to 4 runs in all; then it waits for a look
-          if [ -n "${EP:-}" ] && [ "${PASS:-no}" != yes ]; then
-            runs=$(node -e 'try{console.log(JSON.parse(require("fs").readFileSync("content/factory-state.json"))[process.env.EP].days||0)}catch{console.log(0)}')
-            if [ "$runs" -lt 4 ]; then gh workflow run factory.yml -R "$GITHUB_REPOSITORY" -f episode="$EP" && echo "next run started for $EP"; fi
+          if [ -n "${EP:-}" ] && [ "${PASS:-no}" != yes ] && [ "$runs" -lt 4 ]; then
+            gh workflow run factory.yml -R "$GITHUB_REPOSITORY" -f episode="$EP" && echo "next run started for $EP"
           fi
