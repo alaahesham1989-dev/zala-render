@@ -79,12 +79,48 @@ def clip_scorer():
         return None
 
 
+def object_box(img):
+    """Where the real object sits in a photo shot on a plain studio background (most museum photos), so the crop
+    zooms onto it instead of onto empty white. Returns None for a busy picture (a video frame, a real scene) —
+    those have no large flat background to begin with, so the usual centered crop already suits them."""
+    gw, gh = 96, 120
+    small = img.convert("L").resize((gw, gh))
+    px = small.load()
+    corner = lambda cx, cy: [px[cx + dx, cy + dy] for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2)]
+    samples = corner(3, 3) + corner(gw - 4, 3) + corner(3, gh - 4) + corner(gw - 4, gh - 4)
+    bg = sorted(samples)[len(samples) // 2]
+    mask = [[1 if abs(px[x, y] - bg) > 20 else 0 for x in range(gw)] for y in range(gh)]
+    filled = sum(sum(row) for row in mask)
+    if not (0.06 < filled / (gw * gh) < 0.75):
+        return None   # almost all background (nothing found) or almost none (already a busy photo): skip
+    xs = [x for y in range(gh) for x in range(gw) if mask[y][x]]
+    ys = [y for y in range(gh) for x in range(gw) if mask[y][x]]
+    return min(xs) / gw, min(ys) / gh, (max(xs) + 1) / gw, (max(ys) + 1) / gh
+
+
 def cover(img, w, h, focus_y=0.42):
-    scale = max(w / img.width, h / img.height) * 1.06   # a touch closer than the full picture
-    img = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
-    x = (img.width - w) // 2
-    y = int((img.height - h) * focus_y)
-    img = img.crop((x, y, x + w, y + h))
+    box = object_box(img)
+    if box:
+        bx0, by0, bx1, by1 = box
+        # generous padding around the object so nothing gets cropped off, then grown to the card's own aspect ratio
+        pad = 0.16
+        bx0, by0 = max(0, bx0 - pad), max(0, by0 - pad)
+        bx1, by1 = min(1, bx1 + pad), min(1, by1 + pad)
+        cx, cy = (bx0 + bx1) / 2 * img.width, (by0 + by1) / 2 * img.height
+        bw, bh = max((bx1 - bx0) * img.width, 10), max((by1 - by0) * img.height, 10)
+        target = w / h
+        if bw / bh > target: bh = bw / target
+        else: bw = bh * target
+        # never zoom in past the source picture's own sharpness, and never crop past its edges
+        bw, bh = min(bw, img.width), min(bh, img.height)
+        x0, y0 = max(0, min(img.width - bw, cx - bw / 2)), max(0, min(img.height - bh, cy - bh / 2))
+        img = img.resize((w, h), Image.LANCZOS, box=(x0, y0, x0 + bw, y0 + bh))
+    else:
+        scale = max(w / img.width, h / img.height) * 1.06   # a touch closer than the full picture
+        img = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
+        x = (img.width - w) // 2
+        y = int((img.height - h) * focus_y)
+        img = img.crop((x, y, x + w, y + h))
     img = ImageEnhance.Color(img).enhance(1.35)
     img = ImageEnhance.Contrast(img).enhance(1.18)
     img = ImageEnhance.Sharpness(img).enhance(1.6)
@@ -94,6 +130,18 @@ def cover(img, w, h, focus_y=0.42):
     mask = mask.filter(ImageFilter.GaussianBlur(min(w, h) // 6))
     dark = ImageEnhance.Brightness(img).enhance(0.45)
     return Image.composite(img, dark, mask)
+
+
+def scrim(img, top):
+    """A soft dark gradient from `top` to the bottom edge, so text stays readable over any picture underneath —
+    no hard box edge, it just gently darkens toward the bottom of the frame."""
+    column = Image.new("L", (1, img.height), 0)
+    for y in range(img.height):
+        t = max(0, (y - top) / max(1, (img.height - top)))
+        column.putpixel((0, y), int(210 * min(1, t * 1.4) ** 1.3))
+    alpha = column.resize((img.width, img.height))
+    dark = Image.new("RGB", img.size, (6, 6, 8))
+    return Image.composite(dark, img, alpha)
 
 
 def words(draw, img, text, box, size):
