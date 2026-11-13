@@ -146,12 +146,10 @@ const browser = await puppeteer.launch({
 try {
   const page = await browser.newPage();
   page.on('pageerror', (e) => log('page error:', e.message));
-  // the Mapbox key only works for our own site: map requests say they come from zalavip.com
-  await page.setRequestInterception(true);
-  page.on('request', (q) => {
-    if (/mapbox\.com/.test(q.url())) q.continue({ headers: { ...q.headers(), referer: 'https://www.zalavip.com/', origin: 'https://www.zalavip.com' } });
-    else q.continue();
-  });
+  // the Mapbox key only works for our own site: every request from this page says it comes from zalavip.com
+  // (a plain header, not full request interception — intercepting every one of the thousands of tile requests
+  // this page makes was serialising them through the Node process and made a long tour take over 2 hours)
+  await page.setExtraHTTPHeaders({ Referer: 'https://www.zalavip.com/' });
   let bad = 0;
   page.on('response', (s) => { if (/mapbox\.com/.test(s.url()) && s.status() >= 400 && bad++ < 5) log(`map tile refused ${s.status()}: ${s.url().replace(/access_token=[^&]+/, 'access_token=…').slice(0, 140)}`); });
   await page.setContent(html, { waitUntil: 'networkidle0', timeout: 120000 });
