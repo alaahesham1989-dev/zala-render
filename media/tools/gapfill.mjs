@@ -186,6 +186,15 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   // a line the voice does not match is re-rendered with the exact same words every time and fails the exact same way:
   // rewrite it in plainer, easy-to-pronounce spoken English (keeping the same meaning) so the next voice actually matches
   const bad = (rev.lines || []).filter((r) => lines[r.n - 1] && (r.heard === undefined || (r.missing || []).length >= 4 || (r.extra || []).length >= 4));
+  // teaches every future episode at once: a word Whisper could not match, that looks like an unusual (Egyptological or
+  // transliterated) term rather than an ordinary word Whisper simply misheard, is remembered so the review stops
+  // failing lines over it at all — never on just one episode
+  const hardFile = path.join(CONTENT, 'youtube', 'hard-words.json');
+  const known = (() => { try { return JSON.parse(fs.readFileSync(hardFile, 'utf8')).words; } catch { return []; } })();
+  const common = /^(their|there|which|would|should|could|about|through|before|after|because|these|those|where|while|every|still|being|between|people|years|world|great|first|never|again|around|other|among|within|across)$/;
+  const candidates = [...new Set((rev.lines || []).flatMap((r) => r.missing || []))].filter((w) => w.length > 5 && /^[a-z']+$/.test(w) && !common.test(w));
+  const learned = [...new Set([...known, ...candidates])];
+  if (learned.length > known.length) { fs.mkdirSync(path.dirname(hardFile), { recursive: true }); fs.writeFileSync(hardFile, JSON.stringify({ words: learned.sort() }, null, 2) + '\n'); log(`learned ${learned.length - known.length} hard word(s) for every future episode: ${candidates.filter((w) => !known.includes(w)).join(', ')}`); }
   if (bad.length) {
     const fix = await askJson(`A text-to-speech voice could not clearly match these spoken lines to their written words (hard names, foreign spellings, or awkward phrasing).
 Rewrite each line in plain, natural spoken American English a voice reads cleanly: same meaning and facts, same rough length, but avoid foreign
