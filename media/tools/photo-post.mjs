@@ -151,21 +151,21 @@ Return JSON: {"words": "2 to 5 big words for the picture card, a hook, no place 
   execFileSync(PY, [CARD_PY, cand.url, w, card], { stdio: 'inherit' });
   const article = (Array.isArray(a.article) ? a.article : [a.article]).join('\n\n');
   const judge = await askJson([
-    { text: `You are a strict quality controller for a premium history page. Look at this finished post card and the article written to go under it.
+    { text: `You are a reasonable quality check for a history page, not a strict one (owner's order: ease up — an ordinary good photo should pass, do not hunt for small flaws). Look at this finished post card and the article written to go under it.
 The picture is supposed to show: """${facts}"""
 Hook: """${a.hook}"""
 Article: """${article}"""
-Fail it if ANY of these is true: the picture does not clearly show that object; it is dull, washed out, yellowed, blurry, low resolution or badly cropped (the object cut off);
-it is an old slide, scan, drawing or black-and-white photo; there are watermarks, museum labels, modern people or handwriting; the big words on the card are hard to read, cover the object's face, or are wrong English;
-the article says something the text does not support, has a mistake, or reads like a quick caption instead of real writing (fewer than 3 short paragraphs of real facts, or mostly a question with no information);
-the object is a replica, copy or souvenir. Be strict: only a picture and an article that would make people stop scrolling, read, and follow the page pass.
+Fail it ONLY if something would genuinely embarrass the page: the picture clearly does NOT show that object at all; a real person's face is clearly visible in the background; a museum label or
+a drawing/engraving/scan is the main thing in frame (a little reflection, a display case edge, or a slightly imperfect crop is fine, not a reason to fail);
+the article states something the text plainly contradicts; the object is explicitly a replica, souvenir or modern exhibition piece, not the real artifact.
+Minor things are fine and should pass: a plain museum background, a short or plainly-worded article, an ordinary (not dazzling) photo.
 Return JSON {"pass": true|false, "score": 1-10, "pictureOk": true|false (false only for a problem with the picture itself), "reasons": ["..."]}` },
     { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
   ], { temperature: 0 });
   console.log(`[qc] hook: ${a.hook}`);
   console.log(`[qc] article: ${article}`);
   console.log(`[qc] ${cand.id} ${cand.title}: ${judge ? `${judge.pass ? 'pass' : 'fail'} ${judge.score}/10 ${(judge.reasons || []).join('; ')}` : 'no answer'}`);
-  if (judge?.pass && judge.score >= 8) { pick = cand; ans = a; words = w; break; }
+  if (judge?.pass && judge.score >= 6) { pick = cand; ans = a; words = w; break; }
   // the picture is fine and only the writing is weak: rewrite it from the reviewer's notes and check once more
   if (judge && judge.pictureOk) {
     const fix = await askJson(`Rewrite this Facebook/Instagram article. Reviewer notes: ${(judge.reasons || []).join('; ')}
@@ -181,7 +181,7 @@ Return JSON {"hook": "one short specific opening line or question",
       const fw = String(fix.words || w).slice(0, 40);
       if (fw !== w) { w = fw; execFileSync(PY, [CARD_PY, cand.url, w, card], { stdio: 'inherit' }); }
       const fixedArticle = (Array.isArray(fix.article) ? fix.article : [fix.article]).join('\n\n');
-      const again = await askJson([{ text: `Strict quality check of a history-page post card and its article. Facts: """${facts}"""
+      const again = await askJson([{ text: `A reasonable quality check (not strict) of a history-page post card and its article. Facts: """${facts}"""
 Hook: """${fix.hook || a.hook}"""
 Article: """${fixedArticle}"""
 Fail it if the article says anything the facts do not support, or if it is not at least 3 short paragraphs of real facts (not a bare caption or question),
@@ -189,7 +189,7 @@ or if the big words on the card are misspelled, wrong English or hard to read.
 Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
       { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } }], { temperature: 0 });
       console.log(`[qc] ${cand.id} article rewritten: ${again ? `${again.pass ? 'pass' : 'fail'} ${again.score}/10` : 'no answer'}`);
-      if (again?.pass && again.score >= 8) { pick = cand; ans = { ...a, hook: fix.hook || a.hook, article: fix.article }; words = w; break; }
+      if (again?.pass && again.score >= 6) { pick = cand; ans = { ...a, hook: fix.hook || a.hook, article: fix.article }; words = w; break; }
     }
     continue;   // a good picture stays for another day
   }
@@ -207,13 +207,13 @@ Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
       const bottom = /bottom|cut off at the bottom/.test(why) ? 0.14 : 0.06;
       execFileSync(PY, [CARD_PY, cand.url, w, card, `--trim=${left},${top},${right},${bottom}`], { stdio: 'inherit' });
       const retried = await askJson([
-        { text: `Strict quality check, after cropping the edge the last reviewer flagged. Facts: """${facts}"""\nHook: """${a.hook}"""\nArticle: """${article}"""
+        { text: `A reasonable quality check (not strict), after cropping the edge the last reviewer flagged. Facts: """${facts}"""\nHook: """${a.hook}"""\nArticle: """${article}"""
 Fail it only if the object itself is still not clearly the real thing (wrong object, a replica, modern exhibition display, AI art), or the card's words are hard to read.
 Return JSON {"pass": true|false, "score": 1-10, "reasons": ["..."]}` },
         { inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(card).toString('base64') } },
       ], { temperature: 0 });
       console.log(`[qc] ${cand.id} cropped and rechecked: ${retried ? `${retried.pass ? 'pass' : 'fail'} ${retried.score}/10 ${(retried.reasons || []).join('; ')}` : 'no answer'}`);
-      if (retried?.pass && retried.score >= 7) { pick = cand; ans = a; words = w; break; }
+      if (retried?.pass && retried.score >= 6) { pick = cand; ans = a; words = w; break; }
     }
     used.add(cand.id);   // a real content problem, or the crop did not fix it either: not tried again today
   }
