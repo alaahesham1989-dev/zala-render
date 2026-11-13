@@ -243,9 +243,23 @@ for (const ep of episodes) {
       await r2Put(key, data, type);
       done.shots = done.shots.filter((d) => d.line !== s.line).concat({ n: s.n, line: s.line, kind: s.kind, url: `${BASE}/${key}`, bytes: data.length, at: new Date().toISOString() });
       await r2Put(`render-state/content/prep/${ep}.flow.json`, Buffer.from(JSON.stringify(done, null, 2)), 'application/json');
+      await spend(ep, s.n, still ? 'still' : 'video', still ? 0 : 24);
       log(`   ready: ${key} (${Math.round(data.length / 1e5) / 10} MB)`);
     } catch (e) { log(`   failed: ${e.message}`); }
   }
 }
 p.close();
 log('done');
+
+/** Keeps content/flow-credits.json on R2 current, so the dashboard shows a real balance (24 credits per 8s video, stills are free). */
+async function spend(ep, n, kind, credits) {
+  let ledger = { startBalance: 930, baselineAt: new Date().toISOString(), resetAt: '2026-11-22T09:39:00Z', spent: 0, log: [] };
+  try { ledger = await (await fetch(`${BASE}/render-state/content/flow-credits.json?t=${Date.now()}`)).json(); } catch { /* first spend */ }
+  ledger.spent = (ledger.spent || 0) + credits;
+  ledger.remaining = ledger.startBalance - ledger.spent;
+  ledger.videos = (ledger.log || []).filter((l) => l.kind === 'video').length + (kind === 'video' ? 1 : 0);
+  ledger.stills = (ledger.log || []).filter((l) => l.kind === 'still').length + (kind === 'still' ? 1 : 0);
+  ledger.log = [...(ledger.log || []), { at: new Date().toISOString(), ep, n, kind, credits }].slice(-500);
+  ledger.updatedAt = new Date().toISOString();
+  await r2Put('render-state/content/flow-credits.json', Buffer.from(JSON.stringify(ledger, null, 2)), 'application/json');
+}
