@@ -421,6 +421,8 @@ async function stageStory(id) {
   try { old = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
   // a story written and voiced by hand is final: never replace it with a generated one
   if (old?.handWritten) { log(`Story: ${id} is hand written, keeping it`); return; }
+  // a story made by the preparation stage (prep.mjs) or a standalone short (shorts.mjs) was already checked by the editor: keep it
+  if (old?.prepared || old?.verticalOnly) { log(`Story: ${id} is prepared, keeping it`); return; }
   const topics = JSON.parse(fs.readFileSync(LIB_TOPICS, 'utf8'));
   const topic = topics[id];
   if (!topic) throw new Error(`${id} is not in content/library/topics.json`);
@@ -614,7 +616,7 @@ async function stageImages(script, flat) {
       if (!file) continue;
       beats.push({
         need: p.seen?.what || p.title, picture: pid, animate: !!p.seen?.wide, motion: p.seen?.wide ? motionPrompt(p) : '',
-        asset: { kind: 'image', file: rel(file), url: p.url, page: p.source_url, attribution: `"${String(p.title).slice(0, 80)}" by ${p.author}, ${p.license}, via ${p.source === 'ZALA vault' ? 'Wikimedia Commons' : p.source}`, license: p.license, recon: !!p.recon },
+        asset: { kind: 'image', file: rel(file), url: p.url, page: p.source_url, attribution: `"${String(p.title).slice(0, 80)}" by ${p.author}, ${p.license}, via ${p.source === 'ZALA vault' ? 'Wikimedia Commons' : p.source}`, license: p.license },
       });
     }
     if (!beats.length && f.card) beats.push({ need: f.card, picture: null, animate: false, motion: '', asset: { kind: 'image', card: f.card, file: '', url: '', page: '', attribution: '' } });
@@ -1608,7 +1610,7 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
     fs.writeFileSync(assEn, masterAss(tl, script, { arabic: false, data }), 'utf8');
     await finalPass({ chain, mix, ass: assEn, out: master, tl });
     results.push(inspect(master));
-    if (tl.flat.some((f) => f.ar) && !process.env.NO_ARABIC_COPY) {   // the factory skips it: nobody reviews it now
+    if (tl.flat.some((f) => f.ar)) {
       log('Final: Arabic review copy');
       const assAr = path.join(work, 'captions-ar.ass');
       fs.writeFileSync(assAr, masterAss(tl, script, { arabic: true }), 'utf8');
