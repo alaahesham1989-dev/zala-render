@@ -98,8 +98,10 @@ def object_box(img):
     return min(xs) / gw, min(ys) / gh, (max(xs) + 1) / gw, (max(ys) + 1) / gh
 
 
-def cover(img, w, h, focus_y=0.42):
-    box = object_box(img)
+def cover(img, w, h, focus_y=0.42, smart=False):
+    # smart=True only for the daily picture-post card: a museum studio photo often has a lot of plain background,
+    # and a fixed centre crop can leave the frame mostly empty. Video thumbnails keep their original, proven crop.
+    box = smart and object_box(img)
     if box:
         bx0, by0, bx1, by1 = box
         # generous padding around the object so nothing gets cropped off, then grown to the card's own aspect ratio
