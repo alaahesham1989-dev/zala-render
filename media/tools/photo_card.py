@@ -51,7 +51,7 @@ def main():
     img = fetch(url)
     if img is None:
         raise SystemExit(f"could not fetch {url}")
-    c = cover(img, 1080, 1350, 0.35)
+    c = cover(img, 1080, 1350, 0.35, smart=True)
     c = scrim(c, 760)   # a gentle dark gradient under the words, instead of hard black boxes on top of the picture
     c = c.convert("RGBA")
     f = ImageFont.truetype(FONT, 36)
