@@ -405,7 +405,8 @@
       "ig"
     ],
     "at": "2026-11-13T13:00:00Z",
-    "done": false
+    "done": false,
+    "youtube": "https://youtu.be/6tsbs20flsk"
   },
   {
     "episode": "ZV-S202611122",
@@ -415,6 +416,7 @@
       "ig"
     ],
     "at": "2026-11-13T19:00:00Z",
-    "done": false
+    "done": false,
+    "youtube": "https://youtu.be/swHB_37Tyug"
   }
 ]
