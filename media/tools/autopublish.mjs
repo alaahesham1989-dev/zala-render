@@ -24,13 +24,18 @@ try {
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
 } catch { /* no script: the reels take the episode's first sentence */ }
 
-const taken = new Set([...plan.map((p) => p.at), ...queue.map((q) => q.at)].map((t) => String(t).slice(0, 10)));
-const LONG_DAYS = [1, 4];          // Monday, Thursday
+// a kind of long video has its own hour (episodes 16:00 UTC, virtual tours 18:00 UTC on Saturday); only that hour is
+// counted as taken, so the shorts at 13:00, 19:00 and 23:30 never push a long video away
+const HOUR = Number(process.env.AP_HOUR || 16);
+const hh = `${String(HOUR).padStart(2, '0')}:00`;
+const taken = new Set([...plan.map((p) => p.at), ...queue.map((q) => q.at)].filter((t) => String(t).slice(11, 16) === hh).map((t) => String(t).slice(0, 10)));
+const LONG_DAYS = (process.env.AP_DAYS || '1,4').split(',').map(Number);   // Monday, Thursday (tours: Saturday)
+if (process.env.AP_REELS === '0') pkg.reels = [];   // a tour's short version is its own short
 const day = (d) => d.toISOString().slice(0, 10);
-const at = (d) => `${day(d)}T16:00:00Z`;
+const at = (d) => `${day(d)}T${hh}:00Z`;
 function next(from, ok) {
   const d = new Date(from);
-  d.setUTCHours(16, 0, 0, 0);
+  d.setUTCHours(HOUR, 0, 0, 0);
   if (d <= from) d.setUTCDate(d.getUTCDate() + 1);
   for (let i = 0; i < 120; i++, d.setUTCDate(d.getUTCDate() + 1)) if (ok(d) && !taken.has(day(d))) { taken.add(day(d)); return new Date(d); }
   throw new Error('no free day in the next 120 days');
