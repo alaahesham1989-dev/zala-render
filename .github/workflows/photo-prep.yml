@@ -1,0 +1,60 @@
+name: ZALA picture post — prep
+
+# Fills content/photo-queue.json ahead of time: picks the most shareable true moment from our own checked
+# episode stories, finds a real open-license photo of that exact scene (or makes one with Nano Banana, clearly
+# labelled as a reconstruction, when none exists), and quality-checks the finished card. photos.yml only ever
+# publishes what this workflow has already prepared and checked.
+on:
+  schedule:
+    - cron: "5 6 * * *"   # once a day, well before the 15:00 UTC publish run
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "How many new picture posts to prepare this run"
+        type: string
+        default: "3"
+      dry:
+        description: "Quality check only, queue nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zala-photo-prep
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      LIB_PY: /tmp/p/bin/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tools and our own episode stories
+        run: |
+          python3 -m venv /tmp/p && /tmp/p/bin/pip install --quiet pillow
+          mkdir -p media/brand/fonts content/library content/youtube
+          curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content/youtube" content/youtube --exclude "*" --include "ZV-*.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/render-state/content/library/topics.json" content/library/ --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
+      - name: Prepare
+        run: |
+          node media/tools/photo-prep.mjs --count=${{ inputs.count || '3' }} ${{ inputs.dry && '--dry' || '' }}
+          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
+          git pull -q --rebase --autostash || true
+          git add -f content/photo-queue.json && git commit -qm "photo: prepared new picture posts" && git push -q || echo "nothing new to queue"
