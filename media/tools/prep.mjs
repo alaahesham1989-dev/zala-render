@@ -237,7 +237,7 @@ FACT BANK: ${JSON.stringify(bank.facts)}`, { temperature: 0.3 });
 const learned = () => { const i = readJson(path.join(REPO, 'content', 'insights.json'), null); if (!i?.bestTitles?.length) return ''; return `Our own best performing titles so far (copy their style, not their topic): ${JSON.stringify(i.bestTitles)}. Our best shorts: ${JSON.stringify(i.bestShorts || [])}.
 `; };
 async function packaging(script) {
-  if (script.packaged && !force) return script;
+  if (script.packaged && !force && !/object Object/.test(String(script.title))) return script;
   const chapters = script.chapters.map((c, ci) => `CHAPTER ${ci + 1}: ${c.title}\n${c.lines.map((l, li) => `  [${li}] ${l.en}`).join('\n')}`).join('\n');
   const ans = await askJson(`You package a history video for YouTube and for short vertical videos (Shorts, Reels, TikTok). Audience: Americans who love mysteries and treasure.
 Titles that grow channels in this niche are mysteries and shocking questions, e.g. "Why Did They Hide This Inside the Pyramid?", "The Treasure They Never Wanted You to See", "What Was Inside the Sealed Coffin Shocked Everyone".
