@@ -62,6 +62,8 @@ ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13
 <main>
   <section id="home">
     <div class="stats" id="stats"></div>
+    <h2 style="margin-top:18px">فلو (لقطات متحركة وصور إعادة بناء)</h2>
+    <div class="stats" id="flow"></div>
     <h2>اللي جاي قريب</h2>
     <div class="card" id="next"><div class="empty">بيحمّل...</div></div>
     <h2 style="margin-top:18px">آخر تشغيلات</h2>
@@ -127,10 +129,10 @@ document.getElementById('tabs').addEventListener('click', (e) => { const b = e.t
 let data;
 async function base() {
   if (data) return data;
-  const [queue, plan, outbox, shorts, tours, treasures, runs] = await Promise.all([
+  const [queue, plan, outbox, shorts, tours, treasures, runs, flow] = await Promise.all([
     get(`${RAW}/meta-queue.json`), get(`${STATE}/schedule.json`), get(`${RAW}/outbox.json`),
     get(`${STATE}/shorts-state.json`), get(`${STATE}/tours-state.json`), get(`${STATE}/library/treasures.json`),
-    get(`https://api.github.com/repos/${REPO}/actions/runs?per_page=40`),
+    get(`https://api.github.com/repos/${REPO}/actions/runs?per_page=40`), get(`${STATE}/flow-credits.json`),
   ]);
   const rows = [];
   for (const q of queue || []) {
@@ -147,7 +149,7 @@ async function base() {
   for (const o of outbox || []) titles[o.id] = o.title;
   for (const p of plan || []) if (p.which === 'main' && p.title) titles[p.episode] = p.title;
   for (const p of plan || []) if (p.title) titles[p.episode] ||= p.title;
-  return (data = { rows, plan: plan || [], queue: queue || [], outbox: outbox || [], shorts: shorts?.made || [], tours, treasures: treasures || {}, runs: runs?.workflow_runs || [], titles });
+  return (data = { rows, plan: plan || [], queue: queue || [], outbox: outbox || [], shorts: shorts?.made || [], tours, treasures: treasures || {}, runs: runs?.workflow_runs || [], titles, flow });
 }
 const status = (r) => r.err ? '<span class="no">فيه مشكلة</span>' : r.done ? '<span class="ok">اتنشر</span>' : '<span class="wait">متجدول</span>';
 const rowHtml = (r, d, withDay) => `<div class="row"><span class="t">${withDay ? cairo(r.at) : hour(r.at)}</span>
@@ -174,6 +176,14 @@ const LOAD = {
       [d.runs.filter((r) => r.status !== 'completed').length, 'تشغيلات شغالة دلوقتي'],
     ];
     document.getElementById('stats').innerHTML = st.map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+    if (d.flow) {
+      const f = d.flow;
+      const resetIn = Math.max(0, Math.round((Date.parse(f.resetAt) - now) / 864e5));
+      document.getElementById('flow').innerHTML = `<div class="stat"><b>${f.remaining}</b><span>رصيد Flow المتبقي (من ${f.startBalance})</span></div>
+        <div class="stat"><b>${f.videos || 0}</b><span>لقطة متحركة اتعملت (24 رصيد لكل واحدة)</span></div>
+        <div class="stat"><b>${f.stills || 0}</b><span>صورة Nano Banana (ببلاش)</span></div>
+        <div class="stat"><b>${resetIn}</b><span>يوم لحد ما الرصيد يتجدد</span></div>`;
+    } else { document.getElementById('flow').innerHTML = '<div class="empty">لسه مفيش بيانات رصيد (أول مرة فلو يشتغل بعد التحديث هتظهر هنا)</div>'; }
     document.getElementById('next').innerHTML = next.slice(0, 8).map((r) => rowHtml(r, d, true)).join('') || '<div class="empty">مفيش حاجة متجدولة</div>';
     document.getElementById('lastRuns').innerHTML = d.runs.slice(0, 6).map((r) => `<div class="row"><span class="t">${cairo(r.created_at)}</span><span>${esc(RUNNAME(r.name))}</span><span>${runLabel(r)} · <a href="${r.html_url}" target="_blank">تفاصيل</a></span></div>`).join('') || '<div class="empty">مش قادر أقرا التشغيلات</div>';
     document.getElementById('n-plan').textContent = next.length;
