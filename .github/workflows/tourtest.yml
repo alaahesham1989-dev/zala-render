@@ -1,0 +1,47 @@
+name: ZALA tour flight test (map flight only, nothing saved or published)
+
+on:
+  workflow_dispatch:
+    inputs:
+      place:
+        description: "Map place slug"
+        required: false
+        default: "giza-pyramids"
+
+concurrency:
+  group: zala-tourtest
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      CHROME_PATH: /usr/bin/google-chrome
+      FFMPEG_PATH: /usr/bin/ffmpeg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tools
+        run: sudo apt-get update -y && sudo apt-get install -y ffmpeg && cd media && npm ci
+      - name: Prep and flight
+        run: |
+          mkdir -p content/youtube content/library
+          out=$(node media/tools/tour-prep.mjs "${{ inputs.place }}"); echo "$out"
+          ids=$(echo "$out" | grep -o 'TOUR_IDS:.*' | cut -d: -f2 || true)
+          for id in $ids; do node media/tools/tour-flight.mjs "$id"; done
+          for id in $ids; do cp "content/youtube/$id.json" "$id.json"; aws s3 cp "$id.json" "s3://${R2_BUCKET}/preview/tourtest/$id.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress; done
