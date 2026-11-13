@@ -54,6 +54,7 @@ ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13
     <button data-t="eps">الحلقات<span class="n" id="n-eps"></span></button>
     <button data-t="shorts">الشورتس<span class="n" id="n-shorts"></span></button>
     <button data-t="tours">الجولات<span class="n" id="n-tours"></span></button>
+    <button data-t="blog">المدونة والبوستات<span class="n" id="n-blog"></span></button>
     <button data-t="outbox">الصندوق<span class="n" id="n-outbox"></span></button>
     <button data-t="runs">التشغيلات</button>
   </nav>
@@ -85,6 +86,10 @@ ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13
 
   <section id="shorts"><div id="shortList"><div class="empty">بيحمّل...</div></div></section>
   <section id="tours"><div id="tourList"><div class="empty">بيحمّل...</div></div></section>
+  <section id="blog">
+    <details open><summary><span>مقالات المدونة (zalavip.com/blog)</span><span class="mute" id="blogCount"></span></summary><div class="body" id="blogList"><div class="empty">بيحمّل...</div></div></details>
+    <details open><summary><span>بوستات الصور على فيسبوك وإنستجرام</span><span class="mute" id="photoCount"></span></summary><div class="body" id="photoList"><div class="empty">بيحمّل...</div></div></details>
+  </section>
   <section id="outbox"><div class="card" id="outList"><div class="empty">بيحمّل...</div></div></section>
   <section id="runs"><div id="runGroups"><div class="empty">بيحمّل...</div></div></section>
 </main>
@@ -229,6 +234,26 @@ const LOAD = {
     const done = d.tours?.done || [];
     document.getElementById('tourList').innerHTML = `<details open><summary><span>الجولات اللي اتعملت</span><span class="mute">${list.length}</span></summary><div class="body">${list.map((o) => `<div class="row"><span class="t">${o.landed ? cairo(o.landed) : ''}</span><span>${esc(o.title)}<span class="tag">${o.kind === 'tour-short' ? 'جولة قصيرة' : 'جولة طويلة'}</span><div class="line">${esc(o.place || '')}</div></span><span>${o.scheduled ? '<span class="ok">متجدولة</span>' : '<span class="wait">في الصندوق</span>'} · <a href="${MEDIA}/outbox/${o.id}/${o.id}.mp4" target="_blank">الفيديو</a>${o.place ? ` · <a href="https://www.zalavip.com/atlas?p=${esc(o.place)}" target="_blank">الخريطة</a>` : ''}</span></div>`).join('') || '<div class="empty">لسه مفيش جولات خلصت</div>'}</div></details>
       <details><summary><span>الأماكن اللي اتحضرت لها جولة</span><span class="mute">${done.length}</span></summary><div class="body">${done.map((s) => `<div class="row"><span class="t"></span><span>${esc(s)}</span><span><a href="https://www.zalavip.com/atlas?p=${esc(s)}" target="_blank">الخريطة</a></span></div>`).join('') || '<div class="empty">لسه</div>'}</div></details>`;
+  },
+  async blog() {
+    const d = await base();
+    const [feed, photos] = await Promise.all([get(`${MEDIA}/blog/auto.json`), get(`${RAW}/photo-posts.json`)]);
+    const posts = [...(feed?.posts || feed || [])].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const today = dayKey(Date.now());
+    const day = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' });
+    document.getElementById('blogCount').textContent = posts.length + ' مقالة';
+    document.getElementById('blogList').innerHTML = posts.map((p) => {
+      const live = p.date <= today;
+      const t = p.title?.ar || p.title?.en || p.slug;
+      return `<div class="row"><span class="t">${day(p.date)}</span><span>${esc(t)}<span class="tag">${p.episode ? KIND[kindOf(p.episode)] : 'مقالة'}</span><div class="line">${esc(p.title?.en || '')}${p.cta?.to?.startsWith('/atlas') ? ' · مربوطة بالخريطة' : ''}</div></span>
+        <span>${live ? '<span class="ok">منشورة</span>' : '<span class="wait">هتظهر يوم نزول الفيديو</span>'} · <a href="https://www.zalavip.com/blog/${esc(p.slug)}" target="_blank">المقالة</a>${p.video ? ` · <a href="https://youtu.be/${esc(p.video)}" target="_blank">الفيديو</a>` : ''}${p.cta?.to?.startsWith('/atlas') ? ` · <a href="https://www.zalavip.com${esc(p.cta.to)}" target="_blank">الخريطة</a>` : ''}</span></div>`;
+    }).join('') || '<div class="empty">لسه مفيش مقالات</div>';
+    const done = (photos || []).filter((x) => !x.refused).reverse();
+    const refused = (photos || []).filter((x) => x.refused).length;
+    document.getElementById('photoCount').textContent = `${done.length} بوست${refused ? ` · ${refused} صورة اترفضت في الجودة` : ''}`;
+    document.getElementById('photoList').innerHTML = '<div class="line" style="margin-bottom:6px">بوست صورة واحد كل يوم الساعة 5 العصر بتوقيت مصر، بعد مراجعة الجودة.</div>' + (done.map((x) => `<div class="row"><span class="t">${cairo(x.at)}</span><span>${x.image ? `<a href="${esc(x.image)}" target="_blank"><img src="${esc(x.image)}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;float:inline-start;margin-inline-end:10px"></a>` : ''}<b>${esc(x.words || '')}</b><div class="line">${esc(String(x.caption || '').split(/\r?\n/)[0])}</div></span>
+      <span>${x.fb ? `<a href="https://www.facebook.com/${esc(x.fb)}" target="_blank">فيسبوك</a>` : '<span class="mute">فيسبوك لأ</span>'} · ${x.ig ? '<span class="ok">إنستجرام</span>' : '<span class="mute">إنستجرام لأ</span>'}</span></div>`).join('') || '<div class="empty">لسه مفيش بوستات صور</div>');
+    document.getElementById('n-blog').textContent = posts.length + done.length || '';
   },
   async outbox() {
     const d = await base();
