@@ -4,7 +4,7 @@ name: ZALA insights (learn from the numbers)
 # title to a video whose click-through rate is weak 2 to 5 days after it goes public. Mondays: an Arabic report on Telegram.
 on:
   schedule:
-    - cron: "0 10 * * *"
+    - cron: "47 9 * * *"
   workflow_dispatch:
     inputs:
       telegram:
