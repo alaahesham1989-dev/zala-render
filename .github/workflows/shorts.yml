@@ -95,8 +95,8 @@ jobs:
             for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT") && break; echo "plan: Gemini busy, waiting 5 minutes"; sleep 300; done
           fi
           echo "$out"
-          ids=$(echo "$out" | grep -o 'SHORT_IDS:.*' | cut -d: -f2)
-          [ -n "$REDO" ] && ids=$(for p in $REDO; do echo -n "${p%%:*} "; done)
+          ids=$(echo "$out" | grep -o 'SHORT_IDS:.*' | cut -d: -f2 || true)
+          if [ -n "$REDO" ]; then ids=$(for p in $REDO; do echo -n "${p%%:*} "; done); fi
           made=""
           for id in $ids; do
             echo "=== $id"
