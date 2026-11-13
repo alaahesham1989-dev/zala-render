@@ -26,13 +26,14 @@ def measures(img):
 
 
 def passes(m):
+    # owner's order 2026-11-13: ease up. Catch only a photo that would really look bad, not a merely ordinary one.
     reasons = []
-    if min(m["w"], m["h"]) < 900: reasons.append("too small")
-    if m["colour"] < 28: reasons.append("dull colours")
-    if not 55 <= m["light"] <= 200: reasons.append("too dark or too bright")
-    if m["contrast"] < 38: reasons.append("flat, no contrast")
-    if m["sharp"] < 6: reasons.append("blurry")
-    if m["flat_borders"] >= 3: reasons.append("frame or border (old slide or scan)")   # most edges flat: a real scan/slide border, not just a plain backdrop (the smart crop already zooms past that)
+    if min(m["w"], m["h"]) < 750: reasons.append("too small")
+    if m["colour"] < 20: reasons.append("dull colours")
+    if not 40 <= m["light"] <= 220: reasons.append("too dark or too bright")
+    if m["contrast"] < 28: reasons.append("flat, no contrast")
+    if m["sharp"] < 4.5: reasons.append("blurry")
+    if m["flat_borders"] >= 4: reasons.append("frame or border (old slide or scan)")   # every edge flat: a real scan/slide border, not just a plain backdrop (the smart crop already zooms past that)
     return reasons
 
 
