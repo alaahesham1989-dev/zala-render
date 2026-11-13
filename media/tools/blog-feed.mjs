@@ -45,7 +45,12 @@ async function episode(id) {
   const script = JSON.parse(fs.readFileSync(path.join(CONTENT, 'youtube', `${id}.json`), 'utf8'));
   const items = new Map(fs.readFileSync(path.join(CONTENT, 'library', 'items.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).map((i) => [i.id, i]));
   const plan = fs.existsSync(path.join(CONTENT, 'schedule.json')) ? JSON.parse(fs.readFileSync(path.join(CONTENT, 'schedule.json'), 'utf8')) : [];
-  const main = plan.find((p) => p.episode === id && p.which === 'main');
+  // a long video is in the plan (schedule.json); a short or a short tour only in the posting queue
+  const queued = (() => { try { return JSON.parse(fs.readFileSync(path.join(CONTENT, 'meta-queue.json'), 'utf8')).find((q) => q.episode === id && q.youtube); } catch { return null; } })();
+  const main = plan.find((p) => p.episode === id && p.which === 'main') || queued;
+  // the map places this video is about (atlas-link.mjs): the article sends readers there, the place shows the video
+  let mapPlaces = [];
+  try { mapPlaces = Object.entries(JSON.parse(fs.readFileSync(path.join(CONTENT, 'atlas-videos.json'), 'utf8'))).filter(([, l]) => l.some((v) => v.episode === id)).map(([slug]) => slug); } catch { /* none */ }
   const video = String(main?.youtube || '').match(/(?:youtu\.be\/|v=)([\w-]{11})/)?.[1];
   const credit = (i) => [i.author, i.license].filter(Boolean).join(', ');
   const used = new Set();
@@ -83,8 +88,10 @@ Pick the one main keyword with the clearest search intent from the real searches
   const tr = await withArabic(title, excerpt, body);
   await addArticle({
     slug: slugOf(seo?.keyword ? (topicWords(topic).every((w) => topicWords(seo.keyword).includes(w)) ? seo.keyword : `${seo.keyword} ${topic}`) : script.title), date: cairoDay(main?.at || Date.now()),
-    image: { url: `${BASE}/renders/${id}/publish/${id}_thumbnail.jpg`, credit: 'ZALA VIP' },
-    cta: { to: '/egypt/booking', ar: 'خطط رحلتك إلى مصر مع زالا', en: 'Plan your Egypt trip with ZALA VIP' },
+    // a short has no thumbnail file: its first picture leads the article
+    image: script.verticalOnly && body.find((b) => b.img) ? { url: body.find((b) => b.img).img, credit: body.find((b) => b.img).credit || '' } : { url: `${BASE}/renders/${id}/publish/${id}_thumbnail.jpg`, credit: 'ZALA VIP' },
+    cta: mapPlaces.length ? { to: `/atlas?p=${mapPlaces[0]}`, ar: 'شوف المكان على خريطة زالا واسمع حكايته', en: 'See this place on the ZALA Guide map' } : { to: '/egypt/booking', ar: 'خطط رحلتك إلى مصر مع زالا', en: 'Plan your Egypt trip with ZALA VIP' },
+    ...(mapPlaces.length ? { places: mapPlaces } : {}),
     episode: id, replaces: slugOf(script.title), ...tr, ...(video ? { video } : {}),
   });
 }
