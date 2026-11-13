@@ -32,8 +32,23 @@ def passes(m):
     if not 55 <= m["light"] <= 200: reasons.append("too dark or too bright")
     if m["contrast"] < 38: reasons.append("flat, no contrast")
     if m["sharp"] < 6: reasons.append("blurry")
-    if m["flat_borders"] >= 2: reasons.append("frame or border (old slide or scan)")
+    if m["flat_borders"] >= 3: reasons.append("frame or border (old slide or scan)")   # most edges flat: a real scan/slide border, not just a plain backdrop (the smart crop already zooms past that)
     return reasons
+
+
+def normalize(img, m):
+    """A fix before a give-up: an old scan's plain border is cropped off, washed-out colour gets its saturation
+    back, and weak contrast or bad exposure are corrected — the same photo, properly exposed, not a different one.
+    Only size and real blur cannot be fixed this way (no edit restores detail a photo never captured)."""
+    from PIL import ImageEnhance, ImageOps
+    if m["flat_borders"] >= 3:
+        w, h = img.size
+        img = img.crop((int(w * 0.06), int(h * 0.06), int(w * 0.94), int(h * 0.94)))
+    if not 55 <= m["light"] <= 200 or m["contrast"] < 38:
+        img = ImageOps.autocontrast(img, cutoff=2)
+    if m["colour"] < 28:
+        img = ImageEnhance.Color(img).enhance(2.0)
+    return img
 
 
 def main():
@@ -45,12 +60,27 @@ def main():
             return
         m = measures(img)
         r = passes(m)
+        if r and not ({"too small", "blurry"} & set(r)):   # try the fix before giving up on an otherwise usable photo
+            img2 = normalize(img, m)
+            m2 = measures(img2)
+            r2 = passes(m2)
+            if not r2: m, r = m2, r2
         print(json.dumps({"ok": not r, "reasons": r, **m}))
         return
     url, text, out = sys.argv[1], sys.argv[2], sys.argv[3]
+    # --trim l,t,r,b (each 0 to 0.3): a second try at a picture the reviewer flagged for something at one edge
+    # (a museum label, a reflection, someone in the background) — cut that edge off instead of giving the picture up
+    trim = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4].startswith("--trim=") else None
     img = fetch(url)
     if img is None:
         raise SystemExit(f"could not fetch {url}")
+    if trim:
+        tl, tt, tr, tb = [min(0.3, max(0, float(x))) for x in trim.split("=", 1)[1].split(",")]
+        w0, h0 = img.size
+        img = img.crop((int(w0 * tl), int(h0 * tt), int(w0 * (1 - tr)), int(h0 * (1 - tb))))
+    else:
+        m = measures(img)
+        if passes(m): img = normalize(img, m)   # the same fix the check already approved, applied to what we post
     c = cover(img, 1080, 1350, 0.35, smart=True)
     c = scrim(c, 760)   # a gentle dark gradient under the words, instead of hard black boxes on top of the picture
     c = c.convert("RGBA")
