@@ -95,14 +95,17 @@ function buildCaption(a, { videoUrl, blogUrl, tags }) {
 // ── pick the picture ──
 const items = fs.readFileSync(path.join(CONTENT, 'library', 'items.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const used = new Set(state.map((s) => s.id));
-const shiny = /gold|treasure|jewel|mask|coffin|necklace|pectoral|crown|bracelet|scarab|dagger|throne|statue|amulet|ring|collar|diadem/i;
+// owner's note (2026-11-13): we were only drawing from small jewellery/treasure product shots, which are the
+// pictures most likely to be a flat studio photo on a blank background. Mummies, pyramids, temples and tombs are
+// dramatic by nature and come from the WHOLE library, not just the treasure episodes — draw from all of it.
+const striking = /gold|treasure|jewel|mask|coffin|sarcophagus|necklace|pectoral|crown|bracelet|scarab|dagger|throne|statue|amulet|ring|collar|diadem|mummy|mummies|mummified|pyramid|temple|tomb|hieroglyph|obelisk|sphinx|colossus|relief|ruins|statuary|bust|stela|papyrus/i;
 const textOf = (i) => `${i.title} ${i.seen?.what || ''} ${i.note || ''}`;
 // old glass slides, scans and archive photos look poor on a card: only real colour photographs of the object
 const oldScan = /ETH-BIB|\bDia\b|lantern|\bslide\b|postcard|photograph|negative|glass plate|\.tif\b|archive|1920s|black and white|engraving|drawing|lithograph|replica|reproduction|copy|souvenir|modern/i;
-const pool = items.filter((i) => i.kind === 'image' && String(i.url).startsWith(BASE) && !used.has(i.id)
-  && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && shiny.test(textOf(i)) && !oldScan.test(`${textOf(i)} ${i.source_url || ''}`)
-  && ((i.topics || []).some((t) => /^ZV-T/.test(t)) || /\/vault\/library\/ZV-T/.test(i.url)));
-if (!pool.length) { console.log('[photo] no unused treasure picture left'); process.exit(0); }
+const pool = items.filter((i) => i.kind === 'image' && String(i.url).startsWith(BASE) && !used.has(i.id) && !i.recon
+  && i.seen?.usable !== false && !i.seen?.check?.modern && !i.seen?.check?.nude && striking.test(textOf(i)) && !oldScan.test(`${textOf(i)} ${i.source_url || ''}`)
+  && ((i.topics || []).some((t) => /^ZV-/.test(t)) || /\/vault\/library\/ZV-/.test(i.url)));
+if (!pool.length) { console.log('[photo] no unused striking picture left'); process.exit(0); }
 for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
 
 const PY = process.env.LIB_PY || 'python3';
