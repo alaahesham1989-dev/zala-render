@@ -48,6 +48,7 @@ jobs:
       - name: Tools and our own episode stories
         run: |
           python3 -m venv /tmp/p && /tmp/p/bin/pip install --quiet pillow
+          cd media && npm ci && cd ..
           mkdir -p media/brand/fonts content/library content/youtube
           curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
           aws s3 sync "s3://${R2_BUCKET}/render-state/content/youtube" content/youtube --exclude "*" --include "ZV-*.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
