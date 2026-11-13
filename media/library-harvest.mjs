@@ -393,7 +393,17 @@ function cmdCoverage() {
   }
 }
 
-// ── command line ─────────────────────────────────────────────────────────────
+/** Real open-license photos for one search phrase, pooled from every source above (for a single picture, not a whole harvest). */
+export async function findOpenPhoto(q, n = 8) {
+  const found = (await Promise.all([
+    commons(q, n), artic(q, Math.ceil(n / 2)), cleveland(q, Math.ceil(n / 2)), met(q, Math.ceil(n / 2)), smithsonian(q, Math.ceil(n / 2)), europeana(q, Math.ceil(n / 2)),
+  ].map((p) => p.catch(() => [])))).flat();
+  return found.filter((c) => !JUNK.test(c.title));
+}
+
+// ── command line (skipped when this file is imported for its functions instead of run directly) ──────────────
+const isMain = process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('library-harvest.mjs');
+if (isMain) {
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const flag = (n) => { const i = argv.indexOf(n); if (i < 0) return false; argv.splice(i, 1); return true; };
@@ -412,3 +422,4 @@ else if (cmd === 'describe') await cmdDescribe(target, { limit: limit || 200, re
 else if (cmd === 'coverage') cmdCoverage();
 else if (cmd === 'upload') await cmdUpload();
 else { log('usage: node media/library-harvest.mjs import | harvest <topic|all> [--limit n] [--dry-run] | describe [topic] [--limit n] | coverage | upload'); process.exit(1); }
+}
