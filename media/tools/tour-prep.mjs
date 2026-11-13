@@ -35,7 +35,11 @@ const AIRPORTS = [
   { name: 'Aswan International Airport', lat: 23.9644, lng: 32.8200 },
   { name: 'Abu Simbel Airport', lat: 22.3760, lng: 31.6117 },
   { name: 'Borg El Arab Airport', lat: 30.9177, lng: 29.6964 },
+  { name: 'Hurghada International Airport', lat: 27.1783, lng: 33.7994 },
+  { name: 'Marsa Alam International Airport', lat: 25.5571, lng: 34.5837 },
+  { name: 'Sharm El Sheikh International Airport', lat: 27.9773, lng: 34.3950 },
 ];
+const CAIRO_CITY = { name: 'your hotel in Cairo', lat: 30.0444, lng: 31.2357 };
 const km = (a, b) => { const r = Math.PI / 180, x = (b.lng - a.lng) * r * Math.cos(((a.lat + b.lat) / 2) * r), y = (b.lat - a.lat) * r; return Math.sqrt(x * x + y * y) * 6371; };
 
 async function wikiText(q) {
@@ -50,31 +54,56 @@ async function wikiText(q) {
   } catch { return ''; }
 }
 
-/** The way there: a real driving route from the nearest airport, or a flight line from Cairo when it is far. */
-async function route(place) {
-  const near = AIRPORTS.map((a) => ({ ...a, d: km(a, place) })).sort((a, b) => a.d - b.d)[0];
+async function drive(a, b) {
   const token = process.env.MAPBOX_TOKEN;
-  if (near.d < 160 && token) {
-    try {
-      const r = await (await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${near.lng},${near.lat};${place.lng},${place.lat}?geometries=geojson&overview=full&access_token=${token}`)).json();
-      const g = r.routes?.[0];
-      if (g) return { mode: 'drive', from: near.name, km: Math.round(g.distance / 1000), minutes: Math.round(g.duration / 60), line: g.geometry.coordinates };
-    } catch { /* a flight line instead */ }
-  }
+  try {
+    const r = await (await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${a.lng},${a.lat};${b.lng},${b.lat}?geometries=geojson&overview=full&access_token=${token}`)).json();
+    const g = r.routes?.[0];
+    if (g) return { km: Math.round(g.distance / 1000), minutes: Math.round(g.duration / 60), line: g.geometry.coordinates };
+  } catch { /* straight line below */ }
+  return { km: Math.round(km(a, b) * 1.3), minutes: Math.round(km(a, b) * 1.3), line: [[a.lng, a.lat], [b.lng, b.lat]] };
+}
+
+/** The way a real visitor gets there, as legs the map flight follows and the script describes:
+ *  - Cairo and Giza: ZALA VIP's limousine straight from Cairo airport
+ *  - within about 300 km by road and no closer airport (Alexandria, Faiyum, Minya): ZALA VIP's intercity limousine from Cairo
+ *  - far (Luxor, Aswan, Abu Simbel, the Red Sea): a domestic flight from Cairo to the nearest airport, then a short drive */
+async function route(place) {
   const cairo = AIRPORTS[0];
-  return { mode: 'fly', from: cairo.name, km: Math.round(km(cairo, place)), minutes: null, line: [[cairo.lng, cairo.lat], [place.lng, place.lat]] };
+  const near = AIRPORTS.map((a) => ({ ...a, d: km(a, place) })).sort((a, b) => a.d - b.d)[0];
+  const dCairo = km(cairo, place);
+  if (dCairo < 70) {
+    const d = await drive(cairo, place);
+    return { mode: 'drive', summary: `ZALA VIP's limousine from ${cairo.name}: ${d.km} km, about ${d.minutes} minutes by car`, legs: [{ mode: 'drive', from: cairo.name, ...d }] };
+  }
+  if (dCairo < 300 && (near.name === cairo.name || near.d > 60)) {
+    const d = await drive(CAIRO_CITY, place);
+    return { mode: 'drive', summary: `ZALA VIP's intercity limousine from ${CAIRO_CITY.name}: ${d.km} km, about ${Math.round(d.minutes / 6) / 10} hours on the road`, legs: [{ mode: 'drive', from: 'Cairo', ...d }] };
+  }
+  const flyKm = Math.round(km(cairo, near));
+  const flyMin = Math.round((flyKm / 650) * 60 + 25);   // a domestic jet with climb and landing, rounded in the script
+  const d = await drive(near, place);
+  return {
+    mode: 'fly-drive',
+    summary: `a domestic flight from ${cairo.name} to ${near.name} (about ${Math.max(1, Math.round(flyMin / 30) / 2)} hour${flyMin > 75 ? 's' : ''} in the air), then ${d.km} km, about ${d.minutes} minutes by car from the airport to the place`,
+    legs: [{ mode: 'fly', from: cairo.name, to: near.name, km: flyKm, minutes: flyMin, line: [[cairo.lng, cairo.lat], [near.lng, near.lat]] }, { mode: 'drive', from: near.name, ...d }],
+  };
 }
 
 const TOUR_RULES = `You write a VIRTUAL TOUR for a YouTube channel about Egypt for American viewers. It is a guided walk with stories,
 NOT a lecture: plain, vivid, spoken American English, second person ("you step through the gate..."), short sentences.
 Shape:
-- Chapter 1 "The journey": exactly 3 lines spoken while the camera flies on the map from the airport to the place (mention where we start,
-  how far it is or how long the drive takes using ROUTE, and one hook question about the place). Mark these lines "flight": true.
+- Chapter 1 "The journey": exactly 3 lines spoken while the camera follows the way on the map. Describe the trip EXACTLY as ROUTE says,
+  the way a real traveller does it: you land at Cairo airport; for a far place you take the domestic flight, then the short drive; never
+  suggest driving or walking hundreds of kilometers, never skip a leg. One of the 3 lines is a hook question about the place.
+  Mark these lines "flight": true.
 - Chapters 2 to 5: one STOP each (an entrance, a hall, a hidden detail, a view). Each stop opens with where you are standing,
   then ONE story, secret or surprising fact about it, and ends with a short question that pulls the viewer to the next stop.
 - One line in the tour may describe how a place looked when it was new; mark it "recon": true (it will be shown as an artistic reconstruction).
 - Last chapter "Plan your visit": the best time to go and one practical tip from VISIT TIPS (no prices, no opening hours),
-  then one line: ZALA VIP can drive you there from the airport or your hotel in Cairo.
+  then one line about ZALA VIP that matches ROUTE and is true: in Cairo and Giza its limousine drives you from the airport or your hotel;
+  for Alexandria and other places on the road its intercity limousine takes you from Cairo; for far places ZALA VIP meets you at Cairo
+  airport (VIP fast track) and plans the trip with you. Ask ZALA VIP on zalavip.com or WhatsApp. Never promise a car in a city far from Cairo.
 HARD RULES: use ONLY facts in the TEXT. Never invent names, dates, numbers or quotes. Never say we filmed inside. Each line one or two
 sentences, at most 30 words. Give each line 2 to 4 short English picture search "queries" for what it shows.`;
 
@@ -82,7 +111,7 @@ async function write(place, facts, way, kind) {
   const short = kind === 'tour-short';
   const len = short ? 'The SHORT tour: 7 lines in ONE chapter (45 to 55 seconds). Line 1 is a shocking question over the flight ("flight": true); then 2 stops in 4 lines, 1 line how it looked ("recon": true), last line: the full tour is on our channel.'
     : 'The LONG tour: about 950 spoken words, 40 to 46 lines in 5 to 6 chapters.';
-  const s = await askJson(`${TOUR_RULES}\n${len}\nPLACE: ${place.name.en} (${place.governorate?.en || ''})\nROUTE: ${way.mode === 'drive' ? `${way.km} km, about ${way.minutes} minutes by car from ${way.from}` : `${way.km} km from ${way.from}, best reached by a short flight`}
+  const s = await askJson(`${TOUR_RULES}\n${len}\nPLACE: ${place.name.en} (${place.governorate?.en || ''})\nROUTE: ${way.summary}
 Return JSON {"title": "a tour title people click, max 60 characters, e.g. Inside the ... | Virtual Tour", "thumbnailText": "2 to 4 words",
 "description": "two sentences", "tags": ["5 tags"], "hook": "3 to 6 words shown big at the start", "badge": "VIRTUAL TOUR",
 "chapters": [{"title": "", "lines": [{"en": "", "flight": false, "recon": false, "queries": [""]}]}]}
@@ -109,7 +138,7 @@ async function prep(slug) {
   const facts = [`${place.name.en}: ${place.summary?.en || ''}`, d.history?.en, ...(d.facts || []).map((f) => f.en), d.visitTips?.en ? `VISIT TIPS: ${d.visitTips.en}` : '', await wikiText(`${place.name.en} Egypt`)].filter(Boolean).join('\n');
   if (facts.length < 1500) throw new Error(`${slug}: not enough facts for a tour`);
   const way = await route(place);
-  log(`${place.name.en}: ${way.mode} ${way.km} km from ${way.from}`);
+  log(`${place.name.en}: ${way.summary}`);
   const num = String(++state.n).padStart(2, '0');
   const ids = { long: `ZV-V${num}`, short: `ZV-V${num}S` };
   const specs = readJson(path.join(CONTENT, 'tour-specs.json'), {});
@@ -123,7 +152,7 @@ async function prep(slug) {
     const script = {
       id, series: 'ZALA Virtual Tour', kind, place: slug, title: s.title, thumbnailText: s.thumbnailText, description: s.description, tags: s.tags || [],
       chapters: s.chapters.map((c) => ({ title: c.title, lines: c.lines.map(({ queries, ...l }) => l) })),
-      route: { mode: way.mode, from: way.from, km: way.km, minutes: way.minutes, line: way.line, to: { lat: place.lat, lng: place.lng, name: place.name.en } },
+      route: { mode: way.mode, summary: way.summary, legs: way.legs, to: { lat: place.lat, lng: place.lng, name: place.name.en } },
       prepared: { at: new Date().toISOString(), kind },
       ...(k === 'short' ? { verticalOnly: true, reels: [{ chapter: 1, from: 0, title: s.title, hook: s.hook, badge: 'VIRTUAL TOUR', sub: s.description }] } : { noReels: true }),
     };
