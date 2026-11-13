@@ -465,7 +465,21 @@
       "ig"
     ],
     "at": "2026-11-13T19:00:00Z",
-    "done": false,
-    "youtube": "https://youtu.be/swHB_37Tyug"
+    "done": "2026-11-13T19:02:25.120Z",
+    "youtube": "https://youtu.be/swHB_37Tyug",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "2163288417629475",
+        "url": "https://www.facebook.com/reel/2163288417629475"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18066227537529526",
+        "url": "https://www.instagram.com/reel/DfsVX9XlpPb/"
+      }
+    ]
   }
 ]
