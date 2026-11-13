@@ -400,5 +400,705 @@
       "honey jar ancient Egypt",
       "Imhotep statue"
     ]
+  },
+  "ZV-T13": {
+    "title": "The Unplundered Tomb of Queen Hetep-heres I",
+    "hook": "When archaeologists lifted a sealed limestone block at Giza, they found an empty sarcophagus surrounded by intact gold furniture.",
+    "seconds": 480,
+    "match": "hetepheres|giza|tomb|george reisner|harvard boston expedition|canopic chest|sneferu",
+    "archive": "ancient egypt golden furniture",
+    "queries": [
+      "hetepheres furniture reconstruction museum of fine arts boston",
+      "empty sarcophagus of queen hetepheres giza",
+      "george reisner hetepheres tomb excavation",
+      "ancient egyptian golden bed and canopy",
+      "giza pyramid unplundered shaft tomb",
+      "canopic chest of hetepheres",
+      "harvard boston expedition giza",
+      "fourth dynasty egyptian treasures"
+    ]
+  },
+  "ZV-D13": {
+    "title": "Ancient Egypt's Wild Dream Book: Good Dreams vs. Bad Dreams",
+    "hook": "An ancient Egyptian scribe carefully recorded over two hundred dreams, detailing how seeing a giant pig meant a great flood was coming and eating a crocodile meant a promotion.",
+    "seconds": 780,
+    "match": "ancient egypt | dream book | chester beatty papyrus | divination | dreams | scribes | magic",
+    "archive": "ancient egyptian papyrus manuscript",
+    "queries": [
+      "ancient egyptian dream book papyrus",
+      "chester beatty papyrus hieratic script",
+      "ancient egyptian dreams and divination",
+      "egyptian scribe writing on papyrus",
+      "ancient egypt magical texts museum",
+      "ancient egyptian hieroglyphics close up",
+      "ancient egyptian artifact papyrus",
+      "ancient egypt dream interpretation"
+    ]
+  },
+  "ZV-T14": {
+    "title": "The Screaming Mummy: Why Was This Royal Pharaoh Buried Alive?",
+    "hook": "In 1886, researchers unwrapped a nameless mummy only to recoil in horror at a frozen, agonized scream that had persisted for three millennia.",
+    "seconds": 480,
+    "match": "unknown man e|screaming mummy|ramesses iii|deir el-bahari|royal cache|dna analysis|harem conspiracy",
+    "archive": "screaming mummy, ancient egypt, mummy unwrapping",
+    "queries": [
+      "Unknown Man E mummy",
+      "Screaming Mummy Egypt",
+      "Ramesses III mummy face",
+      "Deir el-Bahari cache mummies",
+      "Ancient Egyptian royal conspiracy",
+      "mummy screaming expression",
+      "Gaston Maspero mummy discovery",
+      "forensic analysis of Egyptian mummies",
+      "ancient Egyptian burial rituals",
+      "mummification tongue protrusion",
+      "Harem conspiracy pharaoh death",
+      "DB320 royal tomb"
+    ]
+  },
+  "ZV-D14": {
+    "title": "The 3,200-Year-Old Egyptian Tablet of Excuses for Missing Work",
+    "hook": "On a slab of limestone now resting in the British Museum, an ancient Egyptian scribe recorded forty workmen's excuses for skipping work—ranging from brewing beer to getting stung by a scorpion.",
+    "seconds": 780,
+    "match": "ostracon ea 5634|deir el-medina|attendance register|sick days|ramesses ii|work excuses",
+    "archive": "egyptian ostracon hieratic",
+    "queries": [
+      "ostracon ea 5634 british museum",
+      "deir el medina attendance register ostracon",
+      "ancient egyptian limestone ostracon hieratic script",
+      "british museum ostracon 5634",
+      "deir el medina workmen ostracon red black ink",
+      "ancient egyptian workers attendance sheet",
+      "deir el medina artisan village thebes ruins",
+      "ancient egypt limestone writing slab hieratic"
+    ]
+  },
+  "ZV-T15": {
+    "title": "The Royal Cache of Deir el-Bahari: Why Were Pharaohs Hiding?",
+    "hook": "In 1881, a humble goat herder stumbled upon a secret cliffside shaft crammed with the mummified bodies of Egypt's greatest kings, hastily hidden to save them from ancient grave robbers.",
+    "seconds": 480,
+    "match": "deir el-bahari | royal cache | tt320 | mummies | grave robbers | abdul rassul | ahmet errug | epdynasty 21",
+    "archive": "egyptian mummies cave",
+    "queries": [
+      "deir el bahari royal cache cave entrance",
+      "tt320 tomb egypt cliff",
+      "mummies found in deir el bahari",
+      "ahmed abdul rassul family",
+      "pharaoh mummies in cairo museum",
+      "ramesses ii mummy discovery",
+      "hatshepsut mummy cache",
+      "ancient egyptian royal mummies hiding place"
+    ]
+  },
+  "ZV-D15": {
+    "title": "The 3,500-Year-Old Egyptian Pregnancy Test That Science Proved Works",
+    "hook": "To find out if she was expecting, an ancient Egyptian woman would urinate on bags of barley and wheat to see which seeds sprouted first.",
+    "seconds": 780,
+    "match": "ancient egypt|pregnancy test|berlin papyrus|barley wheat|ancient medicine|estrogen|kahun papyrus|daily life egypt",
+    "archive": "egyptian medical papyrus seeds",
+    "queries": [
+      "ancient egyptian medical papyrus manuscript detail",
+      "ancient egyptian barley and wheat grains in clay bowl",
+      "ancient egyptian woman domestic life artifact",
+      "berlin papyrus ancient medical text hieratic script",
+      "ancient egyptian clay pots with grain seeds",
+      "ancient egyptian daily life village scene illustration",
+      "hieroglyphics describing medical treatments on papyrus",
+      "ancient egyptian home interior artifact archaeological find"
+    ]
+  },
+  "ZV-T16": {
+    "title": "The Stolen Hoard of Dahshur: Egypt's Vanishing Princess",
+    "hook": "When archaeologists opened the subterranean tomb of 12th-Dynasty Princess Ita at Dahshur, they found her stone sarcophagus smashed and her priceless jeweled regalia vanished into thin air.",
+    "seconds": 480,
+    "match": "dahshur | princess ita | de morgan | jeweled treasures | middle kingdom egypt | looted tomb",
+    "archive": "ancient egyptian jewelry gold",
+    "queries": [
+      "dahshur pyramids egypt",
+      "princess ita tomb egypt",
+      "middle kingdom egyptian jewelry",
+      "pyramid of amenemhat ii",
+      "jacques de morgan archaeologist",
+      "dahshur treasure gold",
+      "ancient egyptian princess jewelry",
+      "cairo museum middle kingdom gold"
+    ]
+  },
+  "ZV-D16": {
+    "title": "Ancient Egyptians Had a Dream Book for Good and Bad Dreams",
+    "hook": "Scribes in ancient Egypt recorded hundreds of dreams on papyrus, detailing specific visions and whether they meant good fortune or impending doom.",
+    "seconds": 780,
+    "match": "dream book|ancient egyptian dreams|papyrus|sleep interpretation|chester beatty papyrus|omens",
+    "archive": "ancient egyptian papyrus manuscript",
+    "queries": [
+      "ancient egyptian dream book papyrus",
+      "chester beatty papyrus dreams",
+      "ancient egyptian hieratic script",
+      "egyptian dream interpretation papyrus",
+      "ancient egypt sleep and dreams",
+      "british museum egyptian papyrus",
+      "ancient egyptian scribe writing",
+      "historical dream books"
+    ]
+  },
+  "ZV-T17": {
+    "title": "The Mysterious Lead Coffins of Saqqara: The Buried Infants",
+    "hook": "In 2009, archaeologists in Saqqara pried open two bizarre, heavy lead coffins only to find secrets dating back to the chaotic Late Period of Egypt.",
+    "seconds": 480,
+    "match": "saqqara|lead coffins|late period|archaeological discovery|egyptian tombs|burial rituals",
+    "archive": "saqqara ancient egypt",
+    "queries": [
+      "saqqara necropolis excavation egypt",
+      "ancient egyptian lead coffins saqqara",
+      "late period egypt archaeological finds",
+      "saqqara tombs burial site",
+      "egyptian antiquities ministry discoveries",
+      "archaeologists opening ancient coffin",
+      "saqqara desert excavation site",
+      "ancient egyptian metal caskets"
+    ]
+  },
+  "ZV-D17": {
+    "title": "Ancient Egyptians Had Pet Monkeys That Helped Them Grocery Shop",
+    "hook": "Archaeological reliefs show leashed baboons and smaller monkeys trained by ancient Egyptians to assist with tasks like picking fruit and even helping merchants hustle thieves at bustling market stalls.",
+    "seconds": 780,
+    "match": "ancient egypt|pets|monkeys|baboons|market|daily life|animals",
+    "archive": "ancient egyptian art monkeys",
+    "queries": [
+      "ancient egyptian baboon pet relief",
+      "egyptian art monkey harvesting fruit",
+      "ancient egypt market scene monkeys",
+      "leashed baboon ancient egypt painting",
+      "pet monkeys tomb of ancient egypt",
+      "egyptian marketplace daily life art",
+      "ancient egypt animals as pets",
+      "baboons in ancient egyptian culture"
+    ]
+  },
+  "ZV-T18": {
+    "title": "The Mystery of the Gebelein Mummies: Egypt's Natural Marvel",
+    "hook": "In 1896, archaeologists pulled naturally preserved bodies from shallow desert graves that revealed shockingly advanced tattooing millennia before written records.",
+    "seconds": 480,
+    "match": "gebelein mummies | british museum | predynastic egypt | desert mummification | ancient tattoos | ginger mummy",
+    "archive": "gebelein mummies british museum",
+    "queries": [
+      "gebelein mummies british museum",
+      "predynastic egyptian mummies",
+      "naturally mummified body desert egypt",
+      "ancient egyptian tatooed mummies",
+      "gebelein man body display",
+      "predynastic egypt burial site",
+      "ancient desert grave excavation",
+      "british museum mummies collection"
+    ]
+  },
+  "ZV-D18": {
+    "title": "Ancient Egyptians Sent Text Messages on Broken Pottery Sherds",
+    "hook": "Instead of wasting precious papyrus for a quick note, ancient grocery shoppers and workers jotted down their daily lists, love notes, and complaints on discarded shards of broken pottery called ostraca.",
+    "seconds": 780,
+    "match": "ostraca|pottery sherds|ancient egyptian notes|graffiti|daily life|writing materials",
+    "archive": "ancient egyptian pottery sherds",
+    "queries": [
+      "ancient egyptian ostraca writing",
+      "deir el medina pottery sherds text",
+      "ancient egyptian pottery shards notes",
+      "hieratic writing on broken pottery",
+      "ancient egyptian daily notes",
+      "ostraca ancient egypt museum",
+      "ancient egyptian grocery list pottery",
+      "broken pottery writing artifact"
+    ]
+  },
+  "ZV-T19": {
+    "title": "The Pharaoh Who Vanished: Why Was Neferneferuaten Erased from History?",
+    "hook": "Archaeologists uncovered a mysterious female pharaoh whose name, statues, and royal cartouches were systematically hacked out of history by her own successors.",
+    "seconds": 480,
+    "match": "neferneferuaten|amarna period|akhenaten|egyptian history|erased pharaohs|ancient mysteries",
+    "archive": "ancient egypt monument statue",
+    "queries": [
+      "Neferneferuaten statue",
+      "Akhenaten family stela",
+      "Amarna period royal art",
+      "erased Egyptian pharaoh",
+      "ancient Egyptian cartouche",
+      "Amarna royal tomb architecture",
+      "female pharaoh ancient egypt",
+      "ancient Egyptian hieroglyphics stone",
+      "archaeological excavation Amarna",
+      "Nefertiti bust Amarna"
+    ]
+  },
+  "ZV-D19": {
+    "title": "Ancient Egypt's Legal System: The 3,000-Year-Old Property Dispute",
+    "hook": "A papyrus scroll reveals an ancient Egyptian woman named Naunakhte who formally disinherited her children in a notarized legal document for failing to care for her in her old age.",
+    "seconds": 780,
+    "match": "naunakhte|will and testament|ancient egypt law|family inheritance|deir el-medina|egyptian social history",
+    "archive": "ancient egyptian papyrus scroll",
+    "queries": [
+      "ancient egyptian papyrus manuscript",
+      "hieratic script on papyrus",
+      "ancient egyptian legal documents",
+      "deir el-medina archaeology",
+      "ancient egyptian family life artifacts",
+      "scribes of ancient egypt",
+      "ancient egypt inheritance records",
+      "archaeological excavations of thebes",
+      "ancient egyptian social customs",
+      "historical legal papyrus fragments"
+    ]
+  },
+  "ZV-T20": {
+    "title": "KV55: The Royal Coffin Where Every Name Was Erased",
+    "hook": "In 1907, excavators in the Valley of the Kings breached a sealed chamber and found a gold coffin whose face had been hacked off and every name deliberately erased.",
+    "seconds": 480,
+    "match": "kv55 | erased mummy | amarna | akhenaten coffin | valley of the kings | edward ayrton | smenkhkare",
+    "archive": "kv55 tomb coffin mummy",
+    "queries": [
+      "kv55 coffin erased face gold",
+      "valley of the kings kv55 tomb chamber",
+      "edward ayrton kv55 excavation photo 1907",
+      "defaced egyptian royal cartouche hieroglyphs",
+      "amarna period gold leaf coffin kv55",
+      "akhenaten smenkhkare kv55 skeletal remains",
+      "valley of the kings tomb entrance steps",
+      "ancient egyptian damnatio memoriae erased hieroglyphs"
+    ]
+  },
+  "ZV-D20": {
+    "title": "The Ancient Egyptian Toilets That Came With Real Estate Deeds",
+    "hook": "When buying a home in ancient Egypt, owners specifically itemized their indoor stone latrines in official property contracts like modern appliances.",
+    "seconds": 780,
+    "match": "ancient egypt toilets|property deeds|stone latrines|real estate|daily life|ancient plumbing",
+    "archive": "ancient egyptian home architecture",
+    "queries": [
+      "ancient egyptian stone toilet",
+      "ancient egyptian house interior ruins",
+      "ancient egypt sanitation artifact",
+      "deir el medina house ruins",
+      "ancient egyptian brick house model",
+      "ancient egypt household items",
+      "archaeological site of ancient egyptian homes",
+      "ancient egyptian bathroom artifacts"
+    ]
+  },
+  "ZV-T21": {
+    "title": "The Missing Emeralds of Cleopatra's Lost Palace",
+    "hook": "Divers scanning the seabed of Alexandria discovered a submerged royal quarter, revealing artifacts from Cleopatra’s palace that have been missing for two millennia.",
+    "seconds": 480,
+    "match": "cleopatra vii|alexandria|sunken palace|thonis-heracleion|franck goddio|underwater archaeology|royal quarter",
+    "archive": "sunken ancient egyptian ruins",
+    "queries": [
+      "sunken palace of cleopatra alexandria",
+      "underwater archaeology alexandria port",
+      "statues found in cleopatra's palace ruins",
+      "franck goddio underwater discovery",
+      "submerged royal quarter alexandria egypt",
+      "cleopatra palace excavation site",
+      "ancient egyptian statues found underwater",
+      "lost city of thonis-heracleion",
+      "archaeological finds alexandria harbor",
+      "cleopatra vii sunken temple ruins"
+    ]
+  },
+  "ZV-D21": {
+    "title": "Ancient Egyptians Named Their Pet Cats After 'Great' and 'Meower'",
+    "hook": "Archaeologists discovered that ancient Egyptian pet owners frequently gave their cats endearing, literal names like 'Meower' or even 'Good Boy'.",
+    "seconds": 780,
+    "match": "ancient egypt|cats|pets|pet names|bastet|felids|history",
+    "archive": "ancient egyptian cat statue",
+    "queries": [
+      "ancient egyptian cat names hieroglyphs",
+      "ancient egypt pet cats archaeology",
+      "bastet cat sculpture museum",
+      "ancient egyptian domestic animals",
+      "cat mummy british museum",
+      "ancient egypt pet owners",
+      "egyptian art feline",
+      "ancient history cats"
+    ]
+  },
+  "ZV-T22": {
+    "title": "The Unopened Seal of Amenemhat IV's Mysterious Labyrinth",
+    "hook": "When archaeologists finally breached the subterranean chambers of the Hawara pyramid, they found an astonishing maze of massive stone blocks, yet the burial chamber sat completely empty.",
+    "seconds": 480,
+    "match": "amenemhat iv|hawara pyramid|labyrinth|pyramid of hawara|middle kingdom egypt|herodotus labyrinth",
+    "archive": "hawara pyramid labyrinth egypt",
+    "queries": [
+      "hawara pyramid site egypt",
+      "amenemhat iv pyramid ruins",
+      "ancient egyptian labyrinth hawara",
+      "petrie excavations hawara",
+      "middle kingdom pyramid ruins",
+      "hawara mudbrick pyramid",
+      "egyptian underground labyrinth",
+      "pyramid of amenemhat iv"
+    ]
+  },
+  "ZV-D22": {
+    "title": "Ancient Egyptians Used Deodorant Balls Made of Incense",
+    "hook": "To combat the scorching desert heat and body odor, ancient Egyptians wore waxy perfumed cones on their heads that slowly melted over their wigs and shoulders throughout the day.",
+    "seconds": 780,
+    "match": "ancient egypt | body odor | deodorant | perfume cones | hygiene | sweat | fashion",
+    "archive": "ancient egyptian wig",
+    "queries": [
+      "ancient egyptian perfume cone wig art",
+      "ancient egyptian makeup and hygiene",
+      "ancient egypt daily life heat",
+      "tomb painting ancient egyptian banquet",
+      "ancient egyptian cosmetic cone",
+      "ancient egypt sweating heat relief",
+      "ancient egyptian body care history",
+      "historical depiction of ancient egyptian party"
+    ]
+  },
+  "ZV-T23": {
+    "title": "The Unfinished Tomb of Khafre's Pyramid Builder",
+    "hook": "Archaeologists uncovered a hidden worker's settlement complete with bakery ovens and toolmarks that revealed the grueling reality behind building the Great Pyramids.",
+    "seconds": 480,
+    "match": "giza pyramid builders|workers village|khufu|mark lehner|heit el-ghurab|ancient egypt",
+    "archive": "egyptian pyramid workers ruins",
+    "queries": [
+      "giza pyramid workers village ruins",
+      "heit el ghurab archaeological site",
+      "ancient egyptian bakeries giza",
+      "workers cemetery giza plateau",
+      "mark lehner pyramid builders excavation",
+      "ancient egypt builder settlement",
+      "giza plateau ruins foundations",
+      "old kingdom worker housing egypt"
+    ]
+  },
+  "ZV-D23": {
+    "title": "Ancient Egyptians Wrote Sarcastic Yelp Reviews on Pottery",
+    "hook": "Archaeologists found ancient pottery shards featuring blunt, sarcastic customer reviews complaining about shoddy craftsmanship and terrible service.",
+    "seconds": 780,
+    "match": "customer complaints|pottery shards|customer service|ancient reviews|business disputes|consumer rights",
+    "archive": "ancient egyptian pottery",
+    "queries": [
+      "ancient egyptian pottery shards writing",
+      "ostraca ancient egypt graffiti text",
+      "ancient egyptian consumer complaints",
+      "deir el medina pottery notes",
+      "ancient egyptian broken pottery ink",
+      "hieratic script on ostraka",
+      "ancient business dispute egypt",
+      "archaeological pottery fragments egypt"
+    ]
+  },
+  "ZV-T24": {
+    "title": "The Mystery of the Bent Pyramid: Sneferu's Double Angle",
+    "hook": "Engineers panicked midway through construction at Dahshur, abruptly shifting the pyramid's steep 54-degree slope to a shallow 43 degrees to prevent total collapse.",
+    "seconds": 480,
+    "match": "bent pyramid | sneferu | dahshur | fourth dynasty | pyramid construction | ancient egyptian architecture",
+    "archive": "bent pyramid dahshur",
+    "queries": [
+      "bent pyramid of sneferu dahshur",
+      "dahshur bent pyramid unique angle",
+      "sneferu pyramid architecture egypt",
+      "interior corridors bent pyramid",
+      "fourth dynasty pyramid dahshur",
+      "ancient egyptian pyramid construction flaws",
+      "casing stones bent pyramid egypt",
+      "sneferu monuments egypt"
+    ]
+  },
+  "ZV-D24": {
+    "title": "Ancient Egypt's 3,500-Year-Old 'Ostraca' Shopping Lists",
+    "hook": "Archaeologists have uncovered mundane grocery lists written on broken pottery shards that reveal exactly what an average Egyptian family bought at the local market.",
+    "seconds": 780,
+    "match": "ostraca|ancient egypt|shopping list|daily life|deir el-medina|archaeology|scribes",
+    "archive": "ancient egyptian pottery",
+    "queries": [
+      "ancient egyptian ostraca shopping list",
+      "deir el-medina pottery shards",
+      "ancient egypt hieratic grocery list",
+      "scribal writing on pottery shards",
+      "ancient egyptian market transactions",
+      "archaeological finds of daily life",
+      "ancient egyptian commodity lists",
+      "hieratic script on ostraca",
+      "ancient egyptian household management",
+      "archaeological artifacts of food supply"
+    ]
+  },
+  "ZV-T25": {
+    "title": "The Stolen Heart of Siptah: Egypt's Missing Royal Mummy",
+    "hook": "When archaeologists finally opened the tomb of the forgotten Pharaoh Siptah, they found his royal sarcophagus—but his heart was entirely missing from his mummified body.",
+    "seconds": 480,
+    "match": "siptah | kv47 | valley of the kings | missing heart | 19th dynasty | mummification | tory",
+    "archive": "siptah mummy valley kings",
+    "queries": [
+      "pharaoh siptah mummy valley of the kings",
+      "kv47 tomb entrance egypt",
+      "siptah sarcophagus egyptian museum",
+      "ancient egyptian mummified heart removal",
+      "19th dynasty pharaohs tombs",
+      "howard carter siptah excavation",
+      "missing royal mummy parts egypt",
+      "theodore davis excavation siptah"
+    ]
+  },
+  "ZV-D25": {
+    "title": "Ancient Egyptian Divorce Papers Divided the Fridge and the Kids",
+    "hook": "When couples split in ancient Egypt, their formal divorce contracts read surprisingly like modern legal documents, dividing property, outlining child support, and guaranteeing the wife a specific share of grain and oil.",
+    "seconds": 780,
+    "match": "ancient egypt | divorce | marriage | women's rights | legal contracts | daily life | family law",
+    "archive": "ancient egypt papyrus contract",
+    "queries": [
+      "ancient egyptian marriage contract papyrus",
+      "ancient egypt divorce document hieratic",
+      "ancient egyptian legal papyrus museum",
+      "ancient egypt family law documents",
+      "ancient egyptian papyrus text translation",
+      "ancient egypt marriage agreement artifacts",
+      "ancient egypt women legal rights papyrus",
+      "ancient egyptian scribe writing on papyrus",
+      "ancient egypt divorce records archaeology"
+    ]
+  },
+  "ZV-T26": {
+    "title": "The Curse of the Unfinished Obelisk: A Crack That Doomed a Giant",
+    "hook": "Workers at Aswan's ancient quarries dropped their tools in horror when a massive, one-third-of-a-million-pound obelisk suddenly cracked in the bedrock, forcing them to abandon it forever.",
+    "seconds": 480,
+    "match": "unfinished obelisk | aswan quarry | hatshepsut | red granite | ancient egyptian stonecutting",
+    "archive": "aswan unfinished obelisk egypt",
+    "queries": [
+      "unfinished obelisk aswan quarry egypt",
+      "ancient egyptian granite quarrying tools",
+      "unfinished obelisk bedrock trench",
+      "aswan quarry scar of the obelisk",
+      "hatshepsut monument aswan",
+      "red granite obelisk egypt",
+      "ancient egypt stone cutting technique",
+      "aswan open air museum egypt"
+    ]
+  },
+  "ZV-D26": {
+    "title": "Ancient Egyptians Wrote Sarcastic Complaint Letters to Merchants",
+    "hook": "An ancient Egyptian customer named Ea-nasir is famously known for receiving angry clay tablets complaining about poor quality copper, proving that customer service disputes are thousands of years old.",
+    "seconds": 780,
+    "match": "ea-nasir | copper complaint | ancient complaints | merchant letters | consumer protection | customer service",
+    "archive": "ancient cuneiform tablet",
+    "queries": [
+      "ancient mesopotamian complaint tablet",
+      "ea nasir copper complaint cuneiform",
+      "ancient consumer complaint clay tablet",
+      "british museum ea nasir tablet",
+      "ancient merchant complaint letter",
+      "cuneiform tablet translation",
+      "ancient babylonian shopping complaint",
+      "historical complaint about bad copper",
+      "ancient writing on clay"
+    ]
+  },
+  "ZV-T27": {
+    "title": "The Mysterious Lead Coffins of Roman Egypt",
+    "hook": "Workers in the Egyptian desert unearthed rows of heavy lead coffins, each locked tight with an ominous curse inscribed on the metal.",
+    "seconds": 480,
+    "match": "lead coffins | saqqara | roman egypt | necropolis | burials | curses",
+    "archive": "ancient roman egypt lead coffins",
+    "queries": [
+      "roman period lead coffins saqqara",
+      "ancient egyptian lead coffins excavation",
+      "saqqara roman necropolis burials",
+      "inscribed lead coffins archaeology",
+      "roman egypt artifact discovery",
+      "ancient lead sarcophagus",
+      "saqqara desert archaeological site",
+      "roman egypt burial customs"
+    ]
+  },
+  "ZV-D27": {
+    "title": "Ancient Egyptians Sent Furious Customer Service Complaints on Clay",
+    "hook": "A frustrated Egyptian copper buyer named Ea-nasir is famously known for getting angry complaint tablets, but an Egyptian man named Nubi wrote a furious letter on a broken pottery shard to a merchant demanding a refund for a defective garment.",
+    "seconds": 780,
+    "match": "nubi|customer service|complaint letters|ostraka|ancient egypt merchant|refund|clay tablet",
+    "archive": "ancient egyptian pottery shard",
+    "queries": [
+      "ancient egyptian ostracon letter",
+      "ancient egyptian complaint letter",
+      "hieratic script pottery shard",
+      "ancient egyptian merchant letter",
+      "deir el medina ostraca writing",
+      "ancient egyptian business dispute",
+      "broken pottery writing egypt",
+      "ancient egyptian consumer complaint"
+    ]
+  },
+  "ZV-T28": {
+    "title": "The Mystery of the Gold-Leafed Mummies of Bahariya Oasis",
+    "hook": "In 1996, a donkey accidentally stumbled into a hidden tomb, revealing a massive necropolis filled with hundreds of glimmering, gold-covered mummies untouched for 2,000 years.",
+    "seconds": 480,
+    "match": "bahariya oasis|valley of the golden mummies|zahi hawass|graeco-roman egypt|farafra|archaeological discovery",
+    "archive": "golden mummy mask",
+    "queries": [
+      "valley of the golden mummies bahariya",
+      "gilded mummy mask ancient egypt",
+      "bahariya oasis necropolis excavation",
+      "roman period egyptian mummy",
+      "gold leaf mummy sarcophagus",
+      "archaeology of bahariya oasis",
+      "ancient egyptian funerary masks",
+      "mummy with golden eyes",
+      "discovery of the golden mummies",
+      "roman era egypt artifacts"
+    ]
+  },
+  "ZV-D28": {
+    "title": "Ancient Egyptians Used Breath Mints Made of Frankincense and Cinnamon",
+    "hook": "To combat foul breath in daily life, ancient Egyptians rolled frankincense, myrrh, cinnamon, and pine nuts into fragrant pellets to chew like modern breath mints.",
+    "seconds": 780,
+    "match": "breath mints|ancient egypt hygiene|kyphi pellets|bad breath remedy|egyptian medicine|dental health",
+    "archive": "ancient egyptian spices",
+    "queries": [
+      "ancient egyptian spices and herbs",
+      "egyptian frankincense resin",
+      "ancient egyptian hygiene tools",
+      "egyptian market spices bowls",
+      "ancient medicine herbs pottery",
+      "cinnamon and myrrh resin",
+      "ancient egyptian mouthwash",
+      "traditional egyptian spices"
+    ]
+  },
+  "ZV-T29": {
+    "title": "The Stolen Hand of Userkaf: Egypt's Oldest Missing Royal Body Part",
+    "hook": "When archaeologists unwrapped the oldest known royal mummy at Saqqara, they discovered that the pharaoh's mummified right hand had been cleanly severed and stolen in antiquity.",
+    "seconds": 480,
+    "match": "userkaf|saqqara|pyramid|mummy|stolen hand|old kingdom|amun|archaeology",
+    "archive": "ancient egyptian pyramid saqqara",
+    "queries": [
+      "userkaf pyramid saqqara ruins",
+      "old kingdom egyptian mummy remains",
+      "saqqara archaeological excavations egypt",
+      "ancient egyptian mummified hands",
+      "pyramid texts saqqara interior",
+      "egyptian royal tombs old kingdom",
+      "saqqara desert necropolis egypt",
+      "archaeologist unearthing egyptian mummy"
+    ]
+  },
+  "ZV-D29": {
+    "title": "Ancient Egyptian Beer Bread That Was Eaten and Drunk at Once",
+    "hook": "Workers in ancient Egypt were paid daily wages in large, heavy loaves of bread that doubled as the raw ingredients for brewing beer.",
+    "seconds": 780,
+    "match": "ancient egypt | beer | bread | wages | workers | food | brewing",
+    "archive": "ancient egyptian bread",
+    "queries": [
+      "ancient egyptian bread loaves",
+      "ancient egyptian brewing beer",
+      "peasant worker food ancient egypt",
+      "daily wages ancient egypt",
+      "ancient egyptian pottery baking",
+      "hieroglyphics baking bread",
+      "ancient egypt food history",
+      "old kingdom bread making"
+    ]
+  },
+  "ZV-T30": {
+    "title": "The 4,000-Year-Old Tomb of 60 Mummies Still Pierced by Battle Arrows",
+    "hook": "In 1923, archaeologist Herbert Winlock unsealed a cliffside tomb at Deir el-Bahari and discovered sixty mummified young men piled inside, their bones still shattered by ancient arrows.",
+    "seconds": 480,
+    "match": "mummified soldiers|deir el bahari|herbert winlock|mentuhotep ii|ancient egyptian warfare|tomb mma 507|slain warriors",
+    "archive": "ancient egyptian mummified soldiers",
+    "queries": [
+      "tomb of the mummified soldiers deir el bahari winlock",
+      "ancient egyptian arrows in mummy bones 1923 discovery",
+      "mentuhotep ii fallen warriors mass tomb mma 507",
+      "mummified egyptian battlefield casualties 4000 years old",
+      "archaeologist herbert winlock excavating deir el-bahari",
+      "ancient egyptian mummies slain in battle archery",
+      "deir el bahari mass grave ancient egypt soldiers",
+      "ancient egypt military mummy battle wounds skull fracture"
+    ]
+  },
+  "ZV-D30": {
+    "title": "Ancient Egyptians Named Their Pet Dogs After Colors and Speed",
+    "hook": "Archaeologists found ancient collars bearing the actual names of beloved hunting dogs, like 'Antelope' and 'Reliable'.",
+    "seconds": 780,
+    "match": "ancient egyptian pets|dog names|archaeology|animal companions|egyptian dogs|pet collars",
+    "archive": "ancient egyptian dogs",
+    "queries": [
+      "ancient egyptian dog names",
+      "egyptian art dogs on leash",
+      "ancient egyptian pet collar",
+      "hunting dogs ancient egypt",
+      "ancient egyptian stele with dog",
+      "dog statue ancient egypt",
+      "pet burials ancient egypt",
+      "ancient egyptian animals",
+      "greyhound ancient egypt",
+      "saluki ancient egypt"
+    ]
+  },
+  "ZV-T31": {
+    "title": "The Mysterious 3,300-Year-Old Love Letters of Akhetaten",
+    "hook": "Archaeologists uncovered clay tablets containing desperate, centuries-old letters begging a pharaoh for missing gold and survival rations.",
+    "seconds": 480,
+    "match": "amarna letters|akhenaten|clay tablets|cuneiform|diplomacy|new kingdom",
+    "archive": "ancient egyptian clay tablets cuneiform",
+    "queries": [
+      "Amarna letters clay tablets",
+      "Akhenaten diplomatic correspondence",
+      "cuneiform tablets Egypt museum",
+      "ancient Egyptian diplomatic letters",
+      "Amarna period archaeology find",
+      "pharaoh letters gold complaints",
+      "ancient Near East clay tablets",
+      "Akhetaten capital ruins"
+    ]
+  },
+  "ZV-D31": {
+    "title": "Ancient Egyptians Had Hair Extensions and Wigs Made of Real Human Hair",
+    "hook": "Archaeologists uncovering ancient tombs found elaborate wigs and hair extensions intricately styled with vegetable fat and beeswax to beat the Egyptian heat.",
+    "seconds": 780,
+    "match": "wigs|hair extensions|cosmetics|ancient egyptian fashion|hairstyles|grooming",
+    "archive": "ancient egyptian wig",
+    "queries": [
+      "ancient egyptian wig",
+      "egyptian human hair wig museum",
+      "ancient egyptian hair extensions",
+      "historical egyptian hairstyle artifacts",
+      "ancient egyptian cosmetics and grooming",
+      "preserved egyptian hair braids",
+      "egyptian wig box artifact",
+      "ancient world hairstyles"
+    ]
+  },
+  "ZV-T32": {
+    "title": "The Stolen Letters of Elephantine: The Papyri Smugglers",
+    "hook": "When local farmers in Aswan accidentally struck a hoard of ancient jars, they unleashed a black-market war over priceless legal documents that nearly vanished forever.",
+    "seconds": 480,
+    "match": "elephantine papyri | aswan | baghawad | persian period egypt | papyrus smuggling | ancient archives",
+    "archive": "ancient egyptian papyrus manuscript",
+    "queries": [
+      "elephantine papyri manuscript",
+      "ancient aswan ruins egypt",
+      "persian period egyptian artifact",
+      "ancient papyrus document fragment",
+      "aswan elephantine island ruins",
+      "ancient legal papyrus writing",
+      "archaeological excavation aswan",
+      "ancient middle eastern manuscript"
+    ]
+  },
+  "ZV-D32": {
+    "title": "Ancient Egyptians Had Board Games They Played with the Dead",
+    "hook": "Workers and nobles alike spent their evenings playing Senet, a popular board game where winning meant helping a soul navigate the perilous perils of the underworld.",
+    "seconds": 780,
+    "match": "senet|board games|afterlife|games|play|entertainment|tomb paintings",
+    "archive": "ancient egyptian senet board",
+    "queries": [
+      "ancient egyptian senet board game museum artifact",
+      "painting of ancient egyptians playing senet game",
+      "wooden senet board game ancient egypt",
+      "ancient egyptian tomb painting playing board games",
+      "senet board game pieces ancient egypt",
+      "king tut playing senet game tomb artifact",
+      "ancient egyptian game of senet rules board",
+      "archaeological discovery senet board egypt",
+      "ancient egyptian leisure activities board games",
+      "hieroglyphics depicting senet game egypt"
+    ]
   }
 }
