@@ -57,6 +57,7 @@ ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13
     <button data-t="blog">المدونة والبوستات<span class="n" id="n-blog"></span></button>
     <button data-t="outbox">الصندوق<span class="n" id="n-outbox"></span></button>
     <button data-t="runs">التشغيلات</button>
+    <button data-t="quick">الوصول السريع</button>
   </nav>
 </header>
 <main>
@@ -94,6 +95,7 @@ ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13
   </section>
   <section id="outbox"><div class="card" id="outList"><div class="empty">بيحمّل...</div></div></section>
   <section id="runs"><div id="runGroups"><div class="empty">بيحمّل...</div></div></section>
+  <section id="quick"><div id="quickLinks"></div></section>
 </main>
 
 <script>
@@ -278,6 +280,44 @@ const LOAD = {
       const last = list[0];
       return `<details><summary><span>${esc(n)}</span><span>${runLabel(last)} <span class="mute">· ${cairo(last.created_at)}</span></span></summary><div class="body">${list.map((r) => `<div class="row"><span class="t">${cairo(r.created_at)}</span><span class="mute">${r.event === 'schedule' ? 'لوحده في ميعاده' : 'اتشغّل يدوي'}</span><span>${runLabel(r)} · <a href="${r.html_url}" target="_blank">تفاصيل</a></span></div>`).join('')}</div></details>`;
     }).join('') || '<div class="empty">مش قادر أقرا التشغيلات</div>';
+  },
+  async quick() {
+    const WF = ['factory.yml', 'shorts.yml', 'prep.yml', 'tours.yml', 'photos.yml', 'meta.yml', 'insights.yml', 'comments.yml', 'blog.yml', 'ytlist.yml'];
+    const RENDER = `https://github.com/${REPO}`;
+    const SITE_REPO = 'https://github.com/alaahesham1989-dev/zala-vip';
+    const groups = [
+      ['المصنع (zala-render) على جيت هاب', [
+        ['الريبو نفسه', `${RENDER}`],
+        ['كل التشغيلات (Actions)', `${RENDER}/actions`],
+        ['ملفات الأدوات media/tools', `${RENDER}/tree/main/media/tools`],
+        ['قايمة مواضيع الحلقات treasures.json', `${RENDER}/blob/main/media/tools/treasures.json`],
+        ...WF.map((f) => [`تشغيلة ${f}`, `${RENDER}/actions/workflows/${f}`]),
+      ]],
+      ['ملفات الحالة على R2 (بتتحدث لوحدها)', [
+        ['جدول الحلقات schedule.json', `${STATE}/schedule.json`],
+        ['صندوق النشر meta-queue.json', `${RAW}/meta-queue.json`],
+        ['الصندوق outbox.json', `${RAW}/outbox.json`],
+        ['رصيد Flow الحقيقي', `${STATE}/flow-credits.json`],
+        ['الكلمات الصعبة hard-words.json', `${STATE}/youtube/hard-words.json`],
+        ['بوستات الصور photo-posts.json', `${RAW}/photo-posts.json`],
+        ['مدونة الفيديوهات والصور blog/auto.json', `${MEDIA}/blog/auto.json`],
+      ]],
+      ['موقع زالا (zala-vip)', [
+        ['الريبو نفسه', SITE_REPO],
+        ['الموقع المباشر', 'https://www.zalavip.com'],
+        ['خريطة ZALA Guide', 'https://www.zalavip.com/atlas'],
+        ['المدونة', 'https://www.zalavip.com/blog'],
+        ['اللوحة دي (نفس اللينك)', 'https://pub-20815a715a814497b24a479c98b1815e.r2.dev/preview/dashboard.html'],
+      ]],
+      ['ملفات لازم أي حد (أو أي أجنت) يبدأ بيها', [
+        ['ابدأ هنا HANDOFF.md', `${SITE_REPO}/blob/main/docs/HANDOFF.md`],
+        ['يوم بيوم CHANNEL_ROADMAP.md', `${SITE_REPO}/blob/main/docs/CHANNEL_ROADMAP.md`],
+        ['كل الأدوات TOOLBOX.md', `${SITE_REPO}/blob/main/docs/TOOLBOX.md`],
+        ['قواعد التصميم والشكل CLAUDE.md', `${SITE_REPO}/blob/main/CLAUDE.md`],
+      ]],
+    ];
+    document.getElementById('quickLinks').innerHTML = `<div class="line" style="margin-bottom:12px">لو كلود مش متاح، الروابط دي بتوصّلك أو أي حد تاني (أو أجنت تاني) مباشرة للمصنع من غيره.</div>` +
+      groups.map(([title, links], i) => `<details ${i < 2 ? 'open' : ''}><summary><span>${esc(title)}</span><span class="mute">${links.length}</span></summary><div class="body"><div class="grid">${links.map(([label, url]) => `<a href="${esc(url)}" target="_blank" class="card" style="display:block;text-decoration:none;color:inherit">${esc(label)}</a>`).join('')}</div></div></details>`).join('');
   },
 };
 let start = (location.hash || '').slice(1);
