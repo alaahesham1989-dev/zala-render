@@ -7,7 +7,7 @@ name: ZALA factory (every day, from library to schedule)
 # YouTube, Facebook and Instagram, with no one asked. The owner gets the result on Telegram and on the dashboard.
 on:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "23 4 * * *"
   workflow_dispatch:
     inputs:
       episode:
