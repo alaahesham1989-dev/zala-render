@@ -148,7 +148,10 @@ async function prep(slug) {
     for (let i = 0; i < 3 && !s; i++) s = await write(place, facts, way, kind);
     if (!s) throw new Error(`${id}: no tour script`);
     const flat = s.chapters.flatMap((c) => c.lines);
-    flat.forEach((l, i) => { if (i === 0) l.map = place.name.en; if (!l.flight) delete l.flight; if (!l.recon) delete l.recon; });
+    // the flight is the opening: one line in a short tour (8 s of a 50 s short), at most the first 3 lines of a long tour
+    const maxFlight = k === 'short' ? 1 : 3;
+    flat.forEach((l, i) => { if (i === 0) l.map = place.name.en; if (!l.flight || i >= maxFlight) delete l.flight; if (!l.recon) delete l.recon; });
+    if (!flat[0].flight) flat[0].flight = true;
     const script = {
       id, series: 'ZALA Virtual Tour', kind, place: slug, title: s.title, thumbnailText: s.thumbnailText, description: s.description, tags: s.tags || [],
       chapters: s.chapters.map((c) => ({ title: c.title, lines: c.lines.map(({ queries, ...l }) => l) })),
