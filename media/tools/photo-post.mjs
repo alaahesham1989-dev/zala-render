@@ -206,8 +206,10 @@ videoUrl = video?.youtube || null;
 const episodeSlug = await episodeBlogSlug(video?.episode);
 const tags = ['AncientEgypt', 'Egypt', 'History', ...(ans?.tags || [])].map((t) => '#' + String(t).replace(/[^A-Za-z0-9]/g, '')).filter((t, i, a) => t.length > 2 && a.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i).slice(0, 5).join(' ');
 caption = buildCaption(ans, { videoUrl, blogUrl: `${SITE}/blog/${slug}`, tags });
+// kept for our own log and the blog's small image credit line only — owner's standing order: never a comment or any
+// mention of the source on Facebook or Instagram, not even in a reply. The post itself talks about the object only.
 credit = `Photo: ${pick.author || 'unknown'}${pick.license ? `, ${pick.license}` : ''}${pick.source_url ? ` (${pick.source_url})` : ''}`;
-console.log(`[photo] ${pick.id} ${pick.title}\n[photo] words: ${words}\n[photo] caption:\n${caption}\n[photo] ${credit}`);
+console.log(`[photo] ${pick.id} ${pick.title}\n[photo] words: ${words}\n[photo] caption:\n${caption}\n[photo] (not posted) ${credit}`);
 
 const key = `posts/${day}-${pick.id}.jpg`;
 if (dry) { console.log('[photo] dry run, nothing posted'); process.exit(0); }
@@ -220,7 +222,6 @@ try {
   const { access_token: pageToken } = await call(`${G}/${PAGE}?fields=access_token`);
   const fb = await call(`${G}/${PAGE}/photos`, { method: 'POST', token: pageToken, params: { url: imageUrl, message: caption, published: 'true' } });
   done.fb = fb.post_id || fb.id;
-  await call(`${G}/${done.fb}/comments`, { method: 'POST', token: pageToken, params: { message: credit } }).catch((e) => console.log('[photo] fb credit:', e.message));
   console.log('[photo] facebook', done.fb);
 } catch (e) { done.fbError = e.message; console.log('[photo] facebook failed:', e.message); }
 // Instagram
@@ -229,7 +230,6 @@ try {
   for (let i = 0; i < 20; i++) { const s = await call(`${G}/${box.id}?fields=status_code`); if (s.status_code === 'FINISHED') break; await sleep(5000); }
   const pub = await call(`${G}/${IG}/media_publish`, { method: 'POST', params: { creation_id: box.id } });
   done.ig = pub.id;
-  await call(`${G}/${pub.id}/comments`, { method: 'POST', params: { message: credit } }).catch((e) => console.log('[photo] ig credit:', e.message));
   console.log('[photo] instagram', done.ig);
 } catch (e) { done.igError = e.message; console.log('[photo] instagram failed:', e.message); }
 
