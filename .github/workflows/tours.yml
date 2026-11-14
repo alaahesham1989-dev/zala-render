@@ -116,7 +116,7 @@ jobs:
           for id in ${IDS:-}; do [ -d "media/out/$id" ] && aws s3 sync "media/out/$id" "s3://${R2_BUCKET}/renders/$id" --endpoint-url "$E" --no-progress; [ -d "quality-$id" ] && aws s3 sync "quality-$id" "s3://${R2_BUCKET}/renders/$id/review" --endpoint-url "$E" --no-progress; done; true
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull --rebase --autostash -q || true
-          git add -f content/meta-queue.json content/outbox.json && git commit -qm "tours: ${MADE:-none}" && git push -q || true
+          git add -f content/meta-queue.json content/outbox.json; if git commit -qm "tours: ${MADE:-none}"; then for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done; fi
       - name: Telegram
         if: always()
         run: |
