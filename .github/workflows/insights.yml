@@ -53,4 +53,4 @@ jobs:
         run: |
           aws s3 sync content/youtube "s3://${{ secrets.R2_BUCKET }}/render-state/content/youtube" --endpoint-url "$E" --no-progress --exclude "*" --include "*.json" || true
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
-          git add -f content/insights.json 2>/dev/null && git commit -qm "insights: numbers from YouTube" && { git pull --rebase -q || true; git push -q; } || true
+          git add -f content/insights.json 2>/dev/null; if git commit -qm "insights: numbers from YouTube"; then git pull --rebase -q || true; for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done; fi
