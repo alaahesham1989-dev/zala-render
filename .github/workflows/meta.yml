@@ -94,11 +94,12 @@ jobs:
         if: env.MODE == 'queue'
         run: |
           set -euo pipefail
+          git pull -q --rebase || true   # the freshest possible queue, right before deciding what is due (two runs overlapping must never post the same item twice)
           node media/tools/meta-publish.mjs --queue content/meta-queue.json
           if ! git diff --quiet content/meta-queue.json; then
             git config user.name "zala-bot"
             git config user.email "zala-bot@users.noreply.github.com"
             git add -f content/meta-queue.json
             git commit -m "meta: published queued items"
-            git push
+            for i in 1 2 3; do git push && break; git pull -q --rebase --autostash || true; sleep 5; done
           fi
