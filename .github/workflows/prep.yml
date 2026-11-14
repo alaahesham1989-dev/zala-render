@@ -45,6 +45,8 @@ jobs:
       GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:
       - uses: actions/checkout@v4
@@ -90,20 +92,31 @@ jobs:
           python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
           /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
       - name: Prepare
+        id: prepare
         if: env.EPS != ''
         run: |
           set -uo pipefail
-          fail=0
+          fail=0; ok_eps=""
           for EP in $EPS; do
             # the picture library first (free sources, local picture checks), then facts, cleaning, story, shot list
             /tmp/lib/bin/python media/tools/library_build.py "$EP" --target 220 || echo "library: $EP kept what it had"
             ok=no
             for i in 1 2 3; do node media/tools/prep.mjs "$EP" ${{ inputs.force && '--force' || '' }} && { ok=yes; break; }; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
-            [ $ok = yes ] || fail=1
+            if [ $ok = yes ]; then ok_eps="$ok_eps $EP"; else fail=1; fi
           done
+          echo "OK_EPS=$ok_eps" >> "$GITHUB_ENV"
           exit $fail
       - name: Save back to R2
         if: always() && env.EPS != ''
         run: |
           for d in youtube library factbank prep; do [ -d "content/$d" ] && aws s3 sync "content/$d" "s3://${R2_BUCKET}/render-state/content/$d" --endpoint-url "$E" --no-progress; done
           true
+      - name: Telegram (quiet on success, speaks up only when really stuck)
+        if: always() && env.EPS != ''
+        run: |
+          ok=$(echo "${OK_EPS:-}" | wc -w)
+          want=$(echo "$EPS" | wc -w)
+          if [ "$ok" -gt 0 ] && [ "$ok" = "$want" ]; then MSG="ZALA التحضير: $ok حلقة اتحضرت تمام ($EPS)."
+          elif [ "$ok" -gt 0 ]; then MSG="ZALA التحضير: $ok من $want اتحضروا، والباقي هيتعاد تاني تلقائي."
+          else MSG="ZALA التحضير: محتاج نظرة، مفيش ولا حلقة اتحضرت من $want اللي كانوا مفروض يتحضروا ($EPS)."; fi
+          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
