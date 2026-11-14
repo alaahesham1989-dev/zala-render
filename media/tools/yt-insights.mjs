@@ -67,22 +67,33 @@ const insights = {
 fs.writeFileSync(OUT, JSON.stringify(insights, null, 2) + '\n');
 log(`${videos.length} public videos, best: ${insights.bestTitles.join(' | ')}`);
 
-// a weak click-through rate 48 to 120 hours after going public: the next title from the episode's idea list
-if (args.includes('--retitle') && !imp.error) {
+// a weak click-through rate 48 to 120 hours after going public: the next title from the episode's idea list.
+// This channel's impressions/CTR are not available from the API yet (small-channel limit), so CTR never fires —
+// retitle fell back to a views-based signal instead: owner's order 2026-11-14, applies to videos AND shorts.
+if (args.includes('--retitle')) {
   const scripts = path.join(REPO, 'content', 'youtube');
   const plan = JSON.parse(fs.readFileSync(path.join(REPO, 'content', 'schedule.json'), 'utf8'));
-  for (const v of longs) {
+  for (const v of [...longs, ...shorts]) {
     const age = (Date.now() - Date.parse(v.published)) / 3600e3;
+    if (age < 48 || age > 120) continue;
     const ctr = v.videoThumbnailImpressionsClickRate;
-    if (age < 48 || age > 120 || ctr === undefined || ctr >= 3 || (v.videoThumbnailImpressions || 0) < 300) continue;
-    const ep = plan.find((p) => p.which === 'main' && String(p.youtube || '').includes(v.id))?.episode;
+    let reason;
+    if (!imp.error && ctr !== undefined && (v.videoThumbnailImpressions || 0) >= 300) {
+      if (ctr >= 3) continue;   // a real CTR number, and it is fine
+      reason = `CTR ${ctr}%`;
+    } else {
+      // fallback: nobody is finishing it. A real flop, not just a quiet day (needs a minimum audience first).
+      if ((v.views || 0) < (v.short ? 50 : 15) || (v.averageViewPercentage || 0) >= 20) continue;
+      reason = `${Math.round(v.averageViewPercentage || 0)}% watched, ${v.views} views`;
+    }
+    const ep = plan.find((p) => (p.which === 'main' || /^R\d$/.test(p.which)) && String(p.youtube || '').includes(v.id))?.episode;
     const s = ep && JSON.parse(fs.readFileSync(path.join(scripts, `${ep}.json`), 'utf8'));
     const next = s?.titleIdeas?.find((t) => t !== v.title && !(s.triedTitles || []).includes(t));
     if (!next) continue;
     const cur = await data(`videos?part=snippet&id=${v.id}`);
     const snippet = { ...cur.items[0].snippet, title: next };
     const r = await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet', { method: 'PUT', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: v.id, snippet }) });
-    log(`retitle ${v.id} (CTR ${ctr}%): "${v.title}" -> "${next}" ${r.ok ? 'done' : 'refused ' + r.status}`);
+    log(`retitle ${v.id} (${reason}): "${v.title}" -> "${next}" ${r.ok ? 'done' : 'refused ' + r.status}`);
     if (r.ok) { s.triedTitles = [...(s.triedTitles || []), v.title]; fs.writeFileSync(path.join(scripts, `${ep}.json`), JSON.stringify(s, null, 2) + '\n'); }
   }
 }
