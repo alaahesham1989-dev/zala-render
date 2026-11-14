@@ -11,6 +11,10 @@ on:
         description: "Send the Arabic report now"
         type: boolean
         default: true
+      force:
+        description: "Retitle this one video id right now, skipping the usual wait (owner's call)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -47,7 +51,9 @@ jobs:
           tg=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.telegram }}" = "true" ]; then tg="--telegram"; fi
           if [ "$(date -u +%u)" = "1" ]; then tg="--telegram"; fi
-          node media/tools/yt-insights.mjs --retitle $tg
+          force=""
+          if [ -n "${{ inputs.force }}" ]; then force="--force ${{ inputs.force }}"; fi
+          node media/tools/yt-insights.mjs --retitle $tg $force
       - name: Keep what was learned
         if: always()
         run: |
