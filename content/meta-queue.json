@@ -481,5 +481,80 @@
         "url": "https://www.instagram.com/reel/DfsVX9XlpPb/"
       }
     ]
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "main",
+    "to": [
+      "fb"
+    ],
+    "at": "2026-11-16T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "main",
+    "to": [
+      "yt:ZbEqSqtyyOA"
+    ],
+    "at": "2026-11-16T20:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-17T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "R1",
+    "to": [
+      "yt:iqt0y4Yd314"
+    ],
+    "at": "2026-11-17T20:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "R2",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-18T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "R2",
+    "to": [
+      "yt:rFV4inoYbcQ"
+    ],
+    "at": "2026-11-18T20:20:00.000Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "R3",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-20T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-T03",
+    "which": "R3",
+    "to": [
+      "yt:inow4PwRnFo"
+    ],
+    "at": "2026-11-20T20:20:00.000Z",
+    "done": false
   }
 ]
