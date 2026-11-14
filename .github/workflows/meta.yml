@@ -1,12 +1,12 @@
 name: ZALA Meta
 
 # Publishing to the ZALA VIP Facebook page and Instagram through the official Graph API, on the server.
-# Run by hand for one video, or every hour for what content/meta-queue.json says is due.
+# The clock (clock.yml) starts it the minute something in content/meta-queue.json is due; by hand it posts one video.
 on:
   workflow_dispatch:
     inputs:
       episode:
-        description: "queue = post what the schedule says is due (waits up to 30 minutes); or an episode id to post one video now"
+        description: "queue = post what the schedule says is due; or an episode id to post one video now"
         required: true
         default: queue
         type: string
@@ -20,25 +20,9 @@ on:
         required: true
         default: fb,ig
         type: string
-  schedule:
-    # owner's order 2026-11-13: posts go out in the US audience's noon-6pm Eastern window, in fixed hourly slots
-    # (17:00, 19:00, 20:00, 21:00, 22:00 UTC and a bit after, for the credits-comment follow-up). GitHub throttles
-    # and often skips a */20 timer entirely for hours at a time, which is what silently delayed posts by days before
-    # this fix (2026-11-14) — a handful of fixed times a day is far more reliable than hoping a frequent one fires.
-    - cron: "3 17 * * *"
-    - cron: "3 18 * * *"
-    - cron: "3 19 * * *"
-    - cron: "3 20 * * *"
-    - cron: "23 20 * * *"
-    - cron: "3 21 * * *"
-    - cron: "23 21 * * *"
-    - cron: "3 22 * * *"
-    - cron: "23 22 * * *"
-    - cron: "3 23 * * *"
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: zala-meta
@@ -47,64 +31,34 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 120
     env:
-      MODE: ${{ (github.event_name == 'schedule' || inputs.episode == 'queue') && 'queue' || 'one' }}
+      MODE: ${{ inputs.episode == 'queue' && 'queue' || 'one' }}
       META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
-      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
-      - name: Watchdog (GitHub sometimes skips a daily schedule; start it if it has not run today)
-        if: github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          today=$(date -u +%Y-%m-%d); hour=$(date -u +%H)
-          # one waiting run per group: a new start would push out a waiting one, so only start when nothing waits
-          waiting=0; for w in shorts.yml prep.yml photo-prep.yml factory.yml; do k=$(gh run list -R "$GITHUB_REPOSITORY" -w $w -L 5 --json status --jq '[.[]|select(.status=="queued" or .status=="pending" or .status=="waiting")]|length' || echo 1); waiting=$((waiting+k)); done
-          [ "$waiting" -gt 0 ] && { echo "watchdog: a run is waiting already"; exit 0; }
-          for w in "prep.yml 02" "photo-prep.yml 07" "shorts.yml 03" "factory.yml 07"; do
-            set -- $w
-            [ "$hour" -lt "$2" ] && continue
-            n=$(gh run list -R "$GITHUB_REPOSITORY" -w "$1" -L 20 --json createdAt --jq "[.[]|select(.createdAt>=\"$today\")]|length" || echo 1)
-            if [ "$n" = "0" ]; then
-              echo "watchdog: $1 did not run today, starting it"
-              gh workflow run "$1" -R "$GITHUB_REPOSITORY" || true
-              if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
-                curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA: ملف $1 ماشتغلش في معاده (تايمر GitHub اتأخر)، شغّلته بنفسي دلوقتي." >/dev/null || true
-              fi
-              break
-            fi
-          done
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait on the server for the next post that is due within 30 minutes (the fixed hourly crons are already close by)
-        if: env.MODE == 'queue'
-        run: |
-          # a short wait only: a long sleep here would hold the concurrency slot and block the NEXT fixed-time run from
-          # ever starting, which is exactly what silently delayed posts by days before this fix (2026-11-14)
-          s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const due=q.some(x=>!x.done&&Date.parse(x.at)<=n);const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<30*60e3).sort((a,b)=>a-b)[0];console.log(!due&&w?Math.ceil(w/1000)+30:0)")
-          echo "waiting $s seconds"; if [ "$s" -gt 0 ]; then sleep "$s"; git pull -q --rebase || true; fi
       - name: Video tools for the full episode on Instagram
         if: env.MODE == 'one' && inputs.which == 'main' && contains(inputs.to, 'ig')
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Bring the package text from R2 (no video files)
         run: |
-          set -euo pipefail
           if [ "$MODE" = "one" ]; then eps="${{ inputs.episode }}"; else eps=$(node -e "const q=require('./content/meta-queue.json');console.log([...new Set(q.filter(x=>!x.done&&Date.parse(x.at)<=Date.now()).map(x=>x.episode))].join(' '))"); fi
           for ep in $eps; do
             mkdir -p "publish/$ep"
-            aws s3 cp "s3://${R2_BUCKET}/renders/${ep}/publish/${ep}.youtube.json" "publish/$ep/" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
+            # one missing package must not stop the others: that item is reported and the rest of the queue goes out
+            aws s3 cp "s3://${R2_BUCKET}/renders/${ep}/publish/${ep}.youtube.json" "publish/$ep/" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress \
+              || aws s3 cp "s3://${R2_BUCKET}/outbox/${ep}/${ep}.youtube.json" "publish/$ep/" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress \
+              || echo "no package for $ep"
           done
       - name: Publish one
         if: env.MODE == 'one'
@@ -112,13 +66,12 @@ jobs:
       - name: Publish what is due
         if: env.MODE == 'queue'
         run: |
-          set -euo pipefail
-          git pull -q --rebase || true   # the freshest possible queue, right before deciding what is due (two runs overlapping must never post the same item twice)
-          node media/tools/meta-publish.mjs --queue content/meta-queue.json
-          if ! git diff --quiet content/meta-queue.json; then
-            git config user.name "zala-bot"
-            git config user.email "zala-bot@users.noreply.github.com"
-            git add -f content/meta-queue.json
-            git commit -m "meta: published queued items"
-            for i in 1 2 3; do git push && break; git pull -q --rebase --autostash || true; sleep 5; done
+          rc=0
+          node media/tools/meta-publish.mjs --queue content/meta-queue.json | tee meta.log || rc=$?
+          # saved even when the publisher stopped half way: what did go out is never posted twice
+          node media/tools/state-save.mjs "meta: published queued items" content/meta-queue.json
+          failed=$(node -e "const q=require('./content/meta-queue.json');console.log(q.filter(x=>x.failed&&Date.parse(x.done)>Date.now()-3600e3).map(x=>x.episode+' '+x.which+' ('+x.failed.join('+')+')').join(', '))")
+          if [ -n "$failed" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA النشر: محتاج نظرة، اتجرب 3 مرات وما نزلش: $failed" >/dev/null || true
           fi
+          exit $rc

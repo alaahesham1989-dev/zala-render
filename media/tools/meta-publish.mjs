@@ -127,12 +127,21 @@ if (queueFile) {
   // Each item: { episode, which, to: ["fb","ig"], at: ISO time, done: false }. The workflow syncs each episode to publish/<episode>.
   const queue = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
   const due = queue.filter((q) => !q.done && Date.parse(q.at) <= Date.now());
+  const save = () => fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
   for (const q of due) {
-    const res = await publish(path.join('publish', q.episode), q.episode, q.which, q.to);
-    q.done = new Date().toISOString();
-    q.results = res;
+    // the old "credits comment" entries (yt:<id>) do nothing any more: closed without a call
+    if (q.to.every((t) => String(t).startsWith('yt:'))) { q.done = new Date().toISOString(); save(); continue; }
+    let res;
+    try { res = await publish(path.join('publish', q.episode), q.episode, q.which, q.to); }
+    catch (err) { res = q.to.map((p) => ({ platform: p, error: String(err.message || err).slice(0, 300) })); }   // e.g. the package file is missing: the rest of the queue still goes out
+    const failed = res.filter((r) => r.error).map((r) => r.platform);
+    q.results = [...(q.results || []).filter((r) => !r.error), ...res];
+    q.tries = (q.tries || 0) + 1;
+    // a platform that refused is tried again on the next run (3 times), the ones that worked are never posted twice
+    if (failed.length && q.tries < 3) q.to = failed;
+    else { q.done = new Date().toISOString(); if (failed.length) q.failed = failed; }
+    save();   // after every item: a crash later in the run can never post this one twice
   }
-  if (due.length) fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);   // untouched when nothing was due
   console.log(`Queue: ${due.length} published, ${queue.filter((q) => !q.done).length} waiting.`);
 } else {
   const [dir, id, which] = args;

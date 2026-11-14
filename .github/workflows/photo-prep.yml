@@ -5,8 +5,6 @@ name: ZALA picture post — prep
 # labelled as a reconstruction, when none exists), and quality-checks the finished card. photos.yml only ever
 # publishes what this workflow has already prepared and checked.
 on:
-  schedule:
-    - cron: "5 6 * * *"   # once a day, well before the 15:00 UTC publish run
   workflow_dispatch:
     inputs:
       count:
@@ -59,9 +57,7 @@ jobs:
         run: |
           set -o pipefail
           node media/tools/photo-prep.mjs --count=${{ inputs.count || '3' }} ${{ inputs.dry && '--dry' || '' }} | tee prep.log
-          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
-          git pull -q --rebase --autostash || true
-          git add -f content/photo-queue.json && git commit -qm "photo: prepared new picture posts" && git push -q || echo "nothing new to queue"
+          node media/tools/state-save.mjs "photo: prepared new picture posts" content/photo-queue.json
       - name: Telegram (quiet on success, speaks up only when really stuck)
         if: always() && !inputs.dry
         run: |

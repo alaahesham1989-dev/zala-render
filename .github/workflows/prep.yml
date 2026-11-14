@@ -7,8 +7,6 @@ name: ZALA prep (facts, clean pictures, story check, Flow shot list)
 # tops up the topic list itself (topic-ideas.mjs) before it ever runs low. The factory only takes an episode whose
 # preparation is fully done.
 on:
-  schedule:
-    - cron: "41 1 * * *"
   workflow_dispatch:
     inputs:
       episodes:
@@ -67,9 +65,7 @@ jobs:
           if [ "$left" -lt 20 ]; then
             for i in 1 2 3; do node media/tools/topic-ideas.mjs 20 && break; echo "topics: Gemini busy, waiting 5 minutes"; sleep 300; done
             cp media/tools/treasures.json content/library/treasures.json
-            git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
-            git add -f media/tools/treasures.json && git pull --rebase --autostash -q || true
-            if git commit -qm "topics: queue topped up ($left left before)"; then for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done; fi
+            node media/tools/state-save.mjs "topics: queue topped up ($left left before)" media/tools/treasures.json || echo "topics: not saved, next run tries again"
           fi
       - name: Which episodes
         run: |

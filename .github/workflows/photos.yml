@@ -6,9 +6,6 @@ name: ZALA picture post
 # This workflow only PUBLISHES the next ready item from content/photo-queue.json — photo-prep.yml fills that
 # queue ahead of time from our own checked episode stories, with a real photo already found and quality-checked.
 on:
-  schedule:
-    - cron: "13 12 * * *"
-    - cron: "37 14 * * *"
   workflow_dispatch:
     inputs:
       now:
@@ -66,6 +63,4 @@ jobs:
         if: env.DONE_TODAY == 'no'
         run: |
           node media/tools/photo-post.mjs ${{ inputs.dry && '--dry' || '' }}
-          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
-          git pull -q --rebase --autostash || true
-          git add -f content/photo-posts.json content/photo-queue.json && git commit -qm "photo: daily picture post" && git push -q || echo "state push failed"
+          node media/tools/state-save.mjs "photo: daily picture post" content/photo-posts.json content/photo-queue.json

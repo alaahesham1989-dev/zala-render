@@ -53,5 +53,15 @@
     "quality": "2026-11-14T12:51:26.939Z",
     "scheduled": "2026-11-14T12:54:40.308Z",
     "blog": "done"
+  },
+  {
+    "id": "ZV-V01S",
+    "kind": "tour-short",
+    "title": "Secrets of the Giza Pyramids | Quick Tour",
+    "place": "giza-pyramids",
+    "landed": "2026-11-14T19:00:00.000Z",
+    "rounds": 1,
+    "scheduled": true,
+    "blog": "done"
   }
 ]

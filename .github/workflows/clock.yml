@@ -1,0 +1,29 @@
+name: ZALA clock (starts everything on time)
+
+# The one scheduler of the machine (media/tools/clock.mjs). GitHub's own timer is hours late on this repository, so
+# no other workflow has a timer any more: this clock stays alive about five hours, starts each workflow at its minute
+# and hands over to the next clock before it ends. The timer below only brings a dead clock back.
+on:
+  schedule:
+    - cron: "7 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  clock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Keep time
+        run: node media/tools/clock.mjs

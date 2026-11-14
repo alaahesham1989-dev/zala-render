@@ -61,14 +61,11 @@ const done = [];
 const main = youtube('main', longAt);
 done.push({ episode: ep, which: 'main', at: at(longAt), youtube: main.url, title: pkg.title });
 queue.push({ episode: ep, which: 'main', to: ['fb'], at: at(longAt), done: false });
-const later = (d) => new Date(new Date(d).getTime() + 20 * 60000).toISOString();   // credits comment once the video is public
-queue.push({ episode: ep, which: 'main', to: [`yt:${main.id}`], at: later(longAt), done: false });
 (pkg.reels || []).forEach((r, n) => {
   const which = `R${n + 1}`;
   const y = youtube(which, reelsAt[n]);
   done.push({ episode: ep, which, at: at(reelsAt[n]), youtube: y.url, title: r.title });
   queue.push({ episode: ep, which, to: ['fb', 'ig'], at: at(reelsAt[n]), done: false });
-  queue.push({ episode: ep, which, to: [`yt:${y.id}`], at: later(reelsAt[n]), done: false });
 });
 fs.writeFileSync(planFile, JSON.stringify([...plan, ...done], null, 2) + '\n');
 fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2) + '\n');

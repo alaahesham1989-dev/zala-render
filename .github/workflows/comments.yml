@@ -2,8 +2,6 @@ name: ZALA comment replies
 
 # Every few hours: replies to new Facebook and Instagram comments by itself and tells the owner in Arabic on Telegram.
 on:
-  schedule:
-    - cron: "17 */3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -31,6 +29,4 @@ jobs:
       - name: Reply
         run: |
           node media/tools/comments.mjs
-          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
-          git pull -q --rebase --autostash || true
-          if [ -f content/replied.json ]; then git add -f content/replied.json; if git commit -qm "comments: replied"; then for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done; fi; fi
+          node media/tools/state-save.mjs "comments: replied" content/replied.json || true

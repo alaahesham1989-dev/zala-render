@@ -177,7 +177,7 @@
       "yt:vnNvhQBqKC8"
     ],
     "at": "2026-11-15T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.252Z"
   },
   {
     "episode": "ZV-T01",
@@ -195,7 +195,7 @@
       "yt:jecxYugNqGM"
     ],
     "at": "2026-11-16T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T01",
@@ -214,7 +214,7 @@
       "yt:A9gEF8DD7Ak"
     ],
     "at": "2026-11-17T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T01",
@@ -233,7 +233,7 @@
       "yt:LxOjSC_pg6o"
     ],
     "at": "2026-11-18T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T01",
@@ -252,7 +252,7 @@
       "yt:2kEcO8sRQ2M"
     ],
     "at": "2026-11-20T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-L01",
@@ -402,7 +402,7 @@
       "yt:9nrQP7Dq58Q"
     ],
     "at": "2026-11-23T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T02",
@@ -421,7 +421,7 @@
       "yt:C9idHAReMEA"
     ],
     "at": "2026-11-24T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T02",
@@ -440,7 +440,7 @@
       "yt:53g1DQcf4w0"
     ],
     "at": "2026-11-25T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T02",
@@ -459,7 +459,7 @@
       "yt:dWNnwbqoF_w"
     ],
     "at": "2026-11-27T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-S202611121",
@@ -527,7 +527,7 @@
       "yt:ZbEqSqtyyOA"
     ],
     "at": "2026-11-16T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T03",
@@ -546,7 +546,7 @@
       "yt:iqt0y4Yd314"
     ],
     "at": "2026-11-17T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T03",
@@ -565,7 +565,7 @@
       "yt:rFV4inoYbcQ"
     ],
     "at": "2026-11-18T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T03",
@@ -584,7 +584,7 @@
       "yt:inow4PwRnFo"
     ],
     "at": "2026-11-20T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-S202611141",
@@ -635,7 +635,7 @@
       "yt:a8BjtLe1qLI"
     ],
     "at": "2026-11-19T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T04",
@@ -654,7 +654,7 @@
       "yt:hZsbBXflNgE"
     ],
     "at": "2026-11-21T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T04",
@@ -673,7 +673,7 @@
       "yt:IZWC9atW2y4"
     ],
     "at": "2026-11-22T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
   },
   {
     "episode": "ZV-T04",
@@ -692,6 +692,17 @@
       "yt:WbYOrjr0jqw"
     ],
     "at": "2026-11-24T20:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T20:07:29.254Z"
+  },
+  {
+    "episode": "ZV-V01S",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-16T17:00:00Z",
+    "done": false,
+    "youtube": "https://youtu.be/6eR6aoVrqFU"
   }
 ]

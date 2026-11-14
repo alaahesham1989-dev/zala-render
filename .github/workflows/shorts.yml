@@ -5,8 +5,6 @@ name: ZALA shorts (standalone, one topic each)
 # makes again), then the outbox on R2 (outbox.mjs) and the publishing file (publisher.mjs): YouTube, Facebook,
 # Instagram at 13:00, 19:00 and 23:30 UTC, the map place and a blog article.
 on:
-  schedule:
-    - cron: "17 0 * * *"
   workflow_dispatch:
     inputs:
       count:
@@ -111,9 +109,7 @@ jobs:
           aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           for id in ${IDS:-}; do [ -d "media/out/$id" ] && aws s3 sync "media/out/$id" "s3://${R2_BUCKET}/renders/$id" --endpoint-url "$E" --no-progress; [ -d "quality-$id" ] && aws s3 sync "quality-$id" "s3://${R2_BUCKET}/renders/$id/review" --endpoint-url "$E" --no-progress; done; true
-          git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
-          git pull --rebase --autostash -q || true
-          git add -f content/meta-queue.json content/shorts-state.json content/outbox.json; if git commit -qm "shorts: ${MADE:-none}"; then for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done; fi
+          node media/tools/state-save.mjs "shorts: ${MADE:-none}" content/meta-queue.json content/shorts-state.json content/outbox.json || true
       - name: Telegram
         if: always()
         run: |
