@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       episode:
-        description: "queue = post what the schedule says is due (waits up to 5 hours); or an episode id to post one video now"
+        description: "queue = post what the schedule says is due (waits up to 30 minutes); or an episode id to post one video now"
         required: true
         default: queue
         type: string
@@ -21,12 +21,20 @@ on:
         default: fb,ig
         type: string
   schedule:
-    - cron: "*/20 * * * *"
-    # GitHub often runs the 20-minute timer hours late. These early runs wait on the server until the next post is due,
-    # so posts go out on time even when the timer is lazy.
-    - cron: "0 9 * * *"
-    - cron: "0 11 * * *"
-    - cron: "30 13 * * *"
+    # owner's order 2026-11-13: posts go out in the US audience's noon-6pm Eastern window, in fixed hourly slots
+    # (17:00, 19:00, 20:00, 21:00, 22:00 UTC and a bit after, for the credits-comment follow-up). GitHub throttles
+    # and often skips a */20 timer entirely for hours at a time, which is what silently delayed posts by days before
+    # this fix (2026-11-14) — a handful of fixed times a day is far more reliable than hoping a frequent one fires.
+    - cron: "3 17 * * *"
+    - cron: "3 18 * * *"
+    - cron: "3 19 * * *"
+    - cron: "3 20 * * *"
+    - cron: "23 20 * * *"
+    - cron: "3 21 * * *"
+    - cron: "23 21 * * *"
+    - cron: "3 22 * * *"
+    - cron: "23 22 * * *"
+    - cron: "3 23 * * *"
 
 permissions:
   contents: write
@@ -71,10 +79,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait on the server for the next post that is due within 5 hours
+      - name: Wait on the server for the next post that is due within 30 minutes (the fixed hourly crons are already close by)
         if: env.MODE == 'queue'
         run: |
-          s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const due=q.some(x=>!x.done&&Date.parse(x.at)<=n);const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<5*3600e3).sort((a,b)=>a-b)[0];console.log(!due&&w?Math.ceil(w/1000)+30:0)")
+          # a short wait only: a long sleep here would hold the concurrency slot and block the NEXT fixed-time run from
+          # ever starting, which is exactly what silently delayed posts by days before this fix (2026-11-14)
+          s=$(node -e "const q=require('./content/meta-queue.json');const n=Date.now();const due=q.some(x=>!x.done&&Date.parse(x.at)<=n);const w=q.filter(x=>!x.done).map(x=>Date.parse(x.at)-n).filter(d=>d>0&&d<30*60e3).sort((a,b)=>a-b)[0];console.log(!due&&w?Math.ceil(w/1000)+30:0)")
           echo "waiting $s seconds"; if [ "$s" -gt 0 ]; then sleep "$s"; git pull -q --rebase || true; fi
       - name: Video tools for the full episode on Instagram
         if: env.MODE == 'one' && inputs.which == 'main' && contains(inputs.to, 'ig')
