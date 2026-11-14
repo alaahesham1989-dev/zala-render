@@ -91,6 +91,7 @@ ul.reasons{margin:6px 0;padding-inline-start:18px;color:var(--wait);font-size:13
   <section id="tours"><div id="tourList"><div class="empty">بيحمّل...</div></div></section>
   <section id="blog">
     <details open><summary><span>مقالات المدونة (zalavip.com/blog)</span><span class="mute" id="blogCount"></span></summary><div class="body" id="blogList"><div class="empty">بيحمّل...</div></div></details>
+    <details open><summary><span>صور جاهزة ومجدولة قدام</span><span class="mute" id="photoQueueCount"></span></summary><div class="body" id="photoQueueList"><div class="empty">بيحمّل...</div></div></details>
     <details open><summary><span>بوستات الصور على فيسبوك وإنستجرام</span><span class="mute" id="photoCount"></span></summary><div class="body" id="photoList"><div class="empty">بيحمّل...</div></div></details>
   </section>
   <section id="outbox"><div class="card" id="outList"><div class="empty">بيحمّل...</div></div></section>
@@ -249,7 +250,10 @@ const LOAD = {
   },
   async blog() {
     const d = await base();
-    const [feed, photos] = await Promise.all([get(`${MEDIA}/blog/auto.json`), get(`${RAW}/photo-posts.json`)]);
+    const [feed, photos, queue] = await Promise.all([get(`${MEDIA}/blog/auto.json`), get(`${RAW}/photo-posts.json`), get(`${RAW}/photo-queue.json`)]);
+    const q = queue || [];
+    document.getElementById('photoQueueCount').textContent = q.length + ' جاهزة';
+    document.getElementById('photoQueueList').innerHTML = '<div class="line" style="margin-bottom:6px">كل يوم الساعة 6 المغرب بتوقيت مصر (أفضل وقت للجمهور الأمريكي) بياخد الأول من هنا.</div>' + (q.map((x, i) => `<div class="row"><span class="t">${i === 0 ? 'النهارده' : `#${i + 1}`}</span><span>${x.cardUrl ? `<a href="${esc(x.cardUrl)}" target="_blank"><img src="${esc(x.cardUrl)}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;float:inline-start;margin-inline-end:10px"></a>` : ''}<b>${esc(x.words || x.topic || '')}</b><div class="line">${esc(x.hook || '')}</div></span><span>${x.isAI ? '<span class="wait">صورة AI</span>' : '<span class="ok">صورة حقيقية</span>'}</span></div>`).join('') || '<div class="empty">الطابور فاضي، محتاج تشغيل التحضير (photo-prep.yml)</div>');
     const posts = [...(feed?.posts || feed || [])].sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const today = dayKey(Date.now());
     const day = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -263,7 +267,7 @@ const LOAD = {
     const done = (photos || []).filter((x) => !x.refused).reverse();
     const refused = (photos || []).filter((x) => x.refused).length;
     document.getElementById('photoCount').textContent = `${done.length} بوست${refused ? ` · ${refused} صورة اترفضت في الجودة` : ''}`;
-    document.getElementById('photoList').innerHTML = '<div class="line" style="margin-bottom:6px">بوست صورة واحد كل يوم الساعة 5 العصر بتوقيت مصر، بعد مراجعة الجودة.</div>' + (done.map((x) => `<div class="row"><span class="t">${cairo(x.at)}</span><span>${x.image ? `<a href="${esc(x.image)}" target="_blank"><img src="${esc(x.image)}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;float:inline-start;margin-inline-end:10px"></a>` : ''}<b>${esc(x.words || '')}</b><div class="line">${esc(String(x.caption || '').split(/\r?\n/)[0])}</div></span>
+    document.getElementById('photoList').innerHTML = '<div class="line" style="margin-bottom:6px">بوست صورة واحد كل يوم الساعة 8 بالليل بتوقيت مصر (الساعة 1 الضهر أمريكا)، بعد مراجعة الجودة.</div>' + (done.map((x) => `<div class="row"><span class="t">${cairo(x.at)}</span><span>${x.image ? `<a href="${esc(x.image)}" target="_blank"><img src="${esc(x.image)}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;float:inline-start;margin-inline-end:10px"></a>` : ''}<b>${esc(x.words || '')}</b><div class="line">${esc(String(x.caption || '').split(/\r?\n/)[0])}</div></span>
       <span>${x.fb ? `<a href="https://www.facebook.com/${esc(x.fb)}" target="_blank">فيسبوك</a>` : '<span class="mute">فيسبوك لأ</span>'} · ${x.ig ? '<span class="ok">إنستجرام</span>' : '<span class="mute">إنستجرام لأ</span>'}</span></div>`).join('') || '<div class="empty">لسه مفيش بوستات صور</div>');
     document.getElementById('n-blog').textContent = posts.length + done.length || '';
   },
@@ -299,6 +303,7 @@ const LOAD = {
         ['الصندوق outbox.json', `${RAW}/outbox.json`],
         ['رصيد Flow الحقيقي', `${STATE}/flow-credits.json`],
         ['الكلمات الصعبة hard-words.json', `${STATE}/youtube/hard-words.json`],
+        ['طابور الصور الجاهزة photo-queue.json', `${RAW}/photo-queue.json`],
         ['بوستات الصور photo-posts.json', `${RAW}/photo-posts.json`],
         ['مدونة الفيديوهات والصور blog/auto.json', `${MEDIA}/blog/auto.json`],
       ]],
