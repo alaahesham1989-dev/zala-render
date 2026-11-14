@@ -89,5 +89,75 @@
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Prince_Khaemwaset_before_Anubis_in_Tomb_QV44.jpg",
     "author": "Rodolfo Valverde",
     "license": "CC BY-SA 2.0"
+  },
+  {
+    "topic": "ZV-T02",
+    "queuedAt": "2026-11-14T13:30:05.047Z",
+    "hook": "Did you know that silver was once considered far more valuable than gold in ancient Egypt?",
+    "article": [
+      "During Egypt's Third Intermediate Period, silver was considerably rarer and more valuable than gold because it had to be imported. When French Egyptologist Pierre Montet stepped into the undisturbed burial chamber of Pharaoh Psusennes I in February 1940, he discovered the king interred inside a breathtaking silver coffin inlaid with solid gold.",
+      "Lower Egypt's extremely humid climate destroyed all perishable wooden artifacts inside the tomb, but the breathtaking metal treasures remained entirely preserved. Over his mummy lay a funerary mask of solid gold and lapis lazuli, while his body was adorned with solid gold sandals and gold finger stalls complete with sculpted fingernails.",
+      "Despite rivaling the famous intact tomb of Tutankhamun, this astonishing royal breakthrough was largely swallowed from history because World War II erupted at the exact same moment. Seeing these exquisite gold and silver treasures today reminds us of the massive wealth that lay hidden underground while the world stood on the brink of destruction."
+    ],
+    "words": "Rarest Silver and Gold Treasures",
+    "tags": [
+      "ancientegypt",
+      "archaeology",
+      "pharaoh",
+      "goldmask",
+      "historyfacts"
+    ],
+    "engage": "Would you have guessed that ancient Egyptians prized imported silver even more than gold?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T02-2026-11-14.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wendjebauendjed%E2%80%99s_cups_from_Tanis.jpg",
+    "author": "Aidan McRae Thomson",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "topic": "ZV-T03",
+    "queuedAt": "2026-11-14T13:30:30.015Z",
+    "hook": "Did you know ancient Egyptian royal wigs were crafted with over a thousand individual gold rings?",
+    "article": [
+      "Royal princesses wore intricate wigs adorned with 1,251 gold rings, creating a shimmering effect as they moved through the court. Princess Sithathoriunet's wig was reconstructed to show how these gold stripes caught the desert sunlight.",
+      "The princesses also used cosmetic vessels to store black kohl derived from galena to darken their eyes and protect them from infection. A study suggests the lead in their makeup actually helped boost nitric oxide, preventing eye diseases.",
+      "Today, these treasures stand as a testament to Middle Kingdom artistry and the luxurious lives of the royal princesses. As the light catches the carnelian and lapis, we are reminded of the humans who once wore them."
+    ],
+    "words": "Ancient Royal Gold Wig Rings",
+    "tags": [
+      "AncientEgypt",
+      "MiddleKingdom",
+      "RoyalJewelry",
+      "Archaeology"
+    ],
+    "engage": "Which detail of ancient Egyptian royal beauty care surprised you the most?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T03-2026-11-14.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/656816",
+    "author": "Unknown",
+    "license": "CC0"
+  },
+  {
+    "topic": "ZV-T04",
+    "queuedAt": "2026-11-14T13:32:21.441Z",
+    "hook": "Did you know ancient Egypt's highest military award for battlefield bravery was a set of golden flies?",
+    "article": [
+      "In 1859, excavators unburied the sealed wooden coffin of Queen Ahhotep containing three glittering golden flies. While ordinary housefly amulets were popular symbolic items, actual golden flies served as the military's highest award for battlefield bravery.",
+      "Remarkably, none of the fourteen fine inscribed artifacts found inside the coffin actually bore Queen Ahhotep's own name. Five objects explicitly bore the name of King Kamose, while seven items were attributed to the young pharaoh Ahmose I.",
+      "These golden flies stood as an eternal symbol of persistent, unyielding military service on the battlefield. Though her physical mummy was destroyed after discovery, these precious artifacts endure as an ultimate badge of ancient combat bravery."
+    ],
+    "words": "GOLDEN FLIES OF BRAVERY",
+    "tags": [
+      "ancientegypt",
+      "goldenflies",
+      "archaeology",
+      "egyptology"
+    ],
+    "engage": "What detail surprised you most about a royal queen being buried with battlefield bravery awards?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T04-2026-11-14.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Golden_Flies_Military_Award_Queen_Ahhotep_Necklace.jpg",
+    "author": "Rob Corder",
+    "license": "CC BY 4.0"
   }
 ]
