@@ -33,4 +33,4 @@ jobs:
           node media/tools/comments.mjs
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull -q --rebase --autostash || true
-          if [ -f content/replied.json ]; then git add -f content/replied.json && git commit -qm "comments: replied" && git push -q || true; fi
+          if [ -f content/replied.json ]; then git add -f content/replied.json; if git commit -qm "comments: replied"; then for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done; fi; fi
