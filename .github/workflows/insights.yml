@@ -51,14 +51,15 @@ jobs:
       - name: Scripts and schedule from R2
         run: aws s3 sync "s3://${{ secrets.R2_BUCKET }}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/*.json" --include "schedule.json"
       - name: Read the numbers
+        env:
+          FORCE_ID: ${{ inputs.force }}
+          FORCE_TITLE: ${{ inputs.title }}
         run: |
-          tg=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.telegram }}" = "true" ]; then tg="--telegram"; fi
-          if [ "$(date -u +%u)" = "1" ]; then tg="--telegram"; fi
-          force=""
-          if [ -n "${{ inputs.force }}" ]; then force="--force ${{ inputs.force }}"; fi
-          if [ -n "${{ inputs.title }}" ]; then force="$force --title ${{ toJSON(inputs.title) }}"; fi
-          node media/tools/yt-insights.mjs --retitle $tg $force
+          args=(--retitle)
+          if { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.telegram }}" = "true" ]; } || [ "$(date -u +%u)" = "1" ]; then args+=(--telegram); fi
+          if [ -n "$FORCE_ID" ]; then args+=(--force "$FORCE_ID"); fi
+          if [ -n "$FORCE_TITLE" ]; then args+=(--title "$FORCE_TITLE"); fi
+          node media/tools/yt-insights.mjs "${args[@]}"
       - name: Keep what was learned
         if: always()
         run: |
