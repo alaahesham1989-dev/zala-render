@@ -57,7 +57,7 @@ jobs:
           git checkout -- media/tools/treasures.json   # the queue lives in git; a stale local copy is never trusted
           cp media/tools/treasures.json content/library/treasures.json
           [ -f content/schedule.json ] || cp media/tools/schedule-seed.json content/schedule.json
-      - name: Keep the topic queue from ever running dry (owner's order: expand it well ahead, not just a handful)
+      - name: "Keep the topic queue from ever running dry (owner's order: expand it well ahead, not just a handful)"
         run: |
           set -uo pipefail
           left=$(node -e 'const fs=require("fs");const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};const ids=Object.keys(j("media/tools/treasures.json")||{});const plan=j("content/schedule.json")||[];console.log(ids.filter((id)=>!plan.some((p)=>p.episode===id)).length)')
