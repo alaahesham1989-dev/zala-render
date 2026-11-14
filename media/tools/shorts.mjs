@@ -95,7 +95,8 @@ Return JSON {"topic": "", "queries": ["3 Wikipedia search queries"]}`, { tempera
       topic = idea.topic;
       facts = await wikiText(idea.queries || [topic]);
     }
-    if (facts.length < 800) { log(`${id}: not enough facts for "${topic}"`); continue; }
+    // the promo's facts are a fixed, trusted blurb (short by design): only the Wikipedia-sourced kinds need this gate
+    if (kind !== 'promo' && facts.length < 800) { log(`${id}: not enough facts for "${topic}"`); continue; }
     const s = await askJson(`${kind === 'promo' ? PROMO_RULES : SHORT_RULES}\nTopic: ${topic}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0.7 });
     if (!s?.lines?.length || s.lines.length < 5) { log(`${id}: no script`); continue; }
     // the editor: every line must be supported by the text
