@@ -20,5 +20,74 @@
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Funerary_apron_of_Neferuptah.jpg",
     "author": "Merja Attia",
     "license": "CC BY-SA 2.0"
+  },
+  {
+    "topic": "ZV-L01",
+    "queuedAt": "2026-11-14T07:53:43.712Z",
+    "hook": "Did you know archaeologists found ancient mummies buried with golden tongues while searching for Cleopatra's lost tomb?",
+    "article": [
+      "In twenty twenty-one, a team searching for Cleopatra at Taposiris Magna announced the discovery of mummies with golden tongues. This ruined temple stands thirty miles west of Alexandria, where excavators also uncovered twenty-seven tombs and ten mummies.",
+      "Searchers found more than three hundred coins from her lifetime and a bust of a man with a cleft chin that looks a lot like Mark Antony. A foundation plate showed that the temple was dedicated to the goddess Isis, and Cleopatra saw herself as the living Isis.",
+      "Imagine standing inside a desert temple where mummies were left with gold inside their mouths. Even with these unbelievable discoveries, no one has proven that the queen's tomb is actually there."
+    ],
+    "words": "GOLDEN TONGUES UNCOVERED MYSTERY",
+    "tags": [
+      "ancientegypt",
+      "archaeology",
+      "historymysteries",
+      "mummies"
+    ],
+    "engage": "What detail from this temple search surprised you the most?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-L01-2026-11-14.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bust_of_Cleopatra_at_the_Royal_Ontario_Museum.jpg",
+    "author": "KevinDInno",
+    "license": "Public domain"
+  },
+  {
+    "topic": "ZV-L08",
+    "queuedAt": "2026-11-14T07:55:16.898Z",
+    "hook": "How did ancient builders align a mountain temple so the sun reaches an inner sanctuary over sixty meters deep only twice a year?",
+    "article": [
+      "Far inside the mountain, at the very end of the temple, four gods sit together in the dark. On two mornings each year, in February and in October, the rising sun lines up perfectly with the temple's doorway.",
+      "The beam of light travels more than sixty meters deep into the rock to illuminate the seated statues of Amun, Ra-Horakhty, and the king himself. But Ptah, a god connected with the underworld, remains completely in shadow.",
+      "For three thousand years, that mysterious moment repeated deep inside the mountain with nobody left to explain it. Today, even after the entire structure was saved and relocated, crowds still gather from around the world as the sun finds its way inside."
+    ],
+    "words": "ILLUMINATED IN THE DARK",
+    "tags": [
+      "ancientegypt",
+      "archaeology",
+      "ancientengineering",
+      "historyfacts"
+    ],
+    "engage": "Would you find the precise solar alignment sixty meters deep or the deliberate shadowing of the underworld god more impressive to see in person?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-L08-2026-11-14.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Templo_de_Nefertari,_Abu_Simbel,_Egipto,_2022-04-02,_DD_128-130_HDR.jpg",
+    "author": "Diego Delso",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "topic": "ZV-L11",
+    "queuedAt": "2026-11-14T07:56:39.986Z",
+    "hook": "Did you know an ancient pharaoh flew on an airplane over three thousand years after his death?",
+    "article": [
+      "In September of nineteen seventy-six, more than three thousand years after his death, the mummy of Ramesses the Second flew to Paris for conservation work. The ancient king remained there until returning to Egypt the following May.",
+      "You may have heard that he was given a passport for the flight, but that famous story is not true. Long before his modern journey, ancient priests had moved his body to a hidden shaft to protect it from tomb robbers until eighteen eighty-one.",
+      "Today, Ramesses rests in Cairo where visitors from around the world can stand face to face with him. Standing before his mummy allows you to meet a king who ruled Egypt for sixty-six years."
+    ],
+    "words": "ANCIENT MUMMY FLEW OVERSEAS",
+    "tags": [
+      "ancientegypt",
+      "mummy",
+      "historyfacts",
+      "archaeology"
+    ],
+    "engage": "Did you previously believe the famous rumor that the pharaoh was given a modern passport?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-L11-2026-11-14.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Prince_Khaemwaset_before_Anubis_in_Tomb_QV44.jpg",
+    "author": "Rodolfo Valverde",
+    "license": "CC BY-SA 2.0"
   }
 ]
