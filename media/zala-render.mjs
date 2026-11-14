@@ -1633,6 +1633,10 @@ async function stageRender(script, flat, { noReels, reelsOnly }) {
     }
   }
   if (!script.verticalOnly && !reelsOnly) uploadPackage(script, tl, data, reelMeta, dir, master, { thumbnails: thumbs, engagement, licensedMusic: !!score });
+  // a standalone short skips uploadPackage (no thumbnails/credits/description to build), but review-render.mjs
+  // always needs the English subtitles file to exist — without this, every standalone short crashed the review
+  // and burned all 3 fix rounds for nothing, so NONE of them could ever pass (found 2026-11-14)
+  else if (!fs.existsSync(path.join(dir, `${script.id}.en.srt`))) fs.writeFileSync(path.join(dir, `${script.id}.en.srt`), srt(tl, 'cap'), 'utf8');
 
   const arabic = /[\u0600-\u06FF]/;
   const leaks = fs.readdirSync(dir).filter((f) => /\.(json|srt)$/.test(f) && arabic.test(fs.readFileSync(path.join(dir, f), 'utf8')));
