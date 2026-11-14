@@ -130,7 +130,10 @@ jobs:
           node -e 'const fs=require("fs"),f="content/factory-state.json",s=JSON.parse(fs.readFileSync(f));const e=process.env.EP;s[e]={...s[e],scheduled:new Date().toISOString(),renders:Number(process.env.TRIES),minutes:Number(process.env.MINUTES)};fs.writeFileSync(f,JSON.stringify(s,null,2))'
           git config user.name "zala-bot"; git config user.email "zala-bot@users.noreply.github.com"
           git pull --rebase --autostash -q || true
-          git add -f content/meta-queue.json content/outbox.json && git commit -qm "factory: $EP into the outbox and scheduled" && git push -q || echo "queue push failed"
+          git add -f content/meta-queue.json content/outbox.json
+          if git commit -qm "factory: $EP into the outbox and scheduled"; then
+            for i in 1 2 3; do git push -q && break; git pull -q --rebase --autostash || true; sleep 5; done
+          fi
       - name: Save work back to R2, even after a failure
         if: always() && env.EP != ''
         run: |
