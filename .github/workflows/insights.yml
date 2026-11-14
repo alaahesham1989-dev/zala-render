@@ -15,6 +15,10 @@ on:
         description: "Retitle this one video id right now, skipping the usual wait (owner's call)"
         required: false
         type: string
+      title:
+        description: "The exact new title to use with force, when the episode has no titleIdeas left"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -53,6 +57,7 @@ jobs:
           if [ "$(date -u +%u)" = "1" ]; then tg="--telegram"; fi
           force=""
           if [ -n "${{ inputs.force }}" ]; then force="--force ${{ inputs.force }}"; fi
+          if [ -n "${{ inputs.title }}" ]; then force="$force --title ${{ toJSON(inputs.title) }}"; fi
           node media/tools/yt-insights.mjs --retitle $tg $force
       - name: Keep what was learned
         if: always()
