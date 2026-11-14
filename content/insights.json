@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T17:23:18.737Z",
+  "at": "2026-11-14T15:13:58.011Z",
   "impressionsAvailable": false,
   "bestTitles": [
     "The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
@@ -17,11 +17,19 @@
   ],
   "videos": [
     {
+      "id": "swHB_37Tyug",
+      "title": "Egypt's Lost Pyramid You've Never Heard Of #shorts",
+      "published": "2026-11-13T19:00:28Z",
+      "short": true,
+      "views": 831,
+      "sources": {}
+    },
+    {
       "id": "jXx5dSTTLyk",
       "title": "Abu Simbel #shorts",
       "published": "2026-11-13T16:00:28Z",
       "short": true,
-      "views": 0,
+      "views": 1,
       "sources": {}
     },
     {
@@ -29,7 +37,7 @@
       "title": "Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
       "published": "2026-11-13T13:00:37Z",
       "short": true,
-      "views": 71,
+      "views": 105,
       "sources": {}
     },
     {
@@ -62,12 +70,18 @@
       "title": "The Lie That Killed Mark Antony #shorts",
       "published": "2026-11-07T16:00:33Z",
       "short": true,
-      "views": 129,
+      "views": 130,
       "video": "Qon6eQ_-iws",
-      "averageViewDuration": 41,
-      "averageViewPercentage": 70.02,
+      "averageViewDuration": 40,
+      "averageViewPercentage": 68.96,
       "subscribersGained": 1,
-      "sources": {}
+      "sources": {
+        "SHORTS": 122,
+        "YT_CHANNEL": 6,
+        "YT_SEARCH": 1,
+        "YT_OTHER_PAGE": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "4lL1nWz8SIc",
@@ -222,14 +236,14 @@
       "title": "Where Did the Great Pyramid's Golden Top Actually Go? #Shorts",
       "published": "2026-10-26T01:41:08Z",
       "short": true,
-      "views": 244,
+      "views": 245,
       "video": "EGuGMlpBC4Y",
       "averageViewDuration": 45,
-      "averageViewPercentage": 70.75,
+      "averageViewPercentage": 70.47,
       "subscribersGained": 3,
       "sources": {
         "SHORTS": 204,
-        "YT_SEARCH": 26,
+        "YT_SEARCH": 27,
         "YT_OTHER_PAGE": 8,
         "YT_CHANNEL": 6,
         "NO_LINK_OTHER": 0
@@ -276,15 +290,15 @@
       "title": "King Menes united Egypt in 3200 BCE. This is how it started! 🇪🇬 #Shorts #ancientegypt #facts",
       "published": "2025-07-07T00:21:35Z",
       "short": true,
-      "views": 58,
+      "views": 60,
       "video": "fXXeuzGOrZU",
-      "averageViewDuration": 36,
-      "averageViewPercentage": 53.410000000000004,
+      "averageViewDuration": 38,
+      "averageViewPercentage": 55.69,
       "subscribersGained": 0,
       "sources": {
         "SHORTS": 33,
         "YT_SEARCH": 16,
-        "YT_CHANNEL": 6,
+        "YT_CHANNEL": 8,
         "SUBSCRIBER": 1,
         "YT_OTHER_PAGE": 1,
         "EXT_URL": 1
@@ -311,16 +325,16 @@
       "title": "The Rise of King Menes – Founder of Ancient Egypt’s First Dynasty | Echoes of Egypt Shorts",
       "published": "2025-07-02T23:51:11Z",
       "short": true,
-      "views": 474,
+      "views": 476,
       "video": "VhKgIm8BGxk",
       "averageViewDuration": 22,
-      "averageViewPercentage": 77.92,
+      "averageViewPercentage": 78.05,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 389,
         "YT_SEARCH": 53,
         "EXT_URL": 17,
-        "YT_CHANNEL": 8,
+        "YT_CHANNEL": 10,
         "YT_OTHER_PAGE": 6,
         "SUBSCRIBER": 1,
         "NO_LINK_OTHER": 0
