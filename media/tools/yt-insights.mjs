@@ -67,6 +67,30 @@ const insights = {
 fs.writeFileSync(OUT, JSON.stringify(insights, null, 2) + '\n');
 log(`${videos.length} public videos, best: ${insights.bestTitles.join(' | ')}`);
 
+// owner's direct order (2026-11-14): retitle one specific video right now, skipping the age/views gate below —
+// used when a short clearly got an unlucky, unfair first push and there is no reason to wait out the safety window.
+const forceIdx = args.indexOf('--force');
+if (forceIdx >= 0) {
+  const vid = args[forceIdx + 1];
+  const v = [...longs, ...shorts].find((x) => x.id === vid);
+  if (!v) { log(`--force ${vid}: not a public video on this channel`); }
+  else {
+    const scripts = path.join(REPO, 'content', 'youtube');
+    const plan = JSON.parse(fs.readFileSync(path.join(REPO, 'content', 'schedule.json'), 'utf8'));
+    const ep = plan.find((p) => (p.which === 'main' || /^R\d$/.test(p.which)) && String(p.youtube || '').includes(v.id))?.episode;
+    const s = ep && JSON.parse(fs.readFileSync(path.join(scripts, `${ep}.json`), 'utf8'));
+    const next = s?.titleIdeas?.find((t) => t !== v.title && !(s.triedTitles || []).includes(t));
+    if (!next) log(`--force ${vid}: no unused title idea for ${ep || 'unknown episode'}`);
+    else {
+      const cur = await data(`videos?part=snippet&id=${v.id}`);
+      const snippet = { ...cur.items[0].snippet, title: next };
+      const r = await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet', { method: 'PUT', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: v.id, snippet }) });
+      log(`forced retitle ${v.id}: "${v.title}" -> "${next}" ${r.ok ? 'done' : 'refused ' + r.status}`);
+      if (r.ok) { s.triedTitles = [...(s.triedTitles || []), v.title]; fs.writeFileSync(path.join(scripts, `${ep}.json`), JSON.stringify(s, null, 2) + '\n'); }
+    }
+  }
+}
+
 // a weak click-through rate 48 to 120 hours after going public: the next title from the episode's idea list.
 // This channel's impressions/CTR are not available from the API yet (small-channel limit), so CTR never fires —
 // retitle fell back to a views-based signal instead: owner's order 2026-11-14, applies to videos AND shorts.
