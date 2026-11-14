@@ -128,7 +128,21 @@
       "ig"
     ],
     "at": "2026-11-14T16:00:00Z",
-    "done": false
+    "done": "2026-11-14T17:06:45.368Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1523635493154320",
+        "url": "https://www.facebook.com/reel/1523635493154320"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18139229890637115",
+        "url": "https://www.instagram.com/reel/Dfus73KFT4A/"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
@@ -137,7 +151,14 @@
       "yt:cib-zodrZCE"
     ],
     "at": "2026-11-14T16:20:00.000Z",
-    "done": false
+    "done": "2026-11-14T17:06:45.368Z",
+    "results": [
+      {
+        "platform": "youtube",
+        "kind": "credits comment (disabled)",
+        "id": "cib-zodrZCE"
+      }
+    ]
   },
   {
     "episode": "ZV-L08",
@@ -301,8 +322,16 @@
       "fb"
     ],
     "at": "2026-11-14T12:00:00Z",
-    "done": false,
-    "note": "older episode already public on YouTube"
+    "done": "2026-11-14T17:06:58.838Z",
+    "note": "older episode already public on YouTube",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "934483713080075",
+        "url": "https://www.facebook.com/108172631323930/videos/934483713080075"
+      }
+    ]
   },
   {
     "episode": "ZV-L03",
