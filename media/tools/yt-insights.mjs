@@ -79,8 +79,9 @@ if (forceIdx >= 0) {
     const plan = JSON.parse(fs.readFileSync(path.join(REPO, 'content', 'schedule.json'), 'utf8'));
     const ep = plan.find((p) => (p.which === 'main' || /^R\d$/.test(p.which)) && String(p.youtube || '').includes(v.id))?.episode;
     const s = ep && JSON.parse(fs.readFileSync(path.join(scripts, `${ep}.json`), 'utf8'));
-    const next = s?.titleIdeas?.find((t) => t !== v.title && !(s.triedTitles || []).includes(t));
-    if (!next) log(`--force ${vid}: no unused title idea for ${ep || 'unknown episode'}`);
+    const titleIdx = args.indexOf('--title');
+    const next = (titleIdx >= 0 && args[titleIdx + 1]) || s?.titleIdeas?.find((t) => t !== v.title && !(s.triedTitles || []).includes(t));
+    if (!next) log(`--force ${vid}: no unused title idea for ${ep || 'unknown episode'} (pass --title "..." to set one directly)`);
     else {
       const cur = await data(`videos?part=snippet&id=${v.id}`);
       const snippet = { ...cur.items[0].snippet, title: next };
