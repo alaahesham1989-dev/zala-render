@@ -135,6 +135,35 @@ async function pixabayClip(line) {
   } catch (e) { log(`pixabay: ${e.name}`); }
   return null;
 }
+// the owner's ZALA promo (every 5th short) is about modern travel, not ancient Egypt: the BAD_TAGS/GOOD_TAGS filter
+// above excludes exactly what it needs (cars, airports, tourists, cities), so every promo line fell through to a
+// plain text card. Found 2026-11-14: the promo was "very weak" visually because of this, not a content problem.
+const PROMO_QUERY = [
+  [/airport|landing|queue|customs/i, 'airport travel'],
+  [/limousine|chauffeur|car\b/i, 'luxury car'],
+  [/pyramid|giza|sphinx/i, 'giza pyramids'],
+  [/nile|river|cruise/i, 'nile river egypt'],
+  [/hotel|resort/i, 'luxury hotel'],
+  [/guide|map|story|place/i, 'egypt travel'],
+];
+const PROMO_BAD = /halloween|spooky|ghost|illustration|drawing|cartoon|anime|vector|fantasy|\bai\b|generated|nude|nudity/i;
+async function promoClip(line) {
+  const key = dry ? '' : process.env.PIXABAY_API_KEY;
+  const hit = PROMO_QUERY.find(([re]) => re.test(line)) || [null, 'egypt travel luxury'];
+  if (!key) return null;
+  try {
+    const res = await fetch(`https://pixabay.com/api/videos/?key=${key}&q=${encodeURIComponent(hit[1])}&safesearch=true&per_page=30`, { signal: AbortSignal.timeout(30000) });
+    const j = await res.json();
+    for (const v of j.hits || []) {
+      if (usedVideos.has(v.id) || banned.has(v.pageURL) || v.duration < 5 || PROMO_BAD.test(v.tags || '')) continue;
+      const pick = ['large', 'medium'].map((k) => v.videos?.[k]).find((f) => f?.url && f.width >= 1280 && f.width > f.height);
+      if (!pick) continue;
+      usedVideos.add(v.id);
+      return { url: pick.url, page: v.pageURL, credit: `Video by ${v.user} on Pixabay`, license: 'Pixabay Content License', what: hit[1], gapfill: true };
+    }
+  } catch (e) { log(`pixabay (promo): ${e.name}`); }
+  return null;
+}
 
 // ── 3. animated title scenes (Manim) ─────────────────────────────────
 function cardWords(l) {
@@ -267,7 +296,7 @@ for (const l of empty) {
     const c = n < 5 && await cropOf(p, n);
     if (c) { l.pictures = [c.id]; uses.set(p.id, n + 1); fromCrops++; continue; }
   }
-  const clip = await pixabayClip(l.en);
+  const clip = script.kind === 'promo' ? await promoClip(l.en) : await pixabayClip(l.en);
   if (clip) { l.clip = clip; fromVideo++; continue; }
   // the title scene plays over a real picture from the same chapter, blurred and dark, so it never claims to show the line
   const near = chapterOf.get(l).lines.flatMap((x) => x.pictures || []).filter((x) => !banned.has(x)).map((x) => byId.get(x)).filter((p) => p && !/portrait|person|man |woman/i.test(p.seen.what || ''));
