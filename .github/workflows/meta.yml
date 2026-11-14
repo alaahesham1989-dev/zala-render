@@ -59,6 +59,8 @@ jobs:
       YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
       YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
       YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
       - name: Watchdog (GitHub sometimes skips a daily schedule; start it if it has not run today)
@@ -68,13 +70,20 @@ jobs:
         run: |
           today=$(date -u +%Y-%m-%d); hour=$(date -u +%H)
           # one waiting run per group: a new start would push out a waiting one, so only start when nothing waits
-          waiting=0; for w in shorts.yml prep.yml factory.yml; do k=$(gh run list -R "$GITHUB_REPOSITORY" -w $w -L 5 --json status --jq '[.[]|select(.status=="queued" or .status=="pending" or .status=="waiting")]|length' || echo 1); waiting=$((waiting+k)); done
+          waiting=0; for w in shorts.yml prep.yml photo-prep.yml factory.yml; do k=$(gh run list -R "$GITHUB_REPOSITORY" -w $w -L 5 --json status --jq '[.[]|select(.status=="queued" or .status=="pending" or .status=="waiting")]|length' || echo 1); waiting=$((waiting+k)); done
           [ "$waiting" -gt 0 ] && { echo "watchdog: a run is waiting already"; exit 0; }
-          for w in "shorts.yml 03" "factory.yml 07"; do
+          for w in "prep.yml 02" "photo-prep.yml 07" "shorts.yml 03" "factory.yml 07"; do
             set -- $w
             [ "$hour" -lt "$2" ] && continue
             n=$(gh run list -R "$GITHUB_REPOSITORY" -w "$1" -L 20 --json createdAt --jq "[.[]|select(.createdAt>=\"$today\")]|length" || echo 1)
-            if [ "$n" = "0" ]; then echo "watchdog: $1 did not run today, starting it"; gh workflow run "$1" -R "$GITHUB_REPOSITORY" || true; break; fi
+            if [ "$n" = "0" ]; then
+              echo "watchdog: $1 did not run today, starting it"
+              gh workflow run "$1" -R "$GITHUB_REPOSITORY" || true
+              if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+                curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA: ملف $1 ماشتغلش في معاده (تايمر GitHub اتأخر)، شغّلته بنفسي دلوقتي." >/dev/null || true
+              fi
+              break
+            fi
           done
       - uses: actions/setup-node@v4
         with:
