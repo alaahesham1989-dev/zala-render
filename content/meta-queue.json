@@ -775,5 +775,44 @@
     "at": "2026-11-16T19:00:00Z",
     "done": false,
     "youtube": "https://youtu.be/qFbMDjmve7g"
+  },
+  {
+    "episode": "ZV-L11",
+    "which": "main",
+    "to": [
+      "fb"
+    ],
+    "at": "2026-11-23T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L11",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-25T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L11",
+    "which": "R2",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-27T20:00:00Z",
+    "done": false
+  },
+  {
+    "episode": "ZV-L11",
+    "which": "R3",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-28T20:00:00Z",
+    "done": false
   }
 ]
