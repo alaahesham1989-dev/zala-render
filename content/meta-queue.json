@@ -341,8 +341,23 @@
       "ig"
     ],
     "at": "2026-11-15T12:00:00Z",
-    "done": false,
-    "note": "older episode already public on YouTube"
+    "done": "2026-11-15T12:01:51.512Z",
+    "note": "older episode already public on YouTube",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1767595490997201",
+        "url": "https://www.facebook.com/reel/1767595490997201"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18103681427175755",
+        "url": "https://www.instagram.com/reel/Dfwu1l5D5rU/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-L04",
