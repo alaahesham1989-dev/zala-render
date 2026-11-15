@@ -168,7 +168,22 @@
       "ig"
     ],
     "at": "2026-11-15T16:00:00Z",
-    "done": false
+    "done": "2026-11-15T16:01:41.487Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1082164304810150",
+        "url": "https://www.facebook.com/reel/1082164304810150"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18130818862854837",
+        "url": "https://www.instagram.com/reel/DfxKU5NFLFd/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-L08",
