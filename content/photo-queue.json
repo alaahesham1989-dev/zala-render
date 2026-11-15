@@ -137,5 +137,77 @@
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Golden_Flies_Military_Award_Queen_Ahhotep_Necklace.jpg",
     "author": "Rob Corder",
     "license": "CC BY 4.0"
+  },
+  {
+    "id": "ZV-T05-2026-11-15-1",
+    "topic": "ZV-T05",
+    "queuedAt": "2026-11-15T06:06:22.091Z",
+    "hook": "Imagine stepping into a dark ancient tomb and having sixty golden faces suddenly stare back at you.",
+    "article": [
+      "As excavations began in 1999, archaeologists uncovered a massive necropolis estimated to hold over ten thousand mummies. Among the discoveries were sixty golden mummies featuring stunning gilded masks and gilded waistcoats depicting various gods and goddesses.",
+      "Their faces glowed in the torchlight as if they were still watching the living. During the Roman period, thirty thousand people lived here, gaining the wealth to afford these elaborate burials from date and grape wine production.",
+      "What archaeologists found at this site changed our understanding of the Greco-Roman period forever. It makes you wonder how many thousands more hidden vaults are still resting quietly beneath the shifting sands today."
+    ],
+    "words": "Golden Mummies In The Dark",
+    "tags": [
+      "goldenmummies",
+      "ancientegypt",
+      "archaeology",
+      "grecoroman"
+    ],
+    "engage": "How would you feel if your torchlight suddenly illuminated sixty golden faces watching you in an ancient tomb?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T05-2026-11-15-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/547257",
+    "author": "Unknown",
+    "license": "CC0"
+  },
+  {
+    "id": "ZV-T07-2026-11-15-1",
+    "topic": "ZV-T07",
+    "queuedAt": "2026-11-15T06:14:13.661Z",
+    "hook": "Did you know King Tutankhamun was buried with a dagger made from outer space?",
+    "article": [
+      "When excavators unwrapped King Tutankhamun's mummy, they found two daggers inside the wrappings, one made of gold and one of iron. In June 2016, a study using x-ray fluorescence spectrometer analysis confirmed the iron blade contained eleven percent nickel and point six percent cobalt, proving its meteoritic origin.",
+      "Iron production did not begin in Egypt until 1200 BC, meaning iron was rarer than gold around 1323 BC. Because of its extreme rarity, the iron dagger was valued on a level equal to that of its ceremonial gold counterpart.",
+      "Today, this ancient weapon is displayed at the Grand Egyptian Museum in Cairo. It stands as an astonishing bridge between our world and the cosmos."
+    ],
+    "words": "Meteoric Iron Dagger From Space",
+    "tags": [
+      "Tutankhamun",
+      "AncientEgypt",
+      "MeteoriteDagger",
+      "Archaeology"
+    ],
+    "engage": "What detail about this space-metal dagger surprises you the most?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T07-2026-11-15-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ancient_Gold_Sword_from_Tutankhamon_Tomb,_Displayed_in_Cairo_Museum.jpg",
+    "author": "Gary Todd",
+    "license": "CC0"
+  },
+  {
+    "id": "ZV-D01-2026-11-15-1",
+    "topic": "ZV-D01",
+    "queuedAt": "2026-11-15T06:15:09.186Z",
+    "hook": "Did you know ancient Egyptians baked hedgehogs inside clay to remove their sharp spikes?",
+    "article": [
+      "The ancient Egyptian diet was remarkably diverse and included some truly unexpected meals. They even cooked hedgehogs by encasing them in clay and baking them until the spikes fell off.",
+      "Ancient Egyptians also regularly ate the tubers, stems, and seeds of papyrus, lotus, and chufa. For dessert, they created sweet treats by mixing honey with ground tiger nuts from the chufa plant.",
+      "Chefs prepared these varied ingredients by stewing, baking, boiling, grilling, frying, or roasting. Imagine watching an ancient cook peel away hot baked clay to reveal a dinner completely freed of its prickly outer layer."
+    ],
+    "words": "Clay Baked Hedgehog Cooking",
+    "tags": [
+      "ancientegypt",
+      "ancienthistory",
+      "egyptianfood",
+      "archaeology"
+    ],
+    "engage": "How would you feel if you were served a meal baked inside clay like this ancient hedgehog dish?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-D01-2026-11-15-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Egyptian_kitchen_Berlin_1.jpg",
+    "author": "Photo: Andreas Praefcke",
+    "license": "Public domain"
   }
 ]
