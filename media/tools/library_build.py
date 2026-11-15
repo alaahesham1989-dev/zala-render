@@ -40,14 +40,26 @@ def log(*a):
     print("[library]", *a, flush=True)
 
 
+DOWN = {}   # host -> failed calls in a row: a source that keeps refusing this server is left alone for the rest of the run
+
+
 def get_json(url, tries=3):
+    host = urllib.parse.urlsplit(url).netloc
+    if DOWN.get(host, 0) >= 3:
+        return {}
     for i in range(tries):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
+                DOWN[host] = 0
                 return json.load(r)
         except Exception as e:
             log(f"  {type(e).__name__} on {url[:80]}")
+            if getattr(e, "code", 0) in (401, 403, 404):
+                break   # a refusal is not a busy server: waiting does not change it
             time.sleep(3 * (i + 1))
+    DOWN[host] = DOWN.get(host, 0) + 1
+    if DOWN[host] == 3:
+        log(f"  {host} keeps refusing: skipped for the rest of this run")
     return {}
 
 

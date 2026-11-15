@@ -28,6 +28,8 @@ const W = vertical ? 1080 : 1920, H = vertical ? 1920 : 1080, FPS = 30, SEG = 8,
 const lines = script.chapters.flatMap((c) => c.lines);
 let flightLines = lines.map((l, i) => (l.flight ? i : -1)).filter((i) => i >= 0);
 if (!flightLines.length) flightLines = [0];
+// filmed already (an earlier run, the tour is only being fixed): an hour of filming is not done twice
+if (flightLines.every((i) => lines[i].clip?.mapFlight) && !process.argv.includes('--force')) { log(`${id}: the map flight is filmed already`); process.exit(0); }
 const total = flightLines.length * SEG * FPS;
 const FF = process.env.FFMPEG_PATH || 'ffmpeg';
 const dest = [r.to.lng, r.to.lat];

@@ -24,10 +24,16 @@ const queueFile = path.join(CONTENT, 'photo-queue.json');
 const postedFile = path.join(CONTENT, 'photo-posts.json');
 const queue = fs.existsSync(queueFile) ? JSON.parse(fs.readFileSync(queueFile, 'utf8')) : [];
 const posted = fs.existsSync(postedFile) ? JSON.parse(fs.readFileSync(postedFile, 'utf8')) : [];
-const claimed = new Set([...queue, ...posted].map((x) => x.topic).filter(Boolean));
+// a story is good for three different posts (three different moments), not one: with one post per story the
+// picture posts would have run dry two weeks after they started
+const PER_STORY = 3, STOCK = 10;
+const usedOf = (id) => [...queue, ...posted].filter((x) => x.topic === id);
 const usedPhotoUrls = new Set([...queue, ...posted].map((x) => x.sourceUrl).filter(Boolean));
 
-const topics = JSON.parse(fs.readFileSync(path.join(CONTENT, 'library', 'topics.json'), 'utf8'));
+const topics = (() => { try { return JSON.parse(fs.readFileSync(path.join(CONTENT, 'library', 'topics.json'), 'utf8')); } catch { return {}; } })();
+// every finished story we have: the long episodes, the standalone shorts and the tours (new ones arrive every day)
+const stories = [...new Set([...Object.keys(topics), ...fs.readdirSync(path.join(CONTENT, 'youtube')).filter((x) => /^ZV-[A-Z]*d+S?.json$/.test(x)).map((x) => x.replace('.json', ''))])]
+  .sort((a, b) => usedOf(a).length - usedOf(b).length);
 const PY = process.env.LIB_PY || 'python3';
 const CARD_PY = path.join(REPO, 'media', 'tools', 'photo_card.py');
 
@@ -61,17 +67,21 @@ async function uploadCard(cardPath, key) {
 }
 
 let made = 0;
-for (const topicId of Object.keys(topics)) {
+if (queue.length >= STOCK && !dry) { console.log(`[prep] ${queue.length} posts are waiting already, nothing to prepare today`); process.exit(0); }
+for (const topicId of stories) {
   if (made >= count) break;
-  if (claimed.has(topicId)) continue;
+  const before = usedOf(topicId);
+  if (before.length >= PER_STORY) continue;
   const script = await scriptFor(topicId);
+  if (script?.kind === 'promo') continue;   // our own ad is not a history story
   const lines = (script?.chapters || []).flatMap((c) => (c.lines || []).map((l) => l.en).filter(Boolean));
   if (lines.length < 3) { console.log(`[prep] ${topicId}: no finished story yet, skipped`); continue; }
 
   const beat = await askJson(`From this true story about ancient Egypt, pick the SINGLE most shareable, surprising moment — the
 one detail that makes people stop scrolling. Write a Facebook/Instagram post about just that moment: a medium length piece,
 not a one-liner and not an essay — a hook line, then exactly 3 short paragraphs of 2 sentences each. Use ONLY facts in the
-text below; never invent a date, name or number.
+text below; never invent a date, name or number.${before.length ? `
+We already posted about these moments of this story, pick a DIFFERENT one: ${JSON.stringify(before.map((x) => x.hook))}` : ''}
 Story:
 """${lines.join('\n')}"""
 Return JSON {"hook": "one short specific opening line or question",
@@ -84,10 +94,11 @@ Return JSON {"hook": "one short specific opening line or question",
   const article = (Array.isArray(beat.article) ? beat.article : [beat.article]).join('\n\n');
   const facts = lines.join(' ').slice(0, 1500);
   const words = String(beat.words).slice(0, 40);
-  const card = path.join(REPO, `prep-${topicId}.jpg`);
+  const postId = `${topicId}-${new Date().toISOString().slice(0, 10)}-${before.length + 1}`;
+  const card = path.join(REPO, `prep-${postId}.jpg`);
 
   // ── a real photo of that exact scene first; our own topic search phrases as a backup ──
-  const queries = [beat.searchQuery, ...(topics[topicId].queries || []).slice(0, 2)];
+  const queries = [beat.searchQuery, ...(topics[topicId]?.queries || []).slice(0, 2)];
   let pick = null;
   outer:
   for (const q of queries) {
@@ -119,13 +130,12 @@ setting, natural lighting, no text, no watermark, no people's faces. A believabl
 
   if (dry) { console.log(`[prep] ${topicId}: would queue (dry run)`); made++; continue; }
   const day = new Date().toISOString().slice(0, 10);
-  const cardUrl = await uploadCard(card, `prep/photo/${topicId}-${day}.jpg`);
+  const cardUrl = await uploadCard(card, `prep/photo/${postId}.jpg`);
   queue.push({
-    topic: topicId, queuedAt: new Date().toISOString(), hook: beat.hook, article: beat.article, words, tags: beat.tags || [],
+    id: postId, topic: topicId, queuedAt: new Date().toISOString(), hook: beat.hook, article: beat.article, words, tags: beat.tags || [],
     engage: beat.engage || null, cardUrl, isAI, sourceUrl: pick?.source_url || null, author: pick?.author || null, license: pick?.license || null,
   });
   fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
-  claimed.add(topicId);
   if (pick?.source_url) usedPhotoUrls.add(pick.source_url);
   made++;
   console.log(`[prep] ${topicId}: queued${isAI ? ' (AI reconstruction)' : ''}`);

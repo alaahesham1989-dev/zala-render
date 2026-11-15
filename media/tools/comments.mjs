@@ -62,17 +62,17 @@ let replied = 0;
 for (const c of batch) {
   const a = byId.get(c.id);
   if (!a) continue;   // Gemini gave nothing for it: try again on the next run
-  let note = 'ماتردّش عليه (سبام أو حساس)';
+  let note = 'ماتردّش عليه (سبام أو حساس)', again = false;
   if (a.reply && !dry) {
     try {
       if (c.where === 'fb') await call(`${G}/${c.id}/comments`, { method: 'POST', token: pageToken, params: { message: a.reply } });
       else await call(`${G}/${c.id}/replies`, { method: 'POST', params: { message: a.reply } });
       replied++; note = 'اتردّ عليه';
-    } catch (e) { note = 'الرد وقع'; console.log(`[comments] ${c.id}: ${e.message}`); }
+    } catch (e) { note = 'الرد وقع، هيتجرب تاني'; again = true; console.log(`[comments] ${c.id}: ${e.message}`); }
   } else if (a.reply) note = `هيترد: ${a.reply}`;
   console.log(`[comments] ${c.where} ${c.id}: ${c.text} -> ${a.reply || '(no reply)'}`);
   lines.push(`• ${c.where === 'fb' ? 'فيسبوك' : 'إنستجرام'}: ${a.ar || ''} ← ${note}`);
-  state.ids.push(c.id);
+  if (!again) state.ids.push(c.id);   // a reply Meta refused is tried again on the next round
 }
 state.ids = state.ids.slice(-5000);
 if (!dry) fs.writeFileSync(stateFile, JSON.stringify(state, null, 2) + '\n');

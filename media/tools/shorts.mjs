@@ -75,7 +75,8 @@ async function plan(count) {
     // owner's order: after every 4 shorts, the 5th is an ad for ZALA VIP itself
     const sincePromo = state.made.length - 1 - state.made.map((m) => m.kind).lastIndexOf('promo');
     const kind = sincePromo >= 4 ? 'promo' : kinds[state.made.filter((m) => m.kind !== 'promo').length % kinds.length];
-    n = Math.max(n, ids.length) + 1;
+    // a number no short of today has used: a second run on the same day must never write over an earlier short
+    do { n += 1; } while (state.made.some((m) => m.id === `ZV-S${day}${n}`));
     const id = `ZV-S${day}${n}`;
     let facts = '', topic = '', place = null;
     if (kind === 'promo') {
@@ -174,6 +175,25 @@ function schedule(id, at) {
   if (made?.place && url) addVideo(made.place, { url, title: made.title, kind: 'short', at: when, episode: id });
 }
 
+/** Shorts planned in the last two days that never reached the outbox: made again first, before any new topic
+ * (the owner's rule: fix, never drop). A short already waiting in the queue or the outbox is left alone. */
+function pending() {
+  const outbox = readJson(path.join(CONTENT, 'outbox.json'), []);
+  const queue = readJson(path.join(CONTENT, 'meta-queue.json'), []);
+  const since = Date.now() - 2 * 86400e3;
+  const ids = state.made.filter((m) => Date.parse(m.at) > since && !outbox.some((o) => o.id === m.id) && !queue.some((q) => q.episode === m.id)
+    && fs.existsSync(path.join(CONTENT, 'youtube', `${m.id}.json`))).map((m) => m.id);
+  console.log(`PENDING_IDS:${[...new Set(ids)].slice(-3).join(' ')}`);
+}
+
+/** How many new shorts today: three go out a day, and a fourth is made until three days of shorts wait ahead,
+ * so one bad day never leaves a day empty (the owner asked for a stock, 2026-11-14). */
+function howMany(pendingCount) {
+  const queue = readJson(path.join(CONTENT, 'meta-queue.json'), []);
+  const ahead = queue.filter((q) => !q.done && /^ZV-Sd/.test(q.episode)).length;
+  return Math.max(1, (ahead < 9 ? 4 : 3) - pendingCount);
+}
+
 /** Puts back the short's own checked script when an older render replaced it with a long story. */
 function restore(id) {
   const bk = path.join(CONTENT, 'youtube', `${id}.before-library.json`);
@@ -209,9 +229,10 @@ async function redo(id, yt) {
   schedule(id, q.at);
 }
 
-if (cmd === 'plan') await plan(Number(arg) || 3);
+if (cmd === 'plan') await plan(arg === 'auto' ? howMany(Number(process.argv[4]) || 0) : Number(arg) || 3);
+else if (cmd === 'pending') pending();
 else if (cmd === 'package') packageOf(arg);
 else if (cmd === 'schedule') schedule(arg);
 else if (cmd === 'restore') restore(arg);
 else if (cmd === 'redo') await redo(arg, process.argv[4]);
-else throw new Error('usage: plan <n> | package <id> | schedule <id> | restore <id> | redo <id> [youtube id]');
+else throw new Error('usage: plan <n|auto [pending count]> | pending | package <id> | schedule <id> | restore <id> | redo <id> [youtube id]');

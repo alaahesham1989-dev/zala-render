@@ -85,7 +85,7 @@ const imageUrl = pick.cardUrl;
 
 queue.shift();
 fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
-const done = { id: pick.topic, topic: pick.topic, at: new Date().toISOString(), words, caption, image: imageUrl, blogSlug: slug, isAI: pick.isAI || false };
+const done = { id: pick.id || pick.topic, topic: pick.topic, at: new Date().toISOString(), words, caption, image: imageUrl, blogSlug: slug, isAI: pick.isAI || false };
 // Facebook
 try {
   const { access_token: pageToken } = await call(`${G}/${PAGE}?fields=access_token`);

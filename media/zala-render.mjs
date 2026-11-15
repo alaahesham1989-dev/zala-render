@@ -1459,7 +1459,10 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
 function thumbnail(script, tl, data, dir, work) {
   const tW = 1280, tH = 720;
   const beats = tl.flat.flatMap((f) => (data.lines[f.key]?.beats || []).map((x) => ({ ...x, en: f.en }))).filter((x) => x.asset && !x.asset.card && !x.asset.map && x.asset.kind !== 'video' && x.asset.file);
-  const variants = script.thumbnails?.length ? script.thumbnails : [{ text: script.thumbnailText || script.title }];
+  // three to choose from, always (YouTube tests them, the review asks for them): a tour or an old script that
+  // names only one gets the same words on two more pictures
+  const variants = [...(script.thumbnails?.length ? script.thumbnails : [{ text: script.thumbnailText || script.title }])];
+  while (variants.length < 3) variants.push({ text: variants[0].text });
   const used = new Set(), made = [];
   variants.forEach((v, i) => {
     const re = v.match ? new RegExp(v.match, 'i') : null;

@@ -21,7 +21,7 @@ const LANE = ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml'];
 const SLOTS = [
   { wf: 'shorts.yml', at: '00:17' },
   { wf: 'prep.yml', at: '01:41' },
-  { wf: 'tours.yml', at: '02:53', days: [2, 5] },
+  { wf: 'tours.yml', at: '02:53', inputs: ['-f', 'place=auto'] },   // a new place on Tuesday and Friday, other days only a tour still being fixed
   { wf: 'factory.yml', at: '04:23' },
   { wf: 'photo-prep.yml', at: '06:05' },
   { wf: 'insights.yml', at: '09:47' },

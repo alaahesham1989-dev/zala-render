@@ -3,14 +3,15 @@ name: ZALA shorts (standalone, one topic each)
 # Every day: three standalone Shorts, each its own topic (a mystery, strange daily life, a place from the ZALA Guide map).
 # The same line as every video: 1 prep (shorts.mjs plan), 2 make (line/make.sh), 3 quality (line/quality.sh, fixes and
 # makes again), then the outbox on R2 (outbox.mjs) and the publishing file (publisher.mjs): YouTube, Facebook,
-# Instagram at 13:00, 19:00 and 23:30 UTC, the map place and a blog article.
+# Instagram at 17:00, 19:00 and 22:00 UTC (noon, 2pm, 5pm US Eastern), the map place and a blog article.
+# Started by the clock (clock.yml) at 00:17 UTC; a short that did not pass yesterday is made again first.
 on:
   workflow_dispatch:
     inputs:
       count:
         description: "How many shorts"
         required: false
-        default: "3"
+        default: "auto"
 
 permissions:
   contents: write
@@ -84,12 +85,15 @@ jobs:
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
-          COUNT="${{ inputs.count }}"; COUNT="${COUNT:-3}"
+          COUNT="${{ inputs.count }}"; COUNT="${COUNT:-auto}"
+          # a short planned earlier that never reached the outbox is made again first (fix, never drop)
+          pend=$(node media/tools/shorts.mjs pending | grep -o 'PENDING_IDS:.*' | cut -d: -f2 || true)
+          echo "made again first: ${pend:-none}"
           out=""
-          for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT") && break; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
+          for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT" "$(echo $pend | wc -w)") && break; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
           echo "$out"
           ids=$(echo "$out" | grep -o 'SHORT_IDS:.*' | cut -d: -f2 || true)
-          echo "IDS=$ids" >> "$GITHUB_ENV"
+          echo "IDS=$pend $ids" >> "$GITHUB_ENV"
       - name: 2 and 3 — Make (pictures, director, voice, render) and Quality (check and fix), into the outbox
         run: |
           set -uo pipefail

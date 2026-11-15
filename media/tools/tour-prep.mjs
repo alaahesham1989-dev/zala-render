@@ -176,7 +176,16 @@ async function prep(slug) {
 }
 
 const arg = process.argv[2];
-if (!arg) throw new Error('usage: next | <place slug>');
+if (!arg) throw new Error('usage: next | pending | <place slug>');
+// tours prepared in the last two weeks that never reached the outbox: finished first, before a new place is started
+if (arg === 'pending') {
+  const outbox = readJson(path.join(CONTENT, 'outbox.json'), []);
+  const dir = path.join(CONTENT, 'youtube');
+  const ids = fs.readdirSync(dir).filter((x) => /^ZV-Vd+S?.json$/.test(x)).map((x) => x.replace('.json', ''))
+    .filter((id) => !outbox.some((o) => o.id === id) && Date.parse(readJson(path.join(dir, `${id}.json`), {}).prepared?.at || 0) > Date.now() - 14 * 86400e3);
+  console.log(`PENDING_IDS:${ids.sort().slice(0, 2).join(' ')}`);
+  process.exit(0);
+}
 let slug = arg;
 if (arg === 'next') {
   const atlas = await fetch(`${SITE}/atlas-places.json`, { headers: UA }).then((r) => r.json());
