@@ -88,7 +88,9 @@ function detect(filter) {
 }
 
 const srt = readSrt(path.join(publish, `${id}.en.srt`));
-const lines = script.chapters.flatMap((c, ci) => c.lines.map((l, li) => ({ label: `c${ci + 1}.${li + 1}`, ...l })));
+// lines the render dropped because they were never recorded are not expected in the subtitles
+const dropped = (() => { try { return new Set(JSON.parse(fs.readFileSync(path.join(CONTENT, "youtube", `${script.id}.dropped.json`), "utf8"))); } catch { return new Set(); } })();
+const lines = script.chapters.flatMap((c, ci) => c.lines.map((l, li) => ({ label: `c${ci + 1}.${li + 1}`, ...l }))).filter((l) => !dropped.has(l.say || l.en));
 const report = { id, seconds: durationOf(video), srtLines: srt.length, scriptLines: lines.length, lines: [], audio: {}, reels: [] };
 
 // picture sheets: two moments of every line
