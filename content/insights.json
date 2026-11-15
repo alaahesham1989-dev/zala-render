@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T16:06:32.017Z",
+  "at": "2026-11-15T09:47:40.731Z",
   "impressionsAvailable": false,
   "bestTitles": [
     "The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
@@ -21,7 +21,7 @@
       "title": "The Impossible Rescue #shorts",
       "published": "2026-11-14T16:00:20Z",
       "short": true,
-      "views": 0,
+      "views": 1,
       "sources": {}
     },
     {
@@ -29,7 +29,7 @@
       "title": "Egypt's Lost Pyramid You've Never Heard Of #shorts",
       "published": "2026-11-13T19:00:28Z",
       "short": true,
-      "views": 832,
+      "views": 864,
       "sources": {}
     },
     {
@@ -37,7 +37,7 @@
       "title": "They Sawed a Mountain in Half to Save This Temple",
       "published": "2026-11-13T16:00:28Z",
       "short": true,
-      "views": 1,
+      "views": 3,
       "sources": {}
     },
     {
@@ -45,7 +45,7 @@
       "title": "Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
       "published": "2026-11-13T13:00:37Z",
       "short": true,
-      "views": 105,
+      "views": 121,
       "sources": {}
     },
     {
@@ -113,15 +113,15 @@
       "title": "Why Nobody Can Find Cleopatra's Tomb",
       "published": "2026-11-05T18:10:31Z",
       "short": false,
-      "views": 6,
+      "views": 7,
       "video": "EjAguOHeldM",
-      "averageViewDuration": 88,
-      "averageViewPercentage": 23.32,
+      "averageViewDuration": 73,
+      "averageViewPercentage": 19.54,
       "subscribersGained": 0,
       "sources": {
+        "RELATED_VIDEO": 3,
         "SUBSCRIBER": 2,
         "YT_CHANNEL": 2,
-        "RELATED_VIDEO": 2,
         "NO_LINK_OTHER": 0
       }
     },
