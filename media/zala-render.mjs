@@ -100,7 +100,7 @@ function loadScript(arg) {
 function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
-    ci, li, key: `${ci}.${li}`, label: `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
+    ci, li, key: `${ci}.${li}`, label: l.label || `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
     en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip, extra: l.extra,
   })));
   return limit ? flat.slice(0, limit) : flat;
@@ -296,6 +296,8 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
   // episode keeps its recorded voice; many missing lines still stop the run
   if (pending.length && script.handWritten) {
     if (pending.length > 5) throw new Error(`${pending.length} lines have no narration, for example: ${pending[0].say.slice(0, 80)}`);
+    // every line keeps the label its recorded voice file was cut under
+    for (const f of flat) script.chapters[f.ci].lines[f.li].label = f.label;
     for (const f of [...pending].sort((a, b) => b.ci - a.ci || b.li - a.li)) script.chapters[f.ci].lines.splice(f.li, 1);
     log(`Voice: dropped ${pending.length} lines that were never recorded: ${pending.map((f) => f.say.slice(0, 50)).join(" | ")}`);
     flat.splice(0, flat.length, ...flatten(script));
