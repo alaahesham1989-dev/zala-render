@@ -253,7 +253,7 @@ const LOAD = {
     const [feed, photos, queue] = await Promise.all([get(`${MEDIA}/blog/auto.json`), get(`${RAW}/photo-posts.json`), get(`${RAW}/photo-queue.json`)]);
     const q = queue || [];
     document.getElementById('photoQueueCount').textContent = q.length + ' جاهزة';
-    document.getElementById('photoQueueList').innerHTML = '<div class="line" style="margin-bottom:6px">كل يوم الساعة 6 المغرب بتوقيت مصر (أفضل وقت للجمهور الأمريكي) بياخد الأول من هنا.</div>' + (q.map((x, i) => `<div class="row"><span class="t">${i === 0 ? 'النهارده' : `#${i + 1}`}</span><span>${x.cardUrl ? `<a href="${esc(x.cardUrl)}" target="_blank"><img src="${esc(x.cardUrl)}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;float:inline-start;margin-inline-end:10px"></a>` : ''}<b>${esc(x.words || x.topic || '')}</b><div class="line">${esc(x.hook || '')}</div></span><span>${x.isAI ? '<span class="wait">صورة AI</span>' : '<span class="ok">صورة حقيقية</span>'}</span></div>`).join('') || '<div class="empty">الطابور فاضي، محتاج تشغيل التحضير (photo-prep.yml)</div>');
+    document.getElementById('photoQueueList').innerHTML = '<div class="line" style="margin-bottom:6px">كل يوم الساعة 8 بالليل بتوقيت مصر (1 الضهر في أمريكا، أفضل وقت لجمهورهم) بياخد الأول من هنا.</div>' + (q.map((x, i) => `<div class="row"><span class="t">${i === 0 ? 'النهارده' : `#${i + 1}`}</span><span>${x.cardUrl ? `<a href="${esc(x.cardUrl)}" target="_blank"><img src="${esc(x.cardUrl)}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;float:inline-start;margin-inline-end:10px"></a>` : ''}<b>${esc(x.words || x.topic || '')}</b><div class="line">${esc(x.hook || '')}</div></span><span>${x.isAI ? '<span class="wait">صورة AI</span>' : '<span class="ok">صورة حقيقية</span>'}</span></div>`).join('') || '<div class="empty">الطابور فاضي، محتاج تشغيل التحضير (photo-prep.yml)</div>');
     const posts = [...(feed?.posts || feed || [])].sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const today = dayKey(Date.now());
     const day = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -286,7 +286,7 @@ const LOAD = {
     }).join('') || '<div class="empty">مش قادر أقرا التشغيلات</div>';
   },
   async quick() {
-    const WF = ['factory.yml', 'shorts.yml', 'prep.yml', 'tours.yml', 'photos.yml', 'meta.yml', 'insights.yml', 'comments.yml', 'blog.yml', 'ytlist.yml'];
+    const WF = ['clock.yml', 'factory.yml', 'shorts.yml', 'prep.yml', 'tours.yml', 'photo-prep.yml', 'photos.yml', 'meta.yml', 'insights.yml', 'comments.yml', 'blog.yml', 'ytlist.yml'];
     const RENDER = `https://github.com/${REPO}`;
     const SITE_REPO = 'https://github.com/alaahesham1989-dev/zala-vip';
     const groups = [
