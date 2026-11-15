@@ -1,0 +1,55 @@
+name: ZALA voice test
+
+# One short sample of a Gemini voice, sent to Telegram and kept on R2 under preview/.
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: "What to say"
+        required: true
+        type: string
+      voice:
+        description: "Gemini voice name"
+        required: false
+        default: Orus
+        type: string
+      style:
+        description: "How to say it"
+        required: false
+        default: "اتكلم بلهجة مصرية شعبية دافية، زي حكواتي قاعد على قهوة بيحكي لصحابه، بإيقاع طبيعي ومش سريع:"
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Make the sample
+        env:
+          KEY: ${{ secrets.GEMINI_API_KEY }}
+          TEXT: ${{ inputs.text }}
+          VOICE: ${{ inputs.voice }}
+          STYLE: ${{ inputs.style }}
+        run: |
+          set -euo pipefail
+          jq -n --arg t "$STYLE $TEXT" --arg v "$VOICE" '{contents:[{parts:[{text:$t}]}],generationConfig:{responseModalities:["AUDIO"],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:$v}}}}}' > req.json
+          curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${KEY}" -H 'Content-Type: application/json' -d @req.json > res.json
+          jq -r '.candidates[0].content.parts[0].inlineData.data // empty' res.json | base64 -d > voice.pcm
+          [ -s voice.pcm ] || { jq -c '.error // .' res.json | head -c 400; exit 1; }
+          ffmpeg -loglevel error -f s16le -ar 24000 -ac 1 -i voice.pcm -b:a 128k voice-test.mp3
+          ffprobe -v error -show_entries format=duration -of csv=p=0 voice-test.mp3
+      - name: Keep it on R2 and send it to Telegram
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VOICE: ${{ inputs.voice }}
+        run: |
+          aws s3 cp voice-test.mp3 "s3://${R2_BUCKET}/preview/voice-test-${VOICE}.mp3" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAudio" -F chat_id="${TELEGRAM_CHAT_ID}" -F audio=@voice-test.mp3 -F caption="تجربة صوت Gemini بالمصري: ${VOICE}" | grep -o '"ok":[a-z]*'
