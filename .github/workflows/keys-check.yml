@@ -17,8 +17,9 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           c() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
-          echo "KAGGLE $(c -u "$KAGGLE_USERNAME:$KAGGLE_KEY" 'https://www.kaggle.com/api/v1/datasets/list?search=egypt') bearer $(c -H "Authorization: Bearer $KAGGLE_KEY" 'https://www.kaggle.com/api/v1/datasets/list?search=egypt') pip $(pip -q install kaggle >/dev/null 2>&1; kaggle datasets list -s egypt 2>&1 | head -c 120 | tr '
 ' ' ')"
+          pip -q install kaggle >/dev/null 2>&1; echo "KAGGLE $(kaggle kernels list --mine -v 2>&1 | head -2 | tr '
+' ' ' | cut -c1-120)"
           echo "GROQ $(c -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/models)"
           echo "CF_TOKEN $(c -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
           echo "CF_AI $(c -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/models/search?per_page=1")"
