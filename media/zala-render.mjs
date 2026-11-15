@@ -300,6 +300,8 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
     for (const f of flat) script.chapters[f.ci].lines[f.li].label = f.label;
     for (const f of [...pending].sort((a, b) => b.ci - a.ci || b.li - a.li)) script.chapters[f.ci].lines.splice(f.li, 1);
     log(`Voice: dropped ${pending.length} lines that were never recorded: ${pending.map((f) => f.say.slice(0, 50)).join(" | ")}`);
+    // the review counts the script without these lines too
+    fs.writeFileSync(path.join(CONTENT, "youtube", `${script.id}.dropped.json`), JSON.stringify(pending.map((f) => f.say), null, 2));
     flat.splice(0, flat.length, ...flatten(script));
     return stageVoice(script, flat, { voiceFrom });
   }
