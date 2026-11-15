@@ -1,0 +1,24 @@
+name: ZALA keys check
+
+# Checks that each free-service key answers. Prints only the HTTP status, never a key.
+on: workflow_dispatch
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          c() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+          echo "KAGGLE $(c -u "$KAGGLE_USERNAME:$KAGGLE_KEY" 'https://www.kaggle.com/api/v1/kernels/list?pageSize=1') bearer $(c -H "Authorization: Bearer $KAGGLE_KEY" 'https://www.kaggle.com/api/v1/kernels/list?pageSize=1')"
+          echo "GROQ $(c -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/models)"
+          echo "CF_TOKEN $(c -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          echo "CF_AI $(c -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/models/search?per_page=1")"
+          echo "HF $( [ -n "$HF_TOKEN" ] && c -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/api/whoami-v2 || echo missing)"
