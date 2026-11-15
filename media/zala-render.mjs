@@ -292,7 +292,15 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
     log(`  reel lines: ${extras.length} cut`);
   }
   for (const f of [...pending]) if (fs.existsSync(voiceFileOf(script, f, vp))) pending.splice(pending.indexOf(f), 1);
-  if (pending.length && script.handWritten) throw new Error(`${pending.length} lines have no narration, for example: ${pending[0].say.slice(0, 80)}`);
+  // a recorded episode never gets a new voice: a few lines added after the recording are dropped, the rest of the
+  // episode keeps its recorded voice; many missing lines still stop the run
+  if (pending.length && script.handWritten) {
+    if (pending.length > 5) throw new Error(`${pending.length} lines have no narration, for example: ${pending[0].say.slice(0, 80)}`);
+    for (const f of [...pending].sort((a, b) => b.ci - a.ci || b.li - a.li)) script.chapters[f.ci].lines.splice(f.li, 1);
+    log(`Voice: dropped ${pending.length} lines that were never recorded: ${pending.map((f) => f.say.slice(0, 50)).join(" | ")}`);
+    flat.splice(0, flat.length, ...flatten(script));
+    return stageVoice(script, flat, { voiceFrom });
+  }
   const queue = groupLines(pending, flat, VOICE_WORDS_PER_REQUEST);
   log(`Voice: ${pending.length} lines in ${queue.length} requests`);
   while (queue.length) {
