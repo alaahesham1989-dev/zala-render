@@ -30,9 +30,9 @@ function chunk(words, maxWords, maxChars) {
  */
 export function buildAss(words, { W, H, mode }) {
   const short = mode === 'short';
-  const size = short ? Math.round(W * 0.15) : Math.round(H * 0.05);
+  const size = short ? Math.round(W * 0.12) : Math.round(H * 0.05);
   const marginV = short ? Math.round(H * 0.27) : Math.round(H * 0.07);
-  const font = short ? 'Anton' : 'Lato';
+  const font = process.env.ZALA_CAPTION_FONT || (short ? 'Anton' : 'Lato');
   const header = `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${W}
@@ -48,7 +48,7 @@ Style: Cap,${font},${size},${WHITE},${WHITE},&H00000000&,&H80000000&,${short ? 0
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
   const lines = [];
-  const groups = chunk(words, short ? 3 : 9, short ? 16 : 60);
+  const groups = chunk(words, short ? 3 : 9, short ? 13 : 60);
   for (const g of groups) {
     const end = g[g.length - 1].t1;   // never past the next group's start, or two captions print over each other
     if (!short) {
