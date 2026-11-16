@@ -186,5 +186,77 @@
     "sourceUrl": "https://commons.wikimedia.org/wiki/File:Egyptian_kitchen_Berlin_1.jpg",
     "author": "Photo: Andreas Praefcke",
     "license": "Public domain"
+  },
+  {
+    "id": "ZV-S202611142-2026-11-16-1",
+    "topic": "ZV-S202611142",
+    "queuedAt": "2026-11-16T06:08:09.012Z",
+    "hook": "Would you stage a massive strike if your boss withheld your beer and bread?",
+    "article": [
+      "About 3,000 years ago during the reign of Ramesses III, royal tomb artisans in the Valley of the Kings completely stopped working. Their sudden walkout happened because their pay of grain rations and barley beer was severely delayed by officials.",
+      "Unwilling to starve, the hungry workers marched straight to the funerary temples and staged a massive sit-in. They boldly shouted that hunger and thirst had driven them to protest.",
+      "It is incredible to imagine what it felt like to see these artisans stand up to authority in person. Faced with this bold revolt, officials quickly handed over sacks of grain to restore peace."
+    ],
+    "words": "STRIKE FOR BEER AND BREAD",
+    "tags": [
+      "AncientEgypt",
+      "LaborStrike",
+      "AncientHistory",
+      "HistoryFacts"
+    ],
+    "engage": "Would you have walked off the job if your pay of beer and bread was delayed?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-S202611142-2026-11-16-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.artic.edu/artworks/594",
+    "author": "Egyptian",
+    "license": "CC0"
+  },
+  {
+    "id": "ZV-D11-2026-11-16-1",
+    "topic": "ZV-D11",
+    "queuedAt": "2026-11-16T06:08:42.426Z",
+    "hook": "How did ancient Egyptian artists make a statue's eyes look so terrifyingly realistic?",
+    "article": [
+      "The famous Old Kingdom sculpture known as the Seated Scribe features remarkably lifelike eyes. These eyes were constructed from red-veined white magnesite, polished rock crystal, and secure copper clips.",
+      "French archaeologist Auguste Mariette uncovered this stone sculpture at Saqqara on 19 November 1850. Dating to between 2620 and 2325 BC, the statue is held in the Louvre Museum.",
+      "Statues of scribes sitting cross-legged with papyrus rolls still look out at us today across millennia with bright crystal eyes. These detailed craftsmanship features offer us an intimate view into three thousand years of continuous daily life."
+    ],
+    "words": "Lifelike Crystal Eyes",
+    "tags": [
+      "SeatedScribe",
+      "AncientEgypt",
+      "LouvreMuseum",
+      "Archaeology"
+    ],
+    "engage": "How would you feel locking eyes with a 4,500-year-old statue made of polished rock crystal?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-D11-2026-11-16-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Maler_der_Grabkammer_des_Panehsi_001.jpg",
+    "author": "Maler der Grabkammer des Panehsi",
+    "license": "Public domain"
+  },
+  {
+    "id": "ZV-D12-2026-11-16-1",
+    "topic": "ZV-D12",
+    "queuedAt": "2026-11-16T06:09:08.881Z",
+    "hook": "Did you know ancient Egyptian priestesses wore sacred religious tattoos over their stomachs?",
+    "article": [
+      "Mummies of the priestesses of Hathor testify that they were decorated with a religious tattoo covering the stomach around the area of the uterus. Sacred tattoos adorned the bodies of these priestesses, connecting their physical form directly to divine fertility and protection.",
+      "Priestess of Hathor was the title of the priestess of the goddess Hathor in the Temple of Dendera in Ancient Egypt. After the Middle Kingdom of Egypt, the title of priestess of Hathor was often irregularly awarded to women of the royal family, typically princesses.",
+      "Archaeological excavations and preserved papyri collections provide extensive insights into these ancient gender roles. These preserved physical markings show how deeply Egyptian society was rooted in religion and sacred bodily traditions."
+    ],
+    "words": "SACRED TEMPLE TATTOOS",
+    "tags": [
+      "ancientegypt",
+      "archaeology",
+      "historyfacts",
+      "egyptology"
+    ],
+    "engage": "What detail about these ancient sacred body tattoos surprised you the most?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-D12-2026-11-16-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.artic.edu/artworks/64312",
+    "author": "Egyptian; probably from Hawara, Egypt",
+    "license": "CC0"
   }
 ]
