@@ -70,6 +70,7 @@ jobs:
           python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
           echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
           python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1" "pillow==10.4.0"
+          pip install --quiet pillow arabic-reshaper python-bidi
           python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
           /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
           for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
