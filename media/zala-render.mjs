@@ -109,6 +109,9 @@ function flatten(script, limit = 0) {
 const workDir = (id) => path.join(TMP, 'render', id);
 const outDir = (id) => path.join(OUT, id, 'publish');
 const reviewDir = (id) => path.join(OUT, id, 'DO-NOT-PUBLISH-internal');
+// an Arabic copy (script.lang 'ar') draws every text in an Arabic font
+let LANG_FONT = '';
+const ROYAL = /statue|bust|mask|gold|pharaoh|king|queen|crown|treasure|sarcophag|colossus|throne|jewel|coffin/i;
 const shotsFile = (id) => path.join(CONTENT, 'youtube', `${id}.shots.json`);
 
 // ── ffmpeg helpers ───────────────────────────────────────────────────────────
@@ -1182,7 +1185,7 @@ const aesc = (s) => String(s).replace(/[{}]/g, '').replace(/\\/g, '').replace(/\
 const RLM = '\u200F';
 const ASS_FORMAT = 'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding';
 const style = (name, font, size, color, { bold = 0, sp = 0, out = 2, sh = 1, an = 7, mv = 0, ml = 0 } = {}) =>
-  `Style: ${name},${font},${size},${color},${color},&H00000000,&H90000000,${bold},0,0,0,100,100,${sp},0,1,${out},${sh},${an},${ml},${ml},${mv},1`;
+  `Style: ${name},${LANG_FONT || font},${size},${color},${color},&H00000000,&H90000000,${bold},0,0,0,100,100,${sp},0,1,${out},${sh},${an},${ml},${ml},${mv},1`;
 
 function chunkText(s, max = 64) {
   if (s.length <= max) return [s];
@@ -1364,8 +1367,8 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${aesc(rows.join('\n'))}`));
   if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${290 + rows.length * 216})\\fad(200,250)}${aesc(reel.sub)}`));
   const e0 = total - outro + 0.2;
-  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}ZALA VIP CONCIERGE`));
-  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}FULL STORY ON YOUTUBE  ·  zalavip.com`));
+  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}${LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE'}`));
+  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${LANG_FONT ? 'الحكاية كاملة على يوتيوب  ·  zalavip.com' : 'FULL STORY ON YOUTUBE  ·  zalavip.com'}`));
   return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';
 }
 
@@ -1397,7 +1400,12 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     const start = i === 0 ? 0 : t - 0.1;
     const list = lineAssets(data, f.key).filter((a) => !a.card && !a.map);
     const anyPicture = () => reel.lines.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card && !a.map) || tl.flat.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card && !a.map);
-    const assets = list.length ? list : [lastAsset || anyPicture()];
+    let assets = list.length ? list : [lastAsset || anyPicture()];
+    // the first picture under the big opening words is a royal one (a statue, a mask, gold), never a dark or empty frame
+    if (i === 0) {
+      const royal = reel.lines.flatMap((x) => data.lines[x.key]?.beats || []).find((b) => b.asset && !b.asset.card && !b.asset.map && ROYAL.test(b.need || ''));
+      if (royal) assets = [royal.asset, ...assets.filter((a) => a !== royal.asset)];
+    }
     const lineSpan = d + 0.35;
     voices.push({ file: voiceFileOf(script, f), t });
     words.push(...timedWords(f.cap, heardOf(voiceFileOf(script, f)), d).map((w) => ({ w: w.w, t0: w.t0 + t, t1: w.t1 + t })));
@@ -1692,6 +1700,7 @@ async function main() {
     if (cmd === 'story') return;
   }
   const script = loadScript(target);
+  if (script.lang === 'ar') { LANG_FONT = 'Noto Kufi Arabic'; process.env.ZALA_CAPTION_FONT = LANG_FONT; }
   const flat = flatten(script, limit);
 
   if (cmd === 'check') { process.exit(stageCheck(script, flat, { voiceFrom }) ? 0 : 1); }
