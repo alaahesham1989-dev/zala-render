@@ -11,6 +11,7 @@ const PORT = 53682;
 const REDIRECT = `http://127.0.0.1:${PORT}/`;
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube.force-ssl', 'https://www.googleapis.com/auth/yt-analytics.readonly'];
 const clientId = process.argv[2];
+const secretName = process.argv[3] || 'YOUTUBE_REFRESH_TOKEN'; // pass YOUTUBE_REFRESH_TOKEN_AR for Arabic channel
 if (!clientId) throw new Error('client id required');
 
 const gh = (...args) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
@@ -57,7 +58,7 @@ if (!sealed) {
   throw new Error(refused || `no token in run ${run}`);
 }
 const token = crypto.privateDecrypt({ key: privateKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' }, Buffer.from(sealed, 'base64')).toString('utf8');
-const r = spawnSync('gh', ['secret', 'set', 'YOUTUBE_REFRESH_TOKEN', '--repo', REPO], { input: token, encoding: 'utf8' });
+const r = spawnSync('gh', ['secret', 'set', secretName, '--repo', REPO], { input: token, encoding: 'utf8' });
 if (r.status !== 0) throw new Error('could not save the secret');
-console.log('SAVED: YOUTUBE_REFRESH_TOKEN');
+console.log(`SAVED: ${secretName}`);
 console.log(log.match(/Scopes granted:[^\n]*/)?.[0] || '');
