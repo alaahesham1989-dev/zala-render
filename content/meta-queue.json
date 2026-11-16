@@ -566,7 +566,16 @@
       "fb"
     ],
     "at": "2026-11-16T20:00:00Z",
-    "done": false
+    "done": "2026-11-16T20:00:53.416Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "1819632542682316",
+        "url": "https://www.facebook.com/108172631323930/videos/1819632542682316"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T03",
