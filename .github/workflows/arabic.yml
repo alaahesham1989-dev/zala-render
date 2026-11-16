@@ -1,0 +1,113 @@
+name: ZALA Arabic copy (one short, review only)
+
+# Makes the Arabic copy of a finished English short for the Arabic channels. It is NOT published or scheduled:
+# the video goes to R2 under renders/<id>-AR and to Telegram for the owner to watch first.
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "English short id, or words from its title"
+        required: true
+        type: string
+      voice:
+        description: "Gemini voice"
+        required: false
+        default: Orus
+        type: string
+
+concurrency:
+  group: zala-episode
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      META_COOKIES: ${{ secrets.META_COOKIES }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+      NO_ARABIC_COPY: "1"   # nobody reviews the Arabic copy any more: one full encode less per render
+      GH_TOKEN: ${{ github.token }}
+      MANIM_PY: /tmp/manim/bin/python
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bring scripts, picture index and plans from R2
+        run: |
+          set -euo pipefail
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
+          git checkout -- content/meta-queue.json
+          git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
+          cp media/tools/treasures.json content/library/treasures.json
+          echo "EP=arabic" >> "$GITHUB_ENV"
+      - name: Install ffmpeg, fonts, drawing libraries and picture tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev
+          cd media && npm ci && node tools/fetch-fonts.mjs && mkdir -p ~/.local/share/fonts && cp brand/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f && cd ..
+          python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
+          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+          python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1" "pillow==10.4.0"
+          python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
+          for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+          # carry on where the last run stopped: the scenes already rendered and the last review (only what it found is fixed)
+          aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
+          mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
+      - name: 1 — Arabic script (same pictures, Egyptian Arabic words)
+        run: |
+          set -uo pipefail
+          exec > >(tee -a run.log) 2>&1
+          out=$(node media/tools/arabic.mjs "${{ inputs.source }}" "${{ inputs.voice }}") || { echo "$out"; exit 1; }
+          echo "$out"
+          echo "ID=$(echo "$out" | grep -o 'AR_ID:.*' | cut -d: -f2)" >> "$GITHUB_ENV"
+      - name: 2 — Make and check (no outbox, no publishing)
+        run: |
+          set -uo pipefail
+          exec > >(tee -a run.log) 2>&1
+          pass=no
+          for round in 1 2 3; do
+            review=""; [ "$round" -gt 1 ] && { review="quality-$ID/verdict.json"; [ -f "quality-$ID/review.json" ] && review="quality-$ID/review.json"; }
+            bash media/tools/line/make.sh "$ID" short "$review" || { echo "make stopped ($round)"; continue; }
+            if bash media/tools/line/quality.sh "$ID" "quality-$ID"; then pass=yes; break; fi
+            echo "QUALITY: $ID fixing (round $round)"
+          done
+          echo "PASS=$pass" >> "$GITHUB_ENV"
+      - name: Save to R2 (preview only)
+        if: always()
+        run: |
+          aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress --exclude "outbox.json" --exclude "meta-queue.json"
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
+          [ -n "${ID:-}" ] && [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
+          [ -n "${ID:-}" ] && [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          aws s3 cp run.log "s3://${R2_BUCKET}/renders/${ID:-arabic}/run.log" --endpoint-url "$E" --no-progress || true
+      - name: Telegram (the video, for the owner to watch)
+        if: always()
+        run: |
+          v=$(ls media/out/${ID:-x}/publish/*.mp4 2>/dev/null | head -1)
+          cap="ZALA عربي: ${ID:-?} — الفحص: ${PASS:-no}. مش متجدول، مستني موافقتك."
+          if [ -n "$v" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" -F chat_id="$TELEGRAM_CHAT_ID" -F video=@"$v" -F caption="$cap" | grep -o '"ok":[a-z]*'
+          else curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$cap (مفيش فيديو، راجع السجل)" | grep -o '"ok":[a-z]*'; fi
