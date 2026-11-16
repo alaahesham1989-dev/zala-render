@@ -821,8 +821,23 @@
       "ig"
     ],
     "at": "2026-11-16T19:00:00Z",
-    "done": false,
-    "youtube": "https://youtu.be/qFbMDjmve7g"
+    "done": "2026-11-16T19:02:00.548Z",
+    "youtube": "https://youtu.be/qFbMDjmve7g",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1835825090774268",
+        "url": "https://www.facebook.com/reel/1835825090774268"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18473450419185741",
+        "url": "https://www.instagram.com/reel/Df0Dui3AD3A/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-L11",
