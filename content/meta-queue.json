@@ -201,7 +201,16 @@
       "fb"
     ],
     "at": "2026-11-16T16:00:00Z",
-    "done": false
+    "done": "2026-11-16T16:01:17.709Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "30272425835692887",
+        "url": "https://www.facebook.com/108172631323930/videos/30272425835692887"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T01",
