@@ -381,8 +381,17 @@
       "fb"
     ],
     "at": "2026-11-16T12:00:00Z",
-    "done": false,
-    "note": "older episode already public on YouTube"
+    "done": "2026-11-16T12:00:30.678Z",
+    "note": "older episode already public on YouTube",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "2294210874735419",
+        "url": "https://www.facebook.com/108172631323930/videos/2294210874735419"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-L04",
