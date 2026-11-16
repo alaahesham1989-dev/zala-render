@@ -107,5 +107,16 @@
     "quality": "2026-11-16T00:52:07.705Z",
     "scheduled": "2026-11-16T01:10:27.915Z",
     "blog": "done"
+  },
+  {
+    "id": "ZV-D01",
+    "kind": "episode",
+    "title": "Why Pyramid Builders Were Paid in Beer",
+    "place": null,
+    "rounds": 3,
+    "landed": "2026-11-16T07:14:49.275Z",
+    "quality": "2026-11-16T07:14:33.866Z",
+    "scheduled": "2026-11-16T07:16:19.691Z",
+    "blog": "done"
   }
 ]
