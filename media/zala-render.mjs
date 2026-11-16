@@ -1250,19 +1250,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
       if (lineAssets(data, f.key).some((a) => a.recon)) dl(4, f.T0, f.T1, 'Recon', `{\\an9\\pos(${W - 40},${H - 44})\\fad(200,200)}ARTISTIC RECONSTRUCTION`);
     });
   }
-  (arabic ? tl.flat : []).forEach((f, i) => {
-    const next = tl.flat[i + 1];
-    const end = Math.min(f.T1 + 0.25, next ? next.T0 - 0.03 : f.T1 + 0.5);
-    const parts = chunkText(f.cap);
-    const tot = parts.reduce((a, p) => a + p.length, 0);
-    let t = f.T0 - 0.03;
-    parts.forEach((p) => {
-      const share = (p.length / tot) * (end - f.T0);
-      dl(2, t, t + share, 'En', `{\\fad(60,60)}${aesc(p)}`);
-      t += share;
-    });
-    if (arabic && f.ar) dl(2, f.T0, end, 'Ar', `{\\fad(120,120)}${RLM}${aesc(f.ar)}${RLM}`);
-  });
+  // Arabic channel: no subtitles — the callout plate and chapter title carry the artifact name in English
 
   // chapter cards top-left (the first chapter is the cold open and has none)
   const firstOf = new Map();

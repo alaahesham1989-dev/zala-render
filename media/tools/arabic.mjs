@@ -68,7 +68,7 @@ const copy = JSON.parse(JSON.stringify(src));
 for (const c of copy.chapters) for (const l of c.lines) {
   const ar = String(ans.lines[n++]).trim();
   Object.assign(l, { en: ar, say: ar, enSource: l.en });
-  delete l.ar; delete l.callout; delete l.card;
+  delete l.ar; delete l.card;  // callout kept: English artifact name shown on screen
 }
 Object.assign(copy, {
   id, lang: 'ar', sourceId: src.id, title: ans.title, description: ans.description, thumbnailText: ans.hook,
