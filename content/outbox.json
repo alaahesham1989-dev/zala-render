@@ -85,5 +85,27 @@
     "quality": "2026-11-15T21:18:25.910Z",
     "scheduled": "2026-11-15T21:20:23.603Z",
     "blog": "done"
+  },
+  {
+    "id": "ZV-S202611151",
+    "kind": "short",
+    "title": "The Ancient Egyptian Temple Built Entirely of Granite",
+    "place": null,
+    "rounds": 1,
+    "landed": "2026-11-16T00:38:32.944Z",
+    "quality": "2026-11-16T00:38:29.975Z",
+    "scheduled": "2026-11-16T01:09:32.936Z",
+    "blog": "done"
+  },
+  {
+    "id": "ZV-S202611152",
+    "kind": "short",
+    "title": "Was King Tut Buried with Space Metal?",
+    "place": null,
+    "rounds": 1,
+    "landed": "2026-11-16T00:52:10.946Z",
+    "quality": "2026-11-16T00:52:07.705Z",
+    "scheduled": "2026-11-16T01:10:27.915Z",
+    "blog": "done"
   }
 ]
