@@ -1,13 +1,22 @@
-name: ZALA Arabic copy (one short, review only)
+name: ZALA Arabic Short (original or translated, review only)
 
-# Makes the Arabic copy of a finished English short for the Arabic channels. It is NOT published or scheduled:
-# the video goes to R2 under renders/<id>-AR and to Telegram for the owner to watch first.
+# Two modes:
+#   ORIGINAL  — leave source empty, set arabic_id (e.g. ZV-AR01): arabic-prep.mjs writes an original
+#               60-second Egyptian Arabic script from arabic-treasures.json, then make+quality run.
+#   TRANSLATE — set source to an English short id/title: arabic.mjs translates it, then make+quality run.
+# Neither mode publishes: the video goes to R2 and Telegram for the owner to watch first.
 on:
   workflow_dispatch:
     inputs:
+      arabic_id:
+        description: "Arabic topic id from arabic-treasures.json (e.g. ZV-AR01) — ORIGINAL mode"
+        required: false
+        default: ""
+        type: string
       source:
-        description: "English short id, or words from its title"
-        required: true
+        description: "English short id or title words — TRANSLATE mode (leave empty for original)"
+        required: false
+        default: ""
         type: string
       voice:
         description: "Gemini voice"
@@ -78,13 +87,26 @@ jobs:
           aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
           aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
           mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
-      - name: 1 — Arabic script (same pictures, Egyptian Arabic words)
+      - name: 1 — Arabic script (original or translated)
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
-          out=$(node media/tools/arabic.mjs "${{ inputs.source }}" "${{ inputs.voice }}") || { echo "$out"; exit 1; }
-          echo "$out"
-          echo "ID=$(echo "$out" | grep -o 'AR_ID:.*' | cut -d: -f2)" >> "$GITHUB_ENV"
+          ARABIC_ID="${{ inputs.arabic_id }}"
+          SOURCE="${{ inputs.source }}"
+          VOICE="${{ inputs.voice }}"
+          if [ -n "$ARABIC_ID" ]; then
+            echo "MODE: original — $ARABIC_ID"
+            out=$(node media/tools/arabic-prep.mjs "$ARABIC_ID" "$VOICE") || { echo "$out"; exit 1; }
+            echo "$out"
+            echo "ID=$ARABIC_ID" >> "$GITHUB_ENV"
+          elif [ -n "$SOURCE" ]; then
+            echo "MODE: translate — $SOURCE"
+            out=$(node media/tools/arabic.mjs "$SOURCE" "$VOICE") || { echo "$out"; exit 1; }
+            echo "$out"
+            echo "ID=$(echo "$out" | grep -o 'AR_ID:.*' | cut -d: -f2)" >> "$GITHUB_ENV"
+          else
+            echo "ERROR: set arabic_id (original) or source (translate)"; exit 1
+          fi
       - name: 2 — Make and check (no outbox, no publishing)
         run: |
           set -uo pipefail
