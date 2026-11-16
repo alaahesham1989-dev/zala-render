@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-15T09:47:40.731Z",
+  "at": "2026-11-16T09:47:31.622Z",
   "impressionsAvailable": false,
   "bestTitles": [
     "The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
@@ -9,19 +9,51 @@
     "Abu Simbel: The Temple That Moved a Mountain"
   ],
   "bestShorts": [
+    "Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
     "The Rise of King Menes – Founder of Ancient Egypt’s First Dynasty | Echoes of Egypt Shorts",
+    "Egypt's Lost Pyramid You've Never Heard Of #shorts",
     "Where Did the Great Pyramid's Golden Top Actually Go? #Shorts",
-    "The Lie That Killed Mark Antony #shorts",
-    "The Tunnel Under the Temple #shorts",
-    "The Midnight Rescue of 40 Pharaohs (Secret Cache TT320) #Shorts"
+    "The Lie That Killed Mark Antony #shorts"
   ],
   "videos": [
+    {
+      "id": "jSSISRoW9PI",
+      "title": "Experience Egypt in Pure Luxury with ZALA VIP #shorts",
+      "published": "2026-11-15T22:00:00Z",
+      "short": true,
+      "views": 28,
+      "sources": {}
+    },
+    {
+      "id": "TgtDhuxUwvk",
+      "title": "Did Ancient Egyptians Write First Pregnancy Manuals? #shorts",
+      "published": "2026-11-15T19:00:20Z",
+      "short": true,
+      "views": 20,
+      "sources": {}
+    },
+    {
+      "id": "_gjePzsWSJ0",
+      "title": "Why Were 60-Ton Boxes Hidden Underground? #shorts",
+      "published": "2026-11-15T17:00:04Z",
+      "short": true,
+      "views": 290,
+      "sources": {}
+    },
+    {
+      "id": "vnNvhQBqKC8",
+      "title": "The Sun Inside the Mountain #shorts",
+      "published": "2026-11-15T16:00:01Z",
+      "short": true,
+      "views": 1035,
+      "sources": {}
+    },
     {
       "id": "cib-zodrZCE",
       "title": "The Impossible Rescue #shorts",
       "published": "2026-11-14T16:00:20Z",
       "short": true,
-      "views": 1,
+      "views": 5,
       "sources": {}
     },
     {
@@ -29,15 +61,25 @@
       "title": "Egypt's Lost Pyramid You've Never Heard Of #shorts",
       "published": "2026-11-13T19:00:28Z",
       "short": true,
-      "views": 864,
-      "sources": {}
+      "views": 829,
+      "video": "swHB_37Tyug",
+      "averageViewDuration": 31,
+      "averageViewPercentage": 69.2,
+      "subscribersGained": 2,
+      "sources": {
+        "SHORTS": 796,
+        "YT_SEARCH": 26,
+        "YT_OTHER_PAGE": 6,
+        "YT_CHANNEL": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "jXx5dSTTLyk",
       "title": "They Sawed a Mountain in Half to Save This Temple",
       "published": "2026-11-13T16:00:28Z",
       "short": true,
-      "views": 3,
+      "views": 6,
       "sources": {}
     },
     {
@@ -45,8 +87,18 @@
       "title": "Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
       "published": "2026-11-13T13:00:37Z",
       "short": true,
-      "views": 121,
-      "sources": {}
+      "views": 102,
+      "video": "6tsbs20flsk",
+      "averageViewDuration": 53,
+      "averageViewPercentage": 118.24,
+      "subscribersGained": 1,
+      "sources": {
+        "SHORTS": 93,
+        "YT_SEARCH": 8,
+        "YT_OTHER_PAGE": 1,
+        "NO_LINK_OTHER": 0,
+        "RELATED_VIDEO": 0
+      }
     },
     {
       "id": "24VKUQfhR_M",
@@ -78,15 +130,15 @@
       "title": "The Lie That Killed Mark Antony #shorts",
       "published": "2026-11-07T16:00:33Z",
       "short": true,
-      "views": 130,
+      "views": 131,
       "video": "Qon6eQ_-iws",
       "averageViewDuration": 40,
-      "averageViewPercentage": 68.96,
+      "averageViewPercentage": 69.18,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 122,
         "YT_CHANNEL": 6,
-        "YT_SEARCH": 1,
+        "YT_SEARCH": 2,
         "YT_OTHER_PAGE": 1,
         "NO_LINK_OTHER": 0
       }
@@ -113,14 +165,14 @@
       "title": "Why Nobody Can Find Cleopatra's Tomb",
       "published": "2026-11-05T18:10:31Z",
       "short": false,
-      "views": 7,
+      "views": 8,
       "video": "EjAguOHeldM",
       "averageViewDuration": 73,
       "averageViewPercentage": 19.54,
       "subscribersGained": 0,
       "sources": {
+        "SUBSCRIBER": 3,
         "RELATED_VIDEO": 3,
-        "SUBSCRIBER": 2,
         "YT_CHANNEL": 2,
         "NO_LINK_OTHER": 0
       }
@@ -228,13 +280,13 @@
       "title": "The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
       "published": "2026-10-27T15:00:09Z",
       "short": false,
-      "views": 11,
+      "views": 12,
       "video": "hGcQqtKDOeo",
       "averageViewDuration": 82,
       "averageViewPercentage": 35.01,
       "subscribersGained": 0,
       "sources": {
-        "YT_SEARCH": 6,
+        "YT_SEARCH": 7,
         "SUBSCRIBER": 3,
         "YT_CHANNEL": 2
       }
@@ -244,14 +296,14 @@
       "title": "Where Did the Great Pyramid's Golden Top Actually Go? #Shorts",
       "published": "2026-10-26T01:41:08Z",
       "short": true,
-      "views": 245,
+      "views": 246,
       "video": "EGuGMlpBC4Y",
       "averageViewDuration": 45,
       "averageViewPercentage": 70.47,
       "subscribersGained": 3,
       "sources": {
         "SHORTS": 204,
-        "YT_SEARCH": 27,
+        "YT_SEARCH": 28,
         "YT_OTHER_PAGE": 8,
         "YT_CHANNEL": 6,
         "NO_LINK_OTHER": 0
