@@ -168,6 +168,7 @@ function pronounce(text) {
 }
 const voiceParams = (script) => ({
   model: DEFAULT_MODEL, voice: script.voice || DEFAULT_VOICE, style: script.voiceStyle || DEFAULT_STYLE, tempo: Number(script.voiceTempo) || 1,
+  ...(script.lang === 'ar' ? { lang: 'ar-EG' } : {}),
 });
 const voiceFileOf = (script, f, vp = voiceParams(script)) => f.extra ? extraVoice(script, f.say) :
   path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo].join('|'))}.wav`);
@@ -197,7 +198,7 @@ async function speakLine(text, vp, file) {
     model: vp.model,
     input: [{ type: 'user_input', content: [{ type: 'text', text: pronounce(text), annotations: [{ type: 'speech_metadata', style: vp.style }] }] }],
     response_format: { type: 'audio' },
-    generation_config: { speech_config: [{ voice: vp.voice }] },
+    generation_config: { speech_config: [{ voice: vp.voice, ...(vp.lang ? { language_code: vp.lang } : {}) }] },
   };
   for (let attempt = 1, waits = 0; ; attempt++) {
     const key = keyFor(vp.model);

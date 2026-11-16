@@ -72,7 +72,7 @@ for (const c of copy.chapters) for (const l of c.lines) {
 }
 Object.assign(copy, {
   id, lang: 'ar', sourceId: src.id, title: ans.title, description: ans.description, thumbnailText: ans.hook,
-  voice, voiceStyle: 'اتكلم بلهجة مصرية شعبية دافية، زي حكواتي بيحكي حكاية مشوقة لصحابه، بإيقاع طبيعي ومش سريع:',
+  voice, voiceStyle: 'Speak only in Egyptian Arabic dialect (عامية مصرية). Warm storyteller tone, natural Egyptian rhythm, lively pace. اتكلم بلهجة مصرية شعبية دافية، زي حكواتي بيحكي حكاية مشوقة لصحابه، بإيقاع طبيعي ومش سريع:',
   voiceTempo: 1, reels: undefined, reelLines: undefined, packaged: true,
 });
 fs.writeFileSync(path.join(YT, `${id}.json`), JSON.stringify(copy, null, 2) + '\n', 'utf8');
