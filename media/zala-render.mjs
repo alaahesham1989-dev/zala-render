@@ -531,7 +531,7 @@ function cardStill(text, bg, vertical = false) {
   const file = path.join(dir, `${hash([text, bg || '', vertical].join('|'))}.jpg`);
   if (fs.existsSync(file)) return file;
   const CW = vertical ? 1620 : SW, CH = vertical ? 2880 : SH, size = vertical ? 170 : 210, per = vertical ? 13 : 20;
-  const words = numerals(text).toUpperCase().split(/\s+/);
+  const words = (LANG_FONT ? String(text) : numerals(text).toUpperCase()).split(/\s+/);
   const rows = [];
   for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= per) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
   const font = filterPath(path.join(FONTS, 'Anton-Regular.ttf'));
@@ -542,7 +542,15 @@ function cardStill(text, bg, vertical = false) {
   const bar = `drawbox=x=${Math.round(CW / 2) - 170}:y=${top + rows.length * lineH + 30}:w=340:h=10:color=0xD4AF37:t=fill`;
   const look = `scale=${CW}:${CH}:force_original_aspect_ratio=increase,crop=${CW}:${CH},gblur=sigma=26,eq=brightness=-0.32:saturation=0.55,vignette=PI/4`;
   const input = bg && fs.existsSync(bg) ? ['-i', bg] : ['-f', 'lavfi', '-i', `color=c=0x14100a:s=${CW}x${CH}:d=1`];
-  ff([...input, '-frames:v', '1', '-vf', `${look},${bar},${draw}`, '-q:v', '3', file]);
+  let textLayer = draw;
+  if (LANG_FONT) {
+    // drawtext cannot join Arabic letters; libass shapes them properly.
+    const ass = path.join(dir, `${hash(file)}.ass`);
+    const body = rows.map((r) => r.replace(/[{}\\]/g, '')).join('\\N');
+    fs.writeFileSync(ass, `[Script Info]\nScriptType: v4.00+\nPlayResX: ${CW}\nPlayResY: ${CH}\nWrapStyle: 2\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n${style('Card', LANG_FONT, size, '&H0037AFD4', { bold: -1, out: 6, sh: 2, an: 5 })}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,Card,,0,0,0,,{\\pos(${Math.round(CW / 2)},${Math.round(top + (rows.length * lineH) / 2)})}${body}\n`);
+    textLayer = `subtitles='${filterPath(ass)}'`;
+  }
+  ff([...input, '-frames:v', '1', '-vf', `${look},${bar},${textLayer}`, '-q:v', '3', file]);
   txts.forEach((t) => fs.rmSync(t, { force: true }));
   return file;
 }
