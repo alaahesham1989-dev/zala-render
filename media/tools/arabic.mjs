@@ -23,18 +23,44 @@ if (!src) throw new Error(`No English short found for "${want}"`);
 const id = `${src.id}-AR`;
 const lines = src.chapters.flatMap((c) => c.lines);
 
-const ans = await askJson(`Retell this YouTube Short about ancient Egypt in spoken Egyptian Arabic (عامية مصرية شعبية دافية، زي حكواتي بيحكي لصحابه).
-Rules:
-- One Arabic line for each English line, same order, same facts. Never add or drop a fact, a date or a number.
-- Write every number and date in Arabic words (مثلاً "تلات آلاف سنة"), never digits.
-- Short spoken sentences, no English words, no emojis. Names in their usual Arabic spelling (توت عنخ آمون، نفرتيتي، رمسيس التاني).
-- "hook": 2 to 4 strong Arabic words for the big text on the first picture.
-- "title": a YouTube title in simple Modern Standard Arabic (فصحى بسيطة) with the main name in it, under 70 characters, ends with #shorts.
-- "description": 2 short sentences in simple Modern Standard Arabic.
+const english = lines.map((l, i) => `${i + 1}. ${l.say || l.en}`).join('\n');
+const STYLE = `الأسلوب: عامية مصرية طبيعية زي حكواتي شاطر بيحكي لصحابه على القهوة، مش ترجمة.
+- الجملة الأولى لازم تشد من أول ثانية: سؤال أو مفاجأة أو "تخيّل..."، مش مقدمة.
+- استخدم روابط الحكي المصري لما تيجي طبيعية: "بس استنى"، "وهنا بقى"، "والغريب إن"، "طب إزاي؟".
+- جمل قصيرة، كل سطر فكرة واحدة، كلام يتقال بصوت عالي بسهولة. ممنوع الفصحى التقيلة والكلام الإنشائي.
+- كل سطر عربي طوله قريب من طول السطر الإنجليزي (عشان يمشي مع نفس الصورة)، ما يزيدش عن ١٨ كلمة.
+- الحقائق زي ما هي بالظبط: ما تزودش ولا تشيل أي معلومة أو تاريخ أو رقم، وما تخترعش.
+- الأرقام والتواريخ بالكلام العربي (زي "تلات آلاف سنة")، مش أرقام. من غير كلام إنجليزي ولا إيموجي.
+- الأسماء بكتابتها العربي المعروفة (توت عنخ آمون، نفرتيتي، رمسيس التاني).
+- آخر سطر يقفل الحكاية بجملة تفضل في الدماغ أو سؤال يخلي الناس تعلّق.`;
+
+const draft = await askJson(`Retell this YouTube Short about ancient Egypt in spoken Egyptian Arabic.
+${STYLE}
+- "hook": من ٢ لـ ٤ كلمات عربي قوية بالعامية للكلام الكبير على أول صورة.
+- "title": عنوان يوتيوب بالفصحى البسيطة فيه الاسم الأساسي، أقل من ٧٠ حرف، وآخره #shorts.
+- "description": جملتين قصيرين بالفصحى البسيطة.
 English title: ${src.title}
 Lines:
-${lines.map((l, i) => `${i + 1}. ${l.say || l.en}`).join('\n')}
-Return only JSON {"title":"","hook":"","description":"","lines":["..."]}`, { temperature: 0.5 });
+${english}
+One Arabic line for each English line, same order. Return only JSON {"title":"","hook":"","description":"","lines":["..."]}`, { temperature: 0.6 });
+if (!draft?.lines || draft.lines.length !== lines.length) throw new Error(`Translation gave ${draft?.lines?.length} lines for ${lines.length}`);
+
+// second pass: an Egyptian script editor polishes the draft against the English facts
+const edited = await askJson(`انت مُحرر سكريبتات شاطر لقناة يوتيوب مصرية عن مصر القديمة. ده سكريبت شورت بالعامية، عايزك تحسّنه عشان يتسمع أحلى ويشد أكتر، من غير ما تغيّر ولا معلومة.
+${STYLE}
+- نفس عدد السطور (${lines.length}) ونفس الترتيب، كل سطر عربي قصاد السطر الإنجليزي بتاعه.
+- صلّح أي جملة شكلها مترجمة حرفي أو تقيلة، وأي كلمة مش مصرية.
+- الـ hook لازم يكون أقوى حاجة، من ٢ لـ ٤ كلمات.
+English (the facts):
+${english}
+Arabic draft:
+${draft.lines.map((l, i) => `${i + 1}. ${l}`).join('\n')}
+hook: ${draft.hook}
+Return only JSON {"hook":"","lines":["..."]}`, { temperature: 0.4 });
+const ans = { ...draft };
+if (edited?.lines?.length === lines.length) { ans.lines = edited.lines; if (edited.hook) ans.hook = edited.hook; }
+else console.log('Editor pass gave the wrong number of lines, keeping the draft');
+console.log('Arabic script:'); ans.lines.forEach((l, i) => console.log(`  ${i + 1}. ${l}`)); console.log(`  hook: ${ans.hook}`);
 
 if (!ans?.lines || ans.lines.length !== lines.length) throw new Error(`Translation gave ${ans?.lines?.length} lines for ${lines.length}`);
 let n = 0;
