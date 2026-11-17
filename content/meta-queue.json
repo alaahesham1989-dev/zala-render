@@ -951,8 +951,23 @@
       "ig"
     ],
     "at": "2026-11-17T19:00:00Z",
-    "done": false,
-    "youtube": "https://youtu.be/wdwfLIrdCTI"
+    "done": "2026-11-17T19:02:01.988Z",
+    "youtube": "https://youtu.be/wdwfLIrdCTI",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1132032729536593",
+        "url": "https://www.facebook.com/reel/1132032729536593"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18184874275439686",
+        "url": "https://www.instagram.com/reel/Df2ogx-GWQz/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-D01",
