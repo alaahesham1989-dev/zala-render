@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { postText } from './captions.mjs';
+import { brandTitle } from './brand.mjs';
 
 const { YOUTUBE_CLIENT_ID: clientId, YOUTUBE_CLIENT_SECRET: clientSecret, YOUTUBE_REFRESH_TOKEN: refresh } = process.env;
 if (!clientId || !clientSecret || !refresh) throw new Error('The YouTube secrets are missing');
@@ -42,7 +43,7 @@ const reel = isMain ? null : pkg.reels.find((r) => r.id === `${id}-${which}`);
 if (!isMain && !reel) throw new Error(`No reel ${which} in the package`);
 const file = path.join(dir, isMain ? pkg.file : reel.file);
 const site = (medium) => `https://www.zalavip.com/?utm_source=youtube&utm_medium=${medium}&utm_campaign=${isMain ? id : reel.id}`;
-const title = String(isMain ? pkg.title : `${reel.title} #shorts`).slice(0, 100);
+const title = isMain ? brandTitle(pkg.title, 100) : `${brandTitle(reel.title, 91)} #shorts`;
 // Owner's order: short words about the subject only; the credits go in the first comment once the video is public.
 const description = postText(pkg, which).slice(0, 4900);
 

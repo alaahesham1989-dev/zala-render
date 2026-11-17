@@ -3,6 +3,8 @@
 // Licences still need their credits, so they go in the first comment instead (creditText), and YouTube's own
 // "altered or synthetic content" setting carries the AI note.
 
+import { brandTitle } from './brand.mjs';
+
 const sentences = (t) => String(t || '').replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+/g)?.map((s) => s.trim()) || [String(t || '').trim()];
 
 /** The opening paragraph of the description: the story, before any link, chapter or credit. */
@@ -24,10 +26,10 @@ const ENGAGE = '💬 What part of this true story surprised you most?';
 /** which: 'main' or 'R1'..'R3'. Two or three short lines about the subject, then the hashtags. */
 export function postText(pkg, which) {
   const story = sentences(storyOf(pkg));
-  if (which === 'main') return `${pkg.title}\n\n${story.slice(0, 2).join(' ')}\n\n${ENGAGE}\n\n${hashtags(pkg)}`;
+  if (which === 'main') return `${brandTitle(pkg.title)}\n\n${story.slice(0, 2).join(' ')}\n\n${ENGAGE}\n\n${hashtags(pkg)}`;
   const reel = (pkg.reels || []).find((r) => r.id === `${pkg.id}-${which}`) || {};
   const about = reel.sub || story[0] || '';
-  return `${reel.title || pkg.title}\n\n${about}\n\n${ENGAGE}\n\n${hashtags(pkg)}`;
+  return `${brandTitle(reel.title || pkg.title)}\n\n${about}\n\n${ENGAGE}\n\n${hashtags(pkg)}`;
 }
 
 /** Credits for the first comment: music, sources, picture and video credits, the AI note. */

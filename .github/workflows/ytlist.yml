@@ -2,6 +2,12 @@ name: ZALA YouTube list (what is public, private, scheduled)
 
 on:
   workflow_dispatch:
+    inputs:
+      brand:
+        description: "add the channel identity (Ancient Egypt) to every title: dry | apply | no"
+        required: false
+        default: "no"
+        type: string
 
 permissions:
   contents: read
@@ -20,3 +26,5 @@ jobs:
         with:
           node-version: 22
       - run: node media/tools/youtube-list.mjs
+      - if: inputs.brand == 'dry' || inputs.brand == 'apply'
+        run: node media/tools/youtube-brand.mjs ${{ inputs.brand == 'dry' && '--dry' || '' }}

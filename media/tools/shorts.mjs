@@ -10,6 +10,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { askJson } from './gemini-lite.mjs';
 import { addVideo } from './atlas-link.mjs';
+import { TITLE_RULE } from './brand.mjs';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const CONTENT = path.join(REPO, 'content');
@@ -32,7 +33,8 @@ async function wikiText(queries) {
   return text;
 }
 
-const SHORT_RULES = `Write ONE standalone YouTube Short / Reel about ancient Egypt for American viewers (45 to 55 seconds spoken, 6 to 8 lines, about 120 to 140 words).
+const SHORT_RULES = `${TITLE_RULE}
+Write ONE standalone YouTube Short / Reel about ancient Egypt for American viewers (45 to 55 seconds spoken, 6 to 8 lines, about 120 to 140 words).
 Line 1 is a shocking question or claim that stops the scroll. Then the surprising facts, building up. The last line pays off and ends with a short teaser that makes people want more (no "subscribe", no links).
 Use ONLY the facts in the text below; never invent names, dates or numbers. Plain, vivid spoken American English. Each line one or two short sentences.
 For each line give 2 short picture search queries (museum objects, places, art) that would really show it.

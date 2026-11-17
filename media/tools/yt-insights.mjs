@@ -8,6 +8,8 @@
 // Usage: node media/tools/yt-insights.mjs [--retitle] [--telegram]
 import fs from 'node:fs';
 import path from 'node:path';
+import { brandTitle } from './brand.mjs';
+const branded = (t, v) => (v.short ? `${brandTitle(t, 91)} #shorts` : brandTitle(t));
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const OUT = path.join(REPO, 'content', 'insights.json');
@@ -84,7 +86,7 @@ if (forceIdx >= 0) {
     if (!next) log(`--force ${vid}: no unused title idea for ${ep || 'unknown episode'} (pass --title "..." to set one directly)`);
     else {
       const cur = await data(`videos?part=snippet&id=${v.id}`);
-      const snippet = { ...cur.items[0].snippet, title: next };
+      const snippet = { ...cur.items[0].snippet, title: branded(next, v) };
       const r = await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet', { method: 'PUT', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: v.id, snippet }) });
       log(`forced retitle ${v.id}: "${v.title}" -> "${next}" ${r.ok ? 'done' : 'refused ' + r.status}`);
       if (r.ok) { s.triedTitles = [...(s.triedTitles || []), v.title]; fs.writeFileSync(path.join(scripts, `${ep}.json`), JSON.stringify(s, null, 2) + '\n'); }
@@ -116,7 +118,7 @@ if (args.includes('--retitle')) {
     const next = s?.titleIdeas?.find((t) => t !== v.title && !(s.triedTitles || []).includes(t));
     if (!next) continue;
     const cur = await data(`videos?part=snippet&id=${v.id}`);
-    const snippet = { ...cur.items[0].snippet, title: next };
+    const snippet = { ...cur.items[0].snippet, title: branded(next, v) };
     const r = await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet', { method: 'PUT', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: v.id, snippet }) });
     log(`retitle ${v.id} (${reason}): "${v.title}" -> "${next}" ${r.ok ? 'done' : 'refused ' + r.status}`);
     if (r.ok) { s.triedTitles = [...(s.triedTitles || []), v.title]; fs.writeFileSync(path.join(scripts, `${ep}.json`), JSON.stringify(s, null, 2) + '\n'); }
