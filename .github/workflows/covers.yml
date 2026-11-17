@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "plan | apply"
+        description: "plan | apply (make and set) | set (set the covers already made)"
         required: false
         default: plan
         type: string
@@ -53,13 +53,14 @@ jobs:
           /tmp/lib/bin/pip install --quiet open_clip_torch pillow
           mkdir -p media/brand/fonts && curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
       - name: Make and set the covers
-        if: inputs.mode == 'apply' && env.EPS != ''
+        if: (inputs.mode == 'apply' || inputs.mode == 'set') && env.EPS != ''
         run: |
           set -uo pipefail
           for EP in $EPS; do
             mkdir -p "pub/$EP"
             aws s3 sync "s3://${R2_BUCKET}/renders/${EP}/publish" "pub/$EP" --endpoint-url "$E" --no-progress --exclude "*.mp4" || true
             [ -f "pub/$EP/$EP.youtube.json" ] || { echo "[covers] $EP: no publish package on R2"; continue; }
+            [ "${{ inputs.mode }}" = "set" ] && continue
             /tmp/lib/bin/python media/tools/thumbs.py "pub/$EP" "$EP" || { echo "[covers] $EP: thumbs failed"; continue; }
             aws s3 sync "pub/$EP" "s3://${R2_BUCKET}/renders/${EP}/publish" --endpoint-url "$E" --no-progress --exclude "*" --include "*.jpg" --include "*.youtube.json" || true
           done

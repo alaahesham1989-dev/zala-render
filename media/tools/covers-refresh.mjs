@@ -9,12 +9,14 @@ import path from 'node:path';
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const C = path.join(REPO, 'content');
 const [, , cmd, dir] = process.argv;
+// the network drops now and then on the runners: try each call a few times before giving up
+const retry = async (fn, n = 4) => { for (let i = 1; ; i++) { try { return await fn(); } catch (e) { if (i >= n) throw e; await new Promise((r) => setTimeout(r, 3000 * i)); } } };
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
 const { YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN } = process.env;
-const tok = (await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: YOUTUBE_CLIENT_ID, client_secret: YOUTUBE_CLIENT_SECRET, refresh_token: YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) })).json()).access_token;
+const tok = (await (await retry(() => fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: YOUTUBE_CLIENT_ID, client_secret: YOUTUBE_CLIENT_SECRET, refresh_token: YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) }))).json()).access_token;
 if (!tok) throw new Error('Google refused the token');
 const H = { Authorization: `Bearer ${tok}` };
-const api = async (u) => { const r = await fetch(`https://www.googleapis.com/youtube/v3/${u}`, { headers: H }); const j = await r.json(); if (!r.ok) throw new Error(JSON.stringify(j).slice(0, 300)); return j; };
+const api = async (u) => { const r = await retry(() => fetch(`https://www.googleapis.com/youtube/v3/${u}`, { headers: H })); const j = await r.json(); if (!r.ok) throw new Error(JSON.stringify(j).slice(0, 300)); return j; };
 const norm = (t) => String(t || '').toLowerCase().replace(/#shorts?\b/g, '').replace(/^ancient egypt(:|\s\|)\s*/, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 if (cmd === 'plan') {
@@ -59,7 +61,9 @@ if (cmd === 'plan') {
     const reel = pkg?.reels?.find((r) => r.id === `${p.ep}-${p.which}`) || (pkg?.reels?.length === 1 ? pkg.reels[0] : null);
     const file = reel && path.join(pub, reel.cover || String(reel.file).replace('.mp4', '_cover.jpg'));
     if (!file || !fs.existsSync(file)) { console.log(`[covers] ${p.video} ${p.ep} ${p.which}: no cover made`); continue; }
-    const r = await fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${p.video}`, { method: 'POST', headers: { ...H, 'Content-Type': 'image/jpeg' }, body: fs.readFileSync(file) });
+    let r;
+    try { r = await retry(() => fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${p.video}`, { method: 'POST', headers: { ...H, 'Content-Type': 'image/jpeg' }, body: fs.readFileSync(file) })); }
+    catch (e) { console.log(`[covers] ${p.video} ${p.ep} ${p.which}: network failed (${e.cause?.code || e.message})`); continue; }
     console.log(`[covers] ${p.video} ${p.ep} ${p.which}: ${r.ok ? 'cover set' : `refused ${r.status} ${(await r.text()).slice(0, 160)}`}`);
     if (r.ok) ok++;
   }
