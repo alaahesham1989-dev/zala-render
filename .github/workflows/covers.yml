@@ -1,0 +1,66 @@
+name: ZALA new covers for the Shorts on the channel
+
+# Owner's order 2026-11-17: old Shorts showed a random frame (map, plan, number card) because no cover was ever set.
+# Matches every short on the channel to its episode, makes a vertical cover (an ancient Egyptian object, thumbs.py)
+# and sets it on YouTube. mode=plan only lists the matches; mode=apply makes and sets the covers.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "plan | apply"
+        required: false
+        default: plan
+        type: string
+
+concurrency:
+  group: zala-covers
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Plan (which short belongs to which episode)
+        run: |
+          set -euo pipefail
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress --exclude "*" --include "youtube/*.json" --include "schedule.json" --include "library/items.jsonl" --include "library/topics.json"
+          git checkout -- content/meta-queue.json
+          node media/tools/covers-refresh.mjs plan | tee plan.log
+          echo "EPS=$(grep -o 'EPISODES:.*' plan.log | cut -d: -f2)" >> "$GITHUB_ENV"
+      - name: Picture tools
+        if: inputs.mode == 'apply' && env.EPS != ''
+        run: |
+          python -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          /tmp/lib/bin/pip install --quiet open_clip_torch pillow
+          mkdir -p media/brand/fonts && curl -sL -o media/brand/fonts/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf
+      - name: Make and set the covers
+        if: inputs.mode == 'apply' && env.EPS != ''
+        run: |
+          set -uo pipefail
+          for EP in $EPS; do
+            mkdir -p "pub/$EP"
+            aws s3 sync "s3://${R2_BUCKET}/renders/${EP}/publish" "pub/$EP" --endpoint-url "$E" --no-progress --exclude "*.mp4" || true
+            [ -f "pub/$EP/$EP.youtube.json" ] || { echo "[covers] $EP: no publish package on R2"; continue; }
+            /tmp/lib/bin/python media/tools/thumbs.py "pub/$EP" "$EP" || { echo "[covers] $EP: thumbs failed"; continue; }
+            aws s3 sync "pub/$EP" "s3://${R2_BUCKET}/renders/${EP}/publish" --endpoint-url "$E" --no-progress --exclude "*" --include "*.jpg" --include "*.youtube.json" || true
+          done
+          node media/tools/covers-refresh.mjs set pub
