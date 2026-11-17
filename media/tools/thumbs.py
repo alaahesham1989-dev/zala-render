@@ -202,19 +202,38 @@ def main():
     pool = [p for p in ids if p in items and about.search(text_of(items[p]))] or ids
     clip = clip_scorer()
     ranked = []
-    for pid in pool[:60]:
+
+    def consider(pid, bonus=0):
         it = items.get(pid)
         if not it or (it.get("seen", {}).get("check") or {}).get("modern"):
-            continue
+            return
         img = fetch(it["url"])
         if not img or min(img.size) < 700:
-            continue
+            return
         col, _ = colourfulness(img)
         if col < 18:          # black and white or washed out: never on a thumbnail
-            continue
+            return
         obj = clip(img) if clip else 1.0
-        ranked.append((score(img, clip) + (60 if pid in first else 0) + (200 if obj >= 0.5 else 0), pid, img))
+        ranked.append((score(img, clip) + bonus + (60 if pid in first else 0) + (200 if obj >= 0.5 else 0), pid, img, obj))
+
+    for pid in pool[:60]:
+        consider(pid)
+    # owner's order 2026-11-17: the cover always shows an ancient Egyptian object. A short with only a map, a sketch
+    # or a desert in its own pictures borrows one from the library: first one about its subject, then any good one.
+    if not any(r[3] >= 0.5 for r in ranked):
+        OBJ = re.compile(r"mask|statue|gold|jewel|coffin|sarcophag|amulet|treasure|bust|pectoral|figurine|throne|scarab|crown|collar|necklace|ring|dagger|chariot|canopic", re.I)
+        title_words = [w for w in re.findall(r"[a-z]{5,}", (script.get("title") or "").lower()) if w not in ("ancient", "egypt", "egyptian", "secret", "secrets", "hidden")]
+        objs = [k for k, it in items.items() if (it.get("seen") or {}).get("usable") and OBJ.search(text_of(it)) and k not in pool]
+        near = [k for k in objs if about.search(text_of(items[k])) or any(w in text_of(items[k]).lower() for w in title_words)]
+        tried = 0
+        for pid in near[:25] + objs[:40]:
+            consider(pid, 40 if pid in near else 0)
+            tried += 1
+            if sum(1 for r in ranked if r[3] >= 0.5) >= 3:
+                break
+        print(f"[thumbs] borrowed object pictures from the library ({tried} tried)")
     ranked.sort(key=lambda x: -x[0])
+    ranked = [r[:3] for r in ranked]
     if not ranked:
         print("[thumbs] no picture to use")
         return
@@ -225,12 +244,23 @@ def main():
     # A small line says what world this is (ANCIENT EGYPT), and the big words are the hook from the title.
     name_words = set(re.findall(r"[a-z]{3,}", topics.get(ep, {}).get("match", "").lower()))
 
+    STOP = {"the", "of", "in", "a", "an", "to", "and", "is", "was", "at", "on", "for", "with", "this", "that", "his", "her", "its", "inside"}
+
+    def clean(t, fallback):
+        w = str(t or "").split()
+        while w and w[-1].lower().strip("?!.,") in STOP:
+            w = w[:-1]
+        while w and w[0].lower() in STOP:
+            w = w[1:]
+        return " ".join(w) if len(w) >= 2 else fallback
+
     def hook(t, n=5):
         t = str(t or "").strip()
         part = t.split(":", 1)[1] if ":" in t else t
         w = [x for x in part.replace("'s", "").split() if not any(nw in x.lower() for nw in name_words)]
         while w and w[0].lower() in ("the", "inside", "a", "an"):
             w = w[1:]
+        w = [x for x in w if x.lower().strip("'s:") not in ("ancient", "egypt", "egyptian", "egypt's")]   # the label already says it
         return " ".join(w[-n:]) if len(w) > n else " ".join(w)
 
     def label(img, text, box, size):
@@ -242,8 +272,9 @@ def main():
         d.rectangle((x - pad, box[1] - pad // 2, x + (b[2] - b[0]) + pad, box[1] + (b[3] - b[1]) + pad), fill=(0, 0, 0))
         d.text((x, box[1] - b[1] // 2), text, font=f, fill=GOLD)
 
-    main_text = hook(script["title"]) or hook(script.get("thumbnailText"))
-    texts = [main_text] + [hook(r.get("hook") or r.get("title"), 4) or main_text for r in script.get("reels", [])][:2]
+    spare = clean(hook(script.get("thumbnailText"), 4), "THE LOST SECRET")
+    main_text = clean(hook(script["title"]), spare)
+    texts = [main_text] + [clean(hook(r.get("hook") or r.get("title"), 4), main_text) for r in script.get("reels", [])][:2]
     made = []
     for n, text in enumerate(texts[:3]):
         _, pid, img = ranked[n % len(ranked)]
@@ -260,7 +291,7 @@ def main():
         _, pid, img = ranked[0 if alone else (n + 1) % len(ranked)]
         c = cover(img, 1080, 1920, 0.4)
         label(c, "ANCIENT EGYPT", (60, 1110, 1020, 1160), 56)
-        words(ImageDraw.Draw(c), c, hook(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook") or r.get("title", ""), 4) or main_text, (60, 1200, 1020, 1700), 190)
+        words(ImageDraw.Draw(c), c, clean(hook(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook") or r.get("title", ""), 4), main_text), (60, 1200, 1020, 1700), 190)
         r["cover"] = r["file"].replace(".mp4", "_cover.jpg")
         c.save(os.path.join(pub, r["cover"]), "JPEG", quality=92)
     pkg["thumbnail"], pkg["thumbnails"] = made[0], made
