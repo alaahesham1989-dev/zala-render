@@ -9,7 +9,7 @@ export function brandTitle(title, max = 100) {
   if (!t || HAS.test(t) || PROMO.test(t)) return t.slice(0, max);
   if (/^egypt's\s/i.test(t)) t = t.replace(/^egypt's\s/i, "Ancient Egypt's ");
   else if (/^(the\s)?egyptian(s)?\s/i.test(t)) t = t.replace(/^(the\s)?egyptian(s)?\s/i, (m, the, s) => `Ancient Egyptian${s || ''} `);
-  else t = `Ancient Egypt: ${t}`;
+  else t = t.includes(':') ? `Ancient Egypt | ${t}` : `Ancient Egypt: ${t}`;
   return t.slice(0, max);
 }
 

@@ -60,7 +60,7 @@ jobs:
       - name: "Keep the topic queue from ever running dry (owner's order: expand it well ahead, not just a handful)"
         run: |
           set -uo pipefail
-          left=$(node -e 'const fs=require("fs");const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};const ids=Object.keys(j("media/tools/treasures.json")||{});const plan=j("content/schedule.json")||[];console.log(ids.filter((id)=>!plan.some((p)=>p.episode===id)).length)')
+          left=$(node -e 'const fs=require("fs");const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};const ids=Object.keys(j("media/tools/treasures.json")||{}).filter((id)=>!id.startsWith("ZV-AR"));const plan=j("content/schedule.json")||[];console.log(ids.filter((id)=>!plan.some((p)=>p.episode===id)).length)')
           echo "topics waiting: $left"
           if [ "$left" -lt 20 ]; then
             for i in 1 2 3; do node media/tools/topic-ideas.mjs 20 && break; echo "topics: Gemini busy, waiting 5 minutes"; sleep 300; done
@@ -73,7 +73,7 @@ jobs:
           if [ -z "$EPS" ]; then
             EPS=$(node -e '
               const fs=require("fs");const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};
-              const ids=Object.keys(j("content/library/treasures.json")||{});
+              const ids=Object.keys(j("content/library/treasures.json")||{}).filter((id)=>!id.startsWith("ZV-AR"));   // Arabic topics belong to arabic.yml only
               const plan=j("content/schedule.json")||[];
               const waiting=ids.filter((id)=>!plan.some((p)=>p.episode===id));
               // the owner wants a deep queue ahead, not just a handful: keep 15 prepared waiting for the factory

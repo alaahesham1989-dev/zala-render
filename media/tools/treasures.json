@@ -1,4 +1,86 @@
 {
+  "ZV-R01": {
+    "title": "Ancient Egypt After Dark: What Really Happened When the Sun Went Down",
+    "hook": "It's 1,320 BCE near Thebes. You wake up on the flat roof of your house, not because you're rested, because you're hot.",
+    "seconds": 1500,
+    "match": "night|lamp|oil lamp|deir el-medina|thebes|sleep|bed|headrest|house|village|daily life|festival|astronomy|stars",
+    "archive": "ancient Egyptian daily life night oil lamp house Deir el-Medina",
+    "queries": [
+      "Deir el-Medina village daily life",
+      "ancient Egyptian oil lamp",
+      "ancient Egyptian headrest bed",
+      "ancient Egyptian house roof",
+      "ancient Egyptian astronomy night sky",
+      "Egyptian calendar decans stars",
+      "ancient Egyptian festivals Opet",
+      "ancient Egyptian beer bread diet",
+      "ancient Egyptian dreams dream book",
+      "ancient Egyptian police medjay",
+      "ancient Egyptian tomb robbers night",
+      "Nut sky goddess"
+    ]
+  },
+  "ZV-R02": {
+    "title": "The Sealed Door Inside the Great Pyramid: What Is Behind It?",
+    "hook": "In 1993 a robot no bigger than a toy train crawled 200 feet up a shaft inside the Great Pyramid, and found a door with two copper handles.",
+    "seconds": 1200,
+    "match": "great pyramid|khufu|gantenbrink|upuaut|queen's chamber|shaft|djedi|scanpyramids|big void|copper handle",
+    "archive": "Great Pyramid Queen's Chamber shaft door Gantenbrink",
+    "queries": [
+      "Great Pyramid of Giza",
+      "Queen's Chamber Great Pyramid shafts",
+      "Rudolf Gantenbrink Upuaut robot",
+      "Djedi robot pyramid",
+      "ScanPyramids big void",
+      "Great Pyramid north face corridor",
+      "King's Chamber Great Pyramid",
+      "Khufu pharaoh",
+      "Grand Gallery Great Pyramid",
+      "Great Pyramid construction theories"
+    ]
+  },
+  "ZV-R03": {
+    "title": "7 Ancient Egypt Secrets Hidden in Plain Sight at Saqqara",
+    "hook": "Everyone flies to the pyramids. Ten miles away is a desert full of secrets almost nobody stops to see.",
+    "seconds": 1500,
+    "match": "saqqara|djoser|imhotep|serapeum|step pyramid|unas|mastaba|bubasteum|wahtye|mummification workshop",
+    "archive": "Saqqara step pyramid Serapeum tombs discoveries",
+    "queries": [
+      "Saqqara necropolis",
+      "Pyramid of Djoser",
+      "Serapeum of Saqqara",
+      "Pyramid of Unas Pyramid Texts",
+      "Tomb of Wahtye",
+      "Saqqara mummification workshop",
+      "Saqqara cat mummies Bubasteum",
+      "Mastaba of Ti",
+      "Imhotep architect",
+      "Saqqara coffins discovery 2020",
+      "Tomb of Horemheb Saqqara",
+      "Mastaba of Mereruka"
+    ]
+  },
+  "ZV-R04": {
+    "title": "What Ancient Egypt's Monuments Really Looked Like When They Were New",
+    "hook": "Everything you picture when you think of ancient Egypt is the wrong colour.",
+    "seconds": 1500,
+    "match": "polychromy|painted|colour|color|reconstruction|karnak|hypostyle|casing stones|luxor temple|statue paint|egyptian blue",
+    "archive": "ancient Egyptian painted temple colours reconstruction",
+    "queries": [
+      "Egyptian blue pigment",
+      "ancient Egyptian painted statues polychromy",
+      "Karnak hypostyle hall paint",
+      "Great Pyramid casing stones",
+      "Luxor Temple obelisk",
+      "Temple of Edfu",
+      "Ramesseum",
+      "ancient Egyptian temple pylons flagpoles",
+      "Abu Simbel paint",
+      "Dendera temple ceiling restoration",
+      "Colossi of Memnon",
+      "Medinet Habu colours"
+    ]
+  },
   "ZV-T01": {
     "title": "Tutankhamun's Gold: Inside the Richest Tomb Ever Found",
     "hook": "In 1922 a candle flickered in the dark, and one man saw gold everywhere.",

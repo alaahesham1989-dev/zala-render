@@ -89,6 +89,12 @@ fs.closeSync(fd);
 console.log(`Uploaded: ${video.id} as ${video.status?.privacyStatus}`);
 
 const notes = [];
+// Shorts get their own vertical cover (thumbs.py): without it YouTube shows a random frame from the middle
+const cover = !isMain && path.join(dir, reel.cover || reel.file.replace('.mp4', '_cover.jpg'));
+if (cover && fs.existsSync(cover)) {
+  const t = await fetch(`${API}/upload/youtube/v3/thumbnails/set?videoId=${video.id}`, { method: 'POST', headers: { ...auth, 'Content-Type': 'image/jpeg' }, body: fs.readFileSync(cover) });
+  notes.push(t.ok ? 'cover set' : `cover refused: ${t.status} ${(await t.text()).slice(0, 300)}`);
+}
 if (isMain) {
   const thumb = path.join(dir, thumbName || pkg.thumbnail);
   const t = await fetch(`${API}/upload/youtube/v3/thumbnails/set?videoId=${video.id}`, { method: 'POST', headers: { ...auth, 'Content-Type': 'image/jpeg' }, body: fs.readFileSync(thumb) });

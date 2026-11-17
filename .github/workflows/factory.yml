@@ -79,7 +79,7 @@ jobs:
           if [ -z "$EP" ]; then
             EP=$(node -e '
               const fs=require("fs");
-              const ids=Object.keys(JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")));
+              const ids=Object.keys(JSON.parse(fs.readFileSync("content/library/treasures.json","utf8"))).filter((id)=>!id.startsWith("ZV-AR"));   // Arabic topics belong to arabic.yml only
               const plan=fs.existsSync("content/schedule.json")?JSON.parse(fs.readFileSync("content/schedule.json","utf8")):[];
               const st=fs.existsSync("content/factory-state.json")?JSON.parse(fs.readFileSync("content/factory-state.json","utf8")):{};
               const j=(f)=>{try{return JSON.parse(fs.readFileSync(f,"utf8"))}catch{return null}};

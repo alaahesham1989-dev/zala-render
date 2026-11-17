@@ -19,6 +19,11 @@ const CONTENT = path.join(REPO, 'content');
 const log = (...a) => console.log('[prep]', ...a);
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return d; } };
 const spec = readJson(path.join(REPO, 'media', 'tools', 'treasures.json'), {})[id];
+// owner's order 2026-11-17 (and the growth research): 7-8 minutes is not a long video. The outliers in this niche
+// run 20 to 30 minutes, so every long episode is at least 20 minutes; shorts keep their own length.
+const LONG_SECONDS = 1200;
+const SECONDS = spec && (spec.seconds || 480) > 90 ? Math.max(spec.seconds || 480, LONG_SECONDS) : spec?.seconds || 480;
+const LONG = SECONDS >= LONG_SECONDS;
 if (!spec) throw new Error(`${id} is not in media/tools/treasures.json`);
 const scriptFile = path.join(CONTENT, 'youtube', `${id}.json`);
 const prepFile = path.join(CONTENT, 'prep', `${id}.json`);
@@ -33,13 +38,13 @@ async function wiki(params) {
 }
 async function factBank() {
   const old = readJson(factFile, null);
-  if (old?.facts?.length >= 25 && !force) { log(`facts: ${old.facts.length} already`); await addPlaces((old.sources || []).map((x) => decodeURIComponent(String(x.url || '').split('/wiki/')[1] || '').replace(/_/g, ' ')).filter(Boolean)); return old; }
+  if (old?.facts?.length >= (LONG ? 70 : 25) && !force) { log(`facts: ${old.facts.length} already`); await addPlaces((old.sources || []).map((x) => decodeURIComponent(String(x.url || '').split('/wiki/')[1] || '').replace(/_/g, ' ')).filter(Boolean)); return old; }
   const titles = [];
-  for (const q of spec.queries.slice(0, 8)) {
+  for (const q of spec.queries.slice(0, LONG ? 12 : 8)) {
     try { for (const r of (await wiki({ action: 'query', list: 'search', srsearch: q, srlimit: 2 })).query.search) if (!titles.includes(r.title)) titles.push(r.title); } catch { /* next search */ }
   }
   let text = '';
-  for (const t of titles.slice(0, 8)) {
+  for (const t of titles.slice(0, LONG ? 12 : 8)) {
     try {
       const pages = (await wiki({ action: 'query', prop: 'extracts', explaintext: 1, titles: t })).query.pages;
       const body = Object.values(pages)[0]?.extract || '';
@@ -49,9 +54,9 @@ async function factBank() {
   log(`facts: ${titles.length} Wikipedia pages: ${titles.join(' | ')}`);
   await addPlaces(titles);
   const bank = await askJson(`Build a fact bank for a history video titled "${spec.title}". Use ONLY the Wikipedia text below; never add anything from memory.
-Return JSON {"topic": "${spec.title}", "summary": "4 sentences", "facts": ["40 to 70 short facts, each one sentence with its names, dates, numbers and places exactly as in the text, focused on the treasure, the people, the discovery and why it matters"],
+Return JSON {"topic": "${spec.title}", "summary": "4 sentences", "facts": ["${LONG ? '90 to 130' : '40 to 70'} short facts, each one sentence with its names, dates, numbers and places exactly as in the text, focused on the treasure, the people, the discovery and why it matters"],
 "common_myths": ["claims the text says are wrong or disputed"], "sources": [{"title": "", "url": ""}]}
-TEXT:${text.slice(0, 90000)}`, { temperature: 0.1 });
+TEXT:${text.slice(0, LONG ? 150000 : 90000)}`, { temperature: 0.1 });
   if (!bank?.facts?.length) throw new Error('Gemini gave no fact bank');
   fs.mkdirSync(path.dirname(factFile), { recursive: true });
   fs.writeFileSync(factFile, JSON.stringify(bank, null, 2) + '\n');
@@ -126,7 +131,14 @@ Return only JSON:
 {"title":"","thumbnailText":"max 3 words","description":"2-3 hook sentences","tags":[""],"outroNext":"","thumbnailShot":"1.1","sources":[{"url":""}],
 "chapters":[{"title":"","lines":[{"en":"","ar":"","pictures":["id"],"gen":{"kind":"","prompt":""},"callout":{"big":"short","small":"short"},"sfx":"impact|hit|whoosh|riser|shimmer"}]}],
 "reels":[{"chapter":1,"title":"","badge":"","hook":"max 5 words","sub":"one short sentence about the subject"}]}
-callout and sfx are optional and rare. Exactly 3 reels, each from a chapter that stands alone. 5 to 7 chapters.`;
+callout and sfx are optional and rare. Exactly 3 reels, each from a chapter that stands alone. ${LONG ? '9 to 12' : '5 to 7'} chapters.
+HOOK RULES (what the biggest videos in this niche do):
+- The first 15 seconds put the viewer INSIDE the scene with "you": a year, a place, what you see, hear and feel
+  (e.g. "It's 1,320 BCE near Thebes. You wake up on the flat roof of your house, not because you're rested, because you're hot.").
+- Give one strange physical detail, never a vague mystery (NOT "a strange door"; YES "a door polished on both sides, and the side nobody was meant to see is polished more").
+- Contrast with life today when it helps ("Today you would reach for your phone. There, there was no switch.").
+- Say the words "ancient Egypt" or "ancient Egyptian" in the first two lines.
+- Every chapter ends on an open question that the next chapter answers.`;
 
 const spoken = (s) => (s.chapters || []).flatMap((c) => c.lines || []).reduce((n, l) => n + String(l.en || '').split(/\s+/).filter(Boolean).length, 0);
 
@@ -143,7 +155,7 @@ ${lines.map((l, i) => `${i + 1}. ${l.en}${(l.pictures || []).length ? `  [pictur
 }
 
 async function writeStory(bank, pics) {
-  const words = Math.round(((spec.seconds || 480) / 60) * 150);
+  const words = Math.round((SECONDS / 60) * 150);
   const known = new Set(pics.map((p) => p.id));
   const catalog = pics.slice(0, 220).map((p) => [p.id, p.seen.type, String(p.title).slice(0, 80), p.seen.what].join(' | ')).join('\n');
   let feedback = '';

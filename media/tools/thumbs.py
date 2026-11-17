@@ -60,9 +60,14 @@ def clip_scorer():
         model, _, pre = open_clip.create_model_and_transforms("ViT-B-32", pretrained="laion2b_s34b_b79k")
         tok = open_clip.get_tokenizer("ViT-B-32")
         model.eval()
+        # owner's order 2026-11-17: the cover shows an ancient Egyptian object (mask, statue, jewellery, treasure),
+        # never a desert, a map, a sketch or a plan
         good = ["a stunning photo of ancient Egyptian gold treasure", "a dramatic photo of a giant ancient Egyptian statue",
-                "a dramatic photo of an ancient Egyptian temple"]
-        bad = ["a dull photo of a museum label", "a photo of tourists", "a blurry old document", "a map"]
+                "a close photo of an ancient Egyptian golden mask", "a photo of ancient Egyptian jewellery with gems",
+                "a photo of a painted ancient Egyptian coffin"]
+        bad = ["a dull photo of a museum label", "a photo of tourists", "a blurry old document", "a map",
+               "an empty desert landscape with sand", "a pencil sketch or drawing", "an architectural floor plan",
+               "big text on a black background", "a plain sky with pyramids far away"]
         with torch.no_grad():
             t = model.encode_text(tok(good + bad))
             t = t / t.norm(dim=-1, keepdim=True)
@@ -186,6 +191,8 @@ def main():
     for c in script["chapters"]:
         for l in c["lines"]:
             ids += [p for p in l.get("pictures") or [] if p not in ids]
+    if not ids:   # a short whose lines carry no picture ids: the pictures fetched for it into the library
+        ids = [k for k, it in items.items() if ep in (it.get("topics") or []) and (it.get("seen") or {}).get("usable")][:80]
     import re
     topics = json.load(open(os.path.join(CONTENT, "library", "topics.json"), encoding="utf-8"))
     about = re.compile(topics.get(ep, {}).get("match", "$^"), re.I)
@@ -205,7 +212,8 @@ def main():
         col, _ = colourfulness(img)
         if col < 18:          # black and white or washed out: never on a thumbnail
             continue
-        ranked.append((score(img, clip) + (60 if pid in first else 0), pid, img))
+        obj = clip(img) if clip else 1.0
+        ranked.append((score(img, clip) + (60 if pid in first else 0) + (200 if obj >= 0.5 else 0), pid, img))
     ranked.sort(key=lambda x: -x[0])
     if not ranked:
         print("[thumbs] no picture to use")
@@ -246,12 +254,15 @@ def main():
         name = f"{ep}_thumbnail.jpg" if n == 0 else f"{ep}_thumbnail-{n + 1}.jpg"
         t.save(os.path.join(pub, name), "JPEG", quality=92)
         made.append(name)
-    for n, r in enumerate(pkg.get("reels", [])):
-        _, pid, img = ranked[(n + 1) % len(ranked)]
+    reels = pkg.get("reels", [])
+    alone = len(reels) == 1 and reels[0].get("file") == f"{ep}.mp4"   # a standalone short: its cover gets the best picture
+    for n, r in enumerate(reels):
+        _, pid, img = ranked[0 if alone else (n + 1) % len(ranked)]
         c = cover(img, 1080, 1920, 0.4)
         label(c, "ANCIENT EGYPT", (60, 1110, 1020, 1160), 56)
-        words(ImageDraw.Draw(c), c, hook((script.get("reels") or [{}] * 3)[n].get("hook") or r.get("title", ""), 4) or main_text, (60, 1200, 1020, 1700), 190)
-        c.save(os.path.join(pub, r["file"].replace(".mp4", "_cover.jpg")), "JPEG", quality=92)
+        words(ImageDraw.Draw(c), c, hook(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook") or r.get("title", ""), 4) or main_text, (60, 1200, 1020, 1700), 190)
+        r["cover"] = r["file"].replace(".mp4", "_cover.jpg")
+        c.save(os.path.join(pub, r["cover"]), "JPEG", quality=92)
     pkg["thumbnail"], pkg["thumbnails"] = made[0], made
     json.dump(pkg, open(pkg_file, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     print("[thumbs] made", made)

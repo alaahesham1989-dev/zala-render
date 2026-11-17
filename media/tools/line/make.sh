@@ -27,5 +27,5 @@ fi
 if [ -n "$REVIEW" ] && [ -f "$REVIEW" ]; then node media/tools/gapfill.mjs "$ID" --review "$REVIEW"; else node media/tools/gapfill.mjs "$ID"; fi
 
 node media/zala-render.mjs all "$ID" || exit 1
-if [ $SHORT = yes ]; then node media/tools/shorts.mjs package "$ID" || exit 1; else $PY media/tools/thumbs.py "media/out/${ID}/publish" "$ID" || true; fi
+if [ $SHORT = yes ]; then node media/tools/shorts.mjs package "$ID" || exit 1; $PY media/tools/thumbs.py "media/out/${ID}/publish" "$ID" || true; else $PY media/tools/thumbs.py "media/out/${ID}/publish" "$ID" || true; fi
 echo "MAKE: $ID done"
