@@ -533,7 +533,7 @@ function cardStill(text, bg, vertical = false) {
   if (fs.existsSync(file)) return file;
   const CW = vertical ? 1620 : SW, CH = vertical ? 2880 : SH, size = vertical ? 170 : 210, per = vertical ? 13 : 20;
   if (/[؀-ۿ]/.test(text)) {
-    const script = path.join(REPO, 'media', 'tools', 'arabic_card.py');
+    const script = [path.join(REPO, 'tools', 'arabic_card.py'), path.join(REPO, 'media', 'tools', 'arabic_card.py')].find(fs.existsSync) || path.join(REPO, 'tools', 'arabic_card.py');
     const bgArg = bg && fs.existsSync(bg) ? bg : '-';
     const r = spawnSync('python3', [script, text, String(CW), String(CH), String(size), bgArg, file], { encoding: 'utf8', timeout: 60000 });
     if (r.status !== 0) log(`arabic_card error:\n${r.stderr}`);

@@ -74,7 +74,7 @@ jobs:
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-naskh-arabic libcairo2-dev libpango1.0-dev pkg-config python3-dev
           cd media && npm ci && node tools/fetch-fonts.mjs && mkdir -p ~/.local/share/fonts && cp brand/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f && cd ..
           python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
           echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
