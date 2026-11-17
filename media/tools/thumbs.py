@@ -254,6 +254,11 @@ def main():
             w = w[1:]
         return " ".join(w) if len(w) >= 2 else fallback
 
+    def said(t, n=5):
+        """A hook written for the screen: kept as written (no name stripping), only the label words go."""
+        w = [x for x in str(t or "").replace("#shorts", "").split() if x.lower().strip("'s:,") not in ("ancient", "egypt", "egyptian", "egypt's")]
+        return " ".join(w[:n]) if len(w) <= n else ""
+
     def hook(t, n=5):
         t = str(t or "").strip()
         part = t.split(":", 1)[1] if ":" in t else t
@@ -291,7 +296,7 @@ def main():
         _, pid, img = ranked[0 if alone else (n + 1) % len(ranked)]
         c = cover(img, 1080, 1920, 0.4)
         label(c, "ANCIENT EGYPT", (60, 1110, 1020, 1160), 56)
-        words(ImageDraw.Draw(c), c, clean(hook(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook") or r.get("title", ""), 4), main_text), (60, 1200, 1020, 1700), 190)
+        words(ImageDraw.Draw(c), c, clean(said(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook")) or hook(r.get("title", ""), 4), main_text), (60, 1200, 1020, 1700), 190)
         r["cover"] = r["file"].replace(".mp4", "_cover.jpg")
         c.save(os.path.join(pub, r["cover"]), "JPEG", quality=92)
     pkg["thumbnail"], pkg["thumbnails"] = made[0], made
