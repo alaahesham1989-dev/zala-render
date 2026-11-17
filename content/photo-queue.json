@@ -1,28 +1,5 @@
 [
   {
-    "topic": "ZV-L11",
-    "queuedAt": "2026-11-14T07:56:39.986Z",
-    "hook": "Did you know an ancient pharaoh flew on an airplane over three thousand years after his death?",
-    "article": [
-      "In September of nineteen seventy-six, more than three thousand years after his death, the mummy of Ramesses the Second flew to Paris for conservation work. The ancient king remained there until returning to Egypt the following May.",
-      "You may have heard that he was given a passport for the flight, but that famous story is not true. Long before his modern journey, ancient priests had moved his body to a hidden shaft to protect it from tomb robbers until eighteen eighty-one.",
-      "Today, Ramesses rests in Cairo where visitors from around the world can stand face to face with him. Standing before his mummy allows you to meet a king who ruled Egypt for sixty-six years."
-    ],
-    "words": "ANCIENT MUMMY FLEW OVERSEAS",
-    "tags": [
-      "ancientegypt",
-      "mummy",
-      "historyfacts",
-      "archaeology"
-    ],
-    "engage": "Did you previously believe the famous rumor that the pharaoh was given a modern passport?",
-    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-L11-2026-11-14.jpg",
-    "isAI": false,
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Prince_Khaemwaset_before_Anubis_in_Tomb_QV44.jpg",
-    "author": "Rodolfo Valverde",
-    "license": "CC BY-SA 2.0"
-  },
-  {
     "topic": "ZV-T02",
     "queuedAt": "2026-11-14T13:30:05.047Z",
     "hook": "Did you know that silver was once considered far more valuable than gold in ancient Egypt?",
