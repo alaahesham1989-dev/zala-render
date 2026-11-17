@@ -73,6 +73,7 @@ jobs:
           git checkout -- content/meta-queue.json
           git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
           cp media/tools/treasures.json content/library/treasures.json
+          node -e 'const fs=require("fs"); const t=JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")); const a=JSON.parse(fs.readFileSync("media/tools/arabic-treasures.json","utf8")); Object.assign(t,a); fs.writeFileSync("content/library/treasures.json", JSON.stringify(t, null, 2));'
           echo "EP=arabic" >> "$GITHUB_ENV"
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
         run: |

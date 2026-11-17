@@ -1100,5 +1100,209 @@
       "ancient egyptian leisure activities board games",
       "hieroglyphics depicting senet game egypt"
     ]
+  },
+  "ZV-AR01": {
+    "title": "محاكمة الموتى — اللحظة اللي فيها قلبك بيتحاسب",
+    "hook": "لما تموت، قلبك بيتوزن — والحكم في ثانية واحدة",
+    "seconds": 60,
+    "match": "book of the dead|weighing of the heart|anubis|osiris|ma'at|judgment|duat",
+    "archive": "ancient Egypt weighing heart judgment dead Book of Dead",
+    "queries": [
+      "weighing of the heart ancient Egypt",
+      "Book of the Dead papyrus judgment",
+      "Anubis scales Ma'at feather",
+      "Osiris throne judgment hall",
+      "Ammit devourer ancient Egypt",
+      "Thoth recording scribe judgment",
+      "Duat underworld ancient Egypt",
+      "forty-two assessors Egyptian afterlife"
+    ]
+  },
+  "ZV-AR02": {
+    "title": "أوزيريس — الإله اللي مات وقام من الموت",
+    "hook": "أول قصة قيامة في التاريخ، وهي مش المسيحية",
+    "seconds": 60,
+    "match": "osiris|seth|isis|horus|osiris myth|murder osiris|resurrection",
+    "archive": "Osiris myth ancient Egypt death resurrection Isis Seth",
+    "queries": [
+      "Osiris myth ancient Egypt",
+      "Seth murder Osiris coffin",
+      "Isis Osiris resurrection",
+      "Osiris green skin agriculture",
+      "Horus Eye Osiris",
+      "Osiris Abydos temple",
+      "Egyptian resurrection belief afterlife",
+      "Osiris coffin texts"
+    ]
+  },
+  "ZV-AR03": {
+    "title": "أنوبيس — إله الموتى اللي بيحرس القبور",
+    "hook": "الكلب الأسود اللي بيحرسك في الموت أقدم من كل الديانات",
+    "seconds": 60,
+    "match": "anubis|jackal god|embalming|mummification|necropolis guardian|anubis shrine",
+    "archive": "Anubis jackal god mummification ancient Egypt",
+    "queries": [
+      "Anubis god ancient Egypt",
+      "Anubis jackal mummification",
+      "Anubis shrine Tutankhamun",
+      "embalming ritual ancient Egypt",
+      "Anubis weighing heart",
+      "Anubis Khentimentiu necropolis",
+      "black jackal Egypt meaning",
+      "ancient Egyptian embalming process"
+    ]
+  },
+  "ZV-AR04": {
+    "title": "ست — الإله الشرير اللي المصريين كانوا بيخافوا منه",
+    "hook": "الشيطان في الميثولوجيا المصرية مش زي اللي تعرفه خالص",
+    "seconds": 60,
+    "match": "set|seth|evil god|storm desert|seth vs horus|typhon",
+    "archive": "Set Seth ancient Egypt evil god storm desert",
+    "queries": [
+      "Set Seth ancient Egypt god",
+      "Seth storm desert god",
+      "Seth vs Horus battle",
+      "Seth murder Osiris",
+      "Seth animal unknown beast",
+      "Hyksos Seth worship",
+      "Seth Ramesses worship",
+      "Seth Egyptian mythology evil"
+    ]
+  },
+  "ZV-AR05": {
+    "title": "الكتاب المصري للموتى — دليل السفر لما بعد الموت",
+    "hook": "٣٠٠٠ سنة قبل الـ GPS، المصريين كانوا عندهم دليل للموت",
+    "seconds": 60,
+    "match": "book of the dead|funerary text|papyrus|spell|amduat|coffin texts",
+    "archive": "Book of the Dead ancient Egypt papyrus spells afterlife",
+    "queries": [
+      "Book of the Dead ancient Egypt",
+      "Book of the Dead spells papyrus",
+      "Ani papyrus British Museum",
+      "coffin texts pyramid texts",
+      "Egyptian afterlife spells magic",
+      "Book of the Dead illustrations",
+      "Hunefer papyrus",
+      "Egyptian funerary text history"
+    ]
+  },
+  "ZV-AR06": {
+    "title": "حتشبسوت — الملكة اللي الغوا تاريخها من التاريخ",
+    "hook": "حكمت مصر ٢٢ سنة وبعدين حاولوا يمسحوها من التاريخ تماماً",
+    "seconds": 60,
+    "match": "hatshepsut|female pharaoh|thutmose III|deir el bahari|obelisk karnak",
+    "archive": "Hatshepsut female pharaoh ancient Egypt erased history",
+    "queries": [
+      "Hatshepsut female pharaoh",
+      "Hatshepsut Thutmose III erased",
+      "Hatshepsut Deir el-Bahari temple",
+      "Hatshepsut obelisk Karnak",
+      "Hatshepsut statues destroyed",
+      "Hatshepsut Punt expedition",
+      "female ruler ancient Egypt",
+      "Hatshepsut mummy identification"
+    ]
+  },
+  "ZV-AR07": {
+    "title": "الأهرامات من الداخل — اللي محدش بيوريكهولك",
+    "hook": "جوّه الهرم في الليل في سنة ٢٥٠٠ ق.م. كان في حاجة واحدة بس",
+    "seconds": 60,
+    "match": "great pyramid interior|king chamber|grand gallery|relieving chambers|pyramid shaft",
+    "archive": "Great Pyramid interior chambers shafts ancient Egypt construction",
+    "queries": [
+      "Great Pyramid interior chambers",
+      "King's Chamber Great Pyramid",
+      "Grand Gallery pyramid construction",
+      "relieving chambers pyramid",
+      "pyramid shafts alignment stars",
+      "subterranean chamber Great Pyramid",
+      "pyramid construction workers ancient Egypt",
+      "Khufu pyramid secret passages"
+    ]
+  },
+  "ZV-AR08": {
+    "title": "نيفرتيتي — أجمل وجه في التاريخ ومحدش عرف هي مين ٣٠٠٠ سنة",
+    "hook": "أجمل وجه صنعه إنسان — ومحدش عرف هي مين لمدة ثلاثة آلاف سنة",
+    "seconds": 60,
+    "match": "nefertiti|bust berlin|akhenaten|amarna|beautiful has come|thutmose sculptor",
+    "archive": "Nefertiti bust Berlin discovery Amarna ancient Egypt",
+    "queries": [
+      "Nefertiti bust Berlin",
+      "Nefertiti discovery 1912 Borchardt",
+      "Akhenaten Nefertiti Amarna",
+      "Nefertiti identity mystery",
+      "Nefertiti bust theft controversy Egypt Germany",
+      "Nefertiti sculptor Thutmose workshop",
+      "Amarna period Egypt",
+      "Nefertiti successor pharaoh theory"
+    ]
+  },
+  "ZV-AR09": {
+    "title": "الغرفة المخفية في الهرم — اللي لقوها دلوقتي",
+    "hook": "في ٢٠١٧ لقوا غرفة جوّه الهرم الأكبر مفيش حد عرف بيها ألفين سنة",
+    "seconds": 60,
+    "match": "great pyramid void ScanPyramids|hidden chamber 2017|cosmic ray muon|big void pyramid",
+    "archive": "Great Pyramid hidden void chamber discovery 2017 ScanPyramids",
+    "queries": [
+      "Great Pyramid void discovery 2017",
+      "ScanPyramids project muon tomography",
+      "Great Pyramid hidden chamber",
+      "pyramid void big void Nature journal",
+      "Khufu pyramid secret room",
+      "pyramid scan technology archaeology",
+      "ScanPyramids Egypt results",
+      "pyramid mysterious chambers archaeology"
+    ]
+  },
+  "ZV-AR10": {
+    "title": "الفراعنة اللي بنوا أبو سمبل — أكبر إنجاز هندسي في التاريخ",
+    "hook": "بناه من غير آلات، ومرتين في السنة بالظبط الشمس بتلمس وشه",
+    "seconds": 60,
+    "match": "Abu Simbel|Ramesses II|sun alignment|equinox|temple relocation|UNESCO",
+    "archive": "Abu Simbel temple Ramesses II sun alignment ancient Egypt",
+    "queries": [
+      "Abu Simbel temple Ramesses II",
+      "Abu Simbel sun alignment equinox",
+      "Abu Simbel construction ancient Egypt",
+      "Abu Simbel relocation UNESCO 1968",
+      "Ramesses II Abu Simbel statues",
+      "Nefertari temple Abu Simbel",
+      "Abu Simbel solar phenomenon",
+      "ancient Egyptian astronomical alignment"
+    ]
+  },
+  "ZV-AR11": {
+    "title": "الموميا — ازاي المصريين كانوا بيعملوا عملية بـ ٧٠ يوم",
+    "hook": "بيخلوا جسمك يعيش ٣٠٠٠ سنة في ٧٠ يوم — الوصفة موجودة",
+    "seconds": 60,
+    "match": "mummification process|natron|embalming|canopic jars|wrapping|70 days",
+    "archive": "mummification process ancient Egypt natron canopic jars",
+    "queries": [
+      "mummification process ancient Egypt",
+      "mummification 70 days steps",
+      "natron salt mummification",
+      "canopic jars organs mummification",
+      "brain removal mummification",
+      "mummification linen wrapping amulets",
+      "ancient Egyptian embalmer priest",
+      "mummification science chemistry"
+    ]
+  },
+  "ZV-AR12": {
+    "title": "الملكة كليوباترا — الحقيقة اللي الأفلام ما بتقولهاش",
+    "hook": "كليوباترا مش مصرية الأصل — وده غالباً ما اتفيلم",
+    "seconds": 60,
+    "match": "cleopatra VII|ptolemaic|greek pharaoh|Julius Caesar|Mark Antony|Alexandria",
+    "archive": "Cleopatra VII real history Ptolemaic Egypt Greek pharaoh",
+    "queries": [
+      "Cleopatra VII history facts",
+      "Cleopatra Greek Ptolemaic dynasty",
+      "Cleopatra languages spoke",
+      "Cleopatra Julius Caesar Alexandria",
+      "Cleopatra Mark Antony death",
+      "Cleopatra appearance real",
+      "Ptolemaic Egypt Greek rulers",
+      "Cleopatra intelligence politician"
+    ]
   }
 }
