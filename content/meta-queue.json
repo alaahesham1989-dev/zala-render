@@ -410,8 +410,23 @@
       "ig"
     ],
     "at": "2026-11-17T12:00:00Z",
-    "done": false,
-    "note": "older episode already public on YouTube"
+    "done": "2026-11-17T12:01:33.174Z",
+    "note": "older episode already public on YouTube",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "4101698603294102",
+        "url": "https://www.facebook.com/reel/4101698603294102"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "17996595945115595",
+        "url": "https://www.instagram.com/reel/Df14bqbEnNH/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-OLD-ALEX",
