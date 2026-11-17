@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-17T09:47:27.785Z",
+  "at": "2026-11-17T16:10:41.757Z",
   "impressionsAvailable": false,
   "bestTitles": [
     "The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
@@ -16,6 +16,21 @@
     "The Lie That Killed Mark Antony #shorts"
   ],
   "videos": [
+    {
+      "id": "A9gEF8DD7Ak",
+      "title": "Finding Tomb KV62 #shorts",
+      "published": "2026-11-17T16:00:36Z",
+      "short": true,
+      "views": 3,
+      "video": "A9gEF8DD7Ak",
+      "averageViewDuration": 37,
+      "averageViewPercentage": 72.94,
+      "subscribersGained": 0,
+      "sources": {
+        "YT_CHANNEL": 2,
+        "NO_LINK_OTHER": 1
+      }
+    },
     {
       "id": "ZbEqSqtyyOA",
       "title": "What Was Hidden in the Pyramid’s Secret Niche?",
@@ -61,7 +76,7 @@
       "title": "Did Ancient Egyptians Write First Pregnancy Manuals? #shorts",
       "published": "2026-11-15T19:00:20Z",
       "short": true,
-      "views": 22,
+      "views": 25,
       "sources": {}
     },
     {
