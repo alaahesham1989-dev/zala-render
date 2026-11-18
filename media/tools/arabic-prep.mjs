@@ -175,22 +175,23 @@ ${catalog || '(no pictures yet)'}`, { temperature: 0.7 });
 
     // editor check
     const bad = await askJson(`أنت محرر متخصص في محتوى مصر القديمة. راجع السكريبت ده سطر بسطر.
-السطر "بيبوظ" لو:
-- بيقول حاجة مش في الـ FACT BANK (اسم أو تاريخ أو رقم مخترع).
-- فيه فصحى تقيلة أو "يُعدّ" أو "دعونا نستكشف" أو مقدمة كلاسيكية.
-- صورته (لو في) مش بتوافق الكلام.
-Return JSON {"bad": [{"n": رقم السطر, "why": "سبب قصير"}]} (فاضي لو كل حاجة تمام).
+درجة "blocker" (لازم تصلّح): بيقول حاجة مش في الـ FACT BANK (اسم أو تاريخ أو رقم مخترع)، أو صورته (لو في) مش بتوافق الكلام.
+درجة "nit" (ملحوظة أسلوب بس، سيبها): فصحى تقيلة أو "يُعدّ" أو "دعونا نستكشف" أو مقدمة كلاسيكية — من غير ما يخترع حاجة.
+Return JSON {"bad": [{"n": رقم السطر, "why": "سبب قصير", "sev": "blocker أو nit"}]} (فاضي لو كل حاجة تمام).
 FACT BANK: ${JSON.stringify(bank.facts).slice(0, 20000)}
 SCRIPT:
 ${lines.map((l, i) => `${i + 1}. ${l.en}`).join('\n')}`, { temperature: 0 });
 
     // no editor answer means the facts were not checked: never accept that script
     if (!bad) { log(`script ${attempt}: editor did not answer`); continue; }
-    const errors = bad.bad || [];
-    log(`script ${attempt}: editor found ${errors.length} issues`);
-    errors.forEach((b) => log(`  line ${b.n}: ${b.why}`));
+    const all = bad.bad || [];
+    const nits = all.filter((b) => b.sev === 'nit');
+    const errors = all.filter((b) => b.sev !== 'nit');   // a blocker, or no severity given: play it safe
+    log(`script ${attempt}: editor found ${errors.length} blockers, ${nits.length} nits`);
+    errors.forEach((b) => log(`  blocker line ${b.n}: ${b.why}`));
+    nits.forEach((b) => log(`  nit line ${b.n}: ${b.why} (kept)`));
 
-    if (!errors.length) return s;
+    if (!errors.length) return s;   // nits alone never fail a script: this is low-stakes travel content, not medical or legal
 
     if (!best || errors.length < best.errors.length) best = { s, lines, errors };
     issues = `\nالمحرر رفض السطور دي:\n${errors.map((b) => `  ${b.n}. ${b.why}`).join('\n')}`;

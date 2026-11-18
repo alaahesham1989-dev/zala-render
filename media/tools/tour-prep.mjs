@@ -119,11 +119,12 @@ Return JSON {"title": "a tour title people click, max 60 characters, e.g. Inside
 TEXT:\n${facts.slice(0, 32000)}`, { temperature: 0.7 });
   const lines = s?.chapters?.flatMap((c) => c.lines || []) || [];
   if (lines.length < (short ? 5 : 20)) { log(`${kind}: no usable script (${lines.length} lines)`); return null; }
-  // the editor: lines the text does not support are dropped, never the whole tour
-  const check = await askJson(`Check this tour against the TEXT. List the line numbers (1-based) that say anything the TEXT does not support
-(lines about the drive, the camera, "you step in", visit tips and the ZALA VIP line are fine). Return JSON {"bad": [numbers]}
+  // the editor: lines the text does not support are dropped, never the whole tour. "nit" (clumsy wording, facts still fine) is kept
+  const check = await askJson(`Check this tour against the TEXT. A line is a "blocker" when it says something the TEXT does not support
+(lines about the drive, the camera, "you step in", visit tips and the ZALA VIP line are always fine). A line is a "nit" when it is just awkwardly worded but factually fine.
+Return JSON {"bad": [{"n": number, "sev": "blocker or nit"}]}
 LINES: ${JSON.stringify(lines.map((l) => l.en))}\nTEXT:\n${facts.slice(0, 32000)}`, { temperature: 0 });
-  const bad = new Set(check?.bad || []);
+  const bad = new Set((check?.bad || []).filter((b) => b.sev !== 'nit').map((b) => b.n));
   let n = 0;
   for (const c of s.chapters) c.lines = c.lines.filter(() => !bad.has(++n));
   s.chapters = s.chapters.filter((c) => c.lines.length);

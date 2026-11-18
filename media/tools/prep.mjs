@@ -146,8 +146,9 @@ async function editor(story, bank, pics) {
   const byId = new Map(pics.map((p) => [p.id, p]));
   const lines = story.chapters.flatMap((c) => c.lines);
   const ans = await askJson(`You are a strict editor for a history channel. Check this story about "${spec.title}" line by line against the FACT BANK.
-A line is bad if: it says something the fact bank does not support (an invented name, date, number, object or event); it talks about something that is not part of this story (cars, planes, fish, Halloween, European cities, modern people); it uses an unrelated picture as a metaphor; or its pictures (described after it) do not show what it says.
-Return JSON {"bad": [{"n": line number, "why": "short reason", "only": "picture" when the words are fine and only the pictures do not fit, else "words"}]} (empty when all lines are good).
+A line is a "blocker" if: it says something the fact bank does not support (an invented name, date, number, object or event); it talks about something that is not part of this story (cars, planes, fish, Halloween, European cities, modern people); it uses an unrelated picture as a metaphor; or its pictures (described after it) do not show what it says.
+A line is a "nit" only when the facts and pictures are fine but the wording is clumsy, repetitive or off-tone — never for a wrong or invented fact.
+Return JSON {"bad": [{"n": line number, "why": "short reason", "sev": "blocker or nit", "only": "picture" when the words are fine and only the pictures do not fit, else "words"}]} (empty when all lines are good).
 FACT BANK: ${JSON.stringify(bank.facts)}
 STORY:
 ${lines.map((l, i) => `${i + 1}. ${l.en}${(l.pictures || []).length ? `  [pictures: ${l.pictures.map((p) => byId.get(p)?.seen?.what || p).join(' / ')}]` : l.gen ? '  [generated shot]' : ''}`).join('\n')}`, { temperature: 0 });
@@ -207,6 +208,8 @@ ${catalog}`, { temperature: 0.5 });
     if (n < words * 0.7) { feedback = `\nYour last attempt had only ${n} words; write more by using more facts, never by inventing.`; log(`story ${attempt}: ${n} words, too short`); continue; }
     let bad = await editor(s, bank, pics);
     if (!bad) { log(`story ${attempt}: the editor gave no answer`); continue; }
+    bad.filter((b) => b.sev === 'nit').forEach((b) => log(`   nit line ${b.n}: ${b.why} (kept)`));
+    bad = bad.filter((b) => b.sev !== 'nit');   // a nit alone never fails a story: this is low-stakes travel content
     log(`story ${attempt}: ${lines.length} lines, ${n} words, ${lines.filter((l) => l.gen).length} generated shots, ${bad.length} bad lines`);
     bad.forEach((b) => log(`   line ${b.n}: ${b.why}`));
     if (!bad.length) return s;
@@ -223,7 +226,8 @@ FACT BANK: ${JSON.stringify(bank.facts)}`, { temperature: 0.3 });
     if (fix?.lines?.length) {
       for (const f of fix.lines) { const l = flat[f.n - 1]; if (l) { if (f.en) { l.en = f.en; delete l.ar; } else l.drop = true; } }
       for (const c of s.chapters) c.lines = c.lines.filter((l) => !l.drop);
-      const again = await editor(s, bank, pics);
+      let again = await editor(s, bank, pics);
+      if (again) again = again.filter((b) => b.sev !== 'nit');
       log(`story ${attempt}: after fixing ${fix.lines.length} lines, the editor finds ${again ? again.length : '?'} bad lines`);
       if (again && !again.length && spoken(s) >= words * 0.7) return s;
       // the review fixes, it does not throw a story away: lines still unsupported are dropped, wrong pictures removed,

@@ -102,13 +102,14 @@ Return JSON {"topic": "", "queries": ["3 Wikipedia search queries"]}`, { tempera
     if (kind !== 'promo' && facts.length < 800) { log(`${id}: not enough facts for "${topic}"`); continue; }
     const s = await askJson(`${kind === 'promo' ? PROMO_RULES : SHORT_RULES}\nTopic: ${topic}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0.7 });
     if (!s?.lines?.length || s.lines.length < 5) { log(`${id}: no script`); continue; }
-    // the editor: every line must be supported by the text
-    const check = await askJson(`Check this Short against the text. List the lines (1-based) that say anything the text does not support. Return JSON {"bad": [numbers]}\nSHORT: ${JSON.stringify(s.lines.map((l) => l.en))}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0 });
+    // the editor: every line must be supported by the text. "nit" (clumsy wording, facts still fine) is kept, never dropped
+    const check = await askJson(`Check this Short against the text. A line is a "blocker" when it says something the text does not support (an invented name, date or number). A line is a "nit" when it is just awkwardly worded but factually fine. Return JSON {"bad": [{"n": number, "sev": "blocker or nit"}]}\nSHORT: ${JSON.stringify(s.lines.map((l) => l.en))}\nTEXT:\n${facts.slice(0, 30000)}`, { temperature: 0 });
     if (!check) { log(`${id}: the editor gave no answer`); continue; }
+    const blockers = (check.bad || []).filter((b) => b.sev !== 'nit').map((b) => b.n);
     // a line the facts do not support is dropped (never the whole short), as long as 5 good lines stay
-    if ((check.bad || []).length) {
-      const keep = s.lines.filter((_, i) => !check.bad.includes(i + 1));
-      log(`${id}: the editor dropped lines ${JSON.stringify(check.bad)}`);
+    if (blockers.length) {
+      const keep = s.lines.filter((_, i) => !blockers.includes(i + 1));
+      log(`${id}: the editor dropped lines ${JSON.stringify(blockers)}`);
       if (keep.length < 5) continue;
       s.lines = keep;
     }
