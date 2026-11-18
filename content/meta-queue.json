@@ -1061,5 +1061,27 @@
     ],
     "at": "2026-12-06T20:00:00Z",
     "done": false
+  },
+  {
+    "episode": "ZV-S202611183",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-19T17:00:00Z",
+    "done": false,
+    "youtube": "https://youtu.be/KW9kox1keO8"
+  },
+  {
+    "episode": "ZV-S202611184",
+    "which": "R1",
+    "to": [
+      "fb",
+      "ig"
+    ],
+    "at": "2026-11-19T19:00:00Z",
+    "done": false,
+    "youtube": "https://youtu.be/_voTKGMPhGo"
   }
 ]

@@ -129,5 +129,27 @@
     "quality": "2026-11-17T22:17:52.124Z",
     "scheduled": "2026-11-17T22:26:32.795Z",
     "blog": "done"
+  },
+  {
+    "id": "ZV-S202611183",
+    "kind": "short",
+    "title": "Ancient Egypt Labyrinth: Did a Secret Maze Rival Pyramids?",
+    "place": null,
+    "rounds": 1,
+    "landed": "2026-11-18T01:17:35.628Z",
+    "quality": "2026-11-18T01:17:33.589Z",
+    "scheduled": "2026-11-18T01:42:06.801Z",
+    "blog": "done"
+  },
+  {
+    "id": "ZV-S202611184",
+    "kind": "short",
+    "title": "Ancient Egypt's Liquid Currency That Built Pyramids",
+    "place": null,
+    "rounds": 3,
+    "landed": "2026-11-18T01:31:08.225Z",
+    "quality": "2026-11-18T01:31:06.024Z",
+    "scheduled": "2026-11-18T01:49:29.006Z",
+    "blog": "done"
   }
 ]

@@ -102,6 +102,27 @@
       "topic": "Bigeh Island",
       "place": "bigeh",
       "at": "2026-11-16T00:21:19.925Z"
+    },
+    {
+      "id": "ZV-S202611181",
+      "kind": "promo",
+      "title": "Experience Egypt in Pure Luxury with ZALA VIP",
+      "topic": "ZALA VIP, luxury travel in Egypt",
+      "at": "2026-11-18T00:21:35.016Z"
+    },
+    {
+      "id": "ZV-S202611183",
+      "kind": "mystery",
+      "title": "Ancient Egypt Labyrinth: Did a Secret Maze Rival Pyramids?",
+      "topic": "Did the Ancient Egyptians Build a Secret Underground Labyrinth That Rivaled the Great Pyramids?",
+      "at": "2026-11-18T00:38:24.910Z"
+    },
+    {
+      "id": "ZV-S202611184",
+      "kind": "daily",
+      "title": "Ancient Egypt's Liquid Currency That Built Pyramids",
+      "topic": "Ancient Egyptian beer as currency and nutrition",
+      "at": "2026-11-18T00:45:27.371Z"
     }
   ]
 }
