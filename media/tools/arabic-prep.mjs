@@ -138,8 +138,10 @@ Return JSON only:
 }
 callout و sfx اختياريين. أول reel من chapter 1.`;
 
-  let feedback = '';
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  const countWords = (ls) => ls.reduce((n, l) => n + String(l.en || '').split(/\s+/).filter(Boolean).length, 0);
+  const numbered = (ls) => ls.map((l, i) => `${i + 1}. ${l.en}`).join('\n');
+  let feedback = '', issues = '', best = null;
+  for (let attempt = 1; attempt <= 4; attempt++) {
     const s = await askJson(`${SCRIPT_RULES}
 
 الموضوع: ${spec.title}
@@ -161,11 +163,13 @@ ${catalog || '(no pictures yet)'}`, { temperature: 0.7 });
       if (!l.gen?.prompt || l.pictures.length) delete l.gen;
     }
 
-    const words = lines.reduce((n, l) => n + String(l.en || '').split(/\s+/).filter(Boolean).length, 0);
+    const words = countWords(lines);
     log(`script ${attempt}: ${lines.length} lines, ${words} words`);
 
     if (words < TARGET_WORDS * 0.7) {
-      feedback = `\nمحاولتك الأخيرة كانت ${words} كلمة بس. عايزين ${TARGET_WORDS} كلمة. أضف سطور من الـ FACT BANK من غير ما تخترع.`;
+      // a short answer (usually a lite model while the big ones are busy) keeps the editor's notes and builds on the best script so far
+      const base = best ? `\nابدأ من السكريبت ده وزوّد عليه:\n${numbered(best.lines)}` : '';
+      feedback = `${base}${issues}\nمحاولتك الأخيرة كانت ${words} كلمة بس. عايزين ${TARGET_WORDS} كلمة. أضف سطور من الـ FACT BANK من غير ما تخترع.`;
       continue;
     }
 
@@ -180,18 +184,30 @@ FACT BANK: ${JSON.stringify(bank.facts).slice(0, 20000)}
 SCRIPT:
 ${lines.map((l, i) => `${i + 1}. ${l.en}`).join('\n')}`, { temperature: 0 });
 
-    const errors = bad?.bad || [];
+    // no editor answer means the facts were not checked: never accept that script
+    if (!bad) { log(`script ${attempt}: editor did not answer`); continue; }
+    const errors = bad.bad || [];
     log(`script ${attempt}: editor found ${errors.length} issues`);
     errors.forEach((b) => log(`  line ${b.n}: ${b.why}`));
 
     if (!errors.length) return s;
 
-    // fix bad lines
-    if (attempt < 3) {
-      feedback = `\nالمحرر رفض السطور دي:\n${errors.map((b) => `  ${b.n}. ${b.why}`).join('\n')}\nصلّحها أو شيلها وحافظ على باقي السطور.`;
-    }
+    if (!best || errors.length < best.errors.length) best = { s, lines, errors };
+    issues = `\nالمحرر رفض السطور دي:\n${errors.map((b) => `  ${b.n}. ${b.why}`).join('\n')}`;
+    feedback = `\nالسكريبت اللي فات:\n${numbered(lines)}${issues}\nصلّح السطور دي بس أو شيلها وعوّضها بحقائق من الـ FACT BANK، وسيب باقي السطور زي ما هي. المجموع حوالي ${TARGET_WORDS} كلمة.`;
   }
-  throw new Error('script failed all 3 attempts');
+
+  // last resort: the best checked script without the lines the editor rejected
+  if (best) {
+    const rejected = new Set(best.errors.map((b) => Number(b.n)));
+    let n = 0;
+    for (const c of best.s.chapters) c.lines = (c.lines || []).filter(() => !rejected.has(++n));
+    best.s.chapters = best.s.chapters.filter((c) => c.lines.length);
+    const left = countWords(best.s.chapters.flatMap((c) => c.lines));
+    log(`fallback: best script without ${rejected.size} rejected lines, ${left} words`);
+    if (left >= TARGET_WORDS * 0.55) return best.s;
+  }
+  throw new Error('script failed all 4 attempts');
 }
 
 // ── 4. assemble and save ─────────────────────────────────────────────

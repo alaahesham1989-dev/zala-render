@@ -1,5 +1,5 @@
 // Small Gemini text helper for the daily posts and comment replies: free keys, busy models skipped, JSON answers.
-const KEYS = [...new Set([...(process.env.GEMINI_API_KEYS || '').split(','), process.env.GEMINI_API_KEY || ''].map((k) => k.trim()).filter(Boolean))];
+import { geminiKeys as KEYS } from '../lib/gemini-keys.mjs';
 const MODELS = (process.env.GEMINI_TEXT_MODELS || 'gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite').split(',').map((m) => m.trim()).filter(Boolean);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

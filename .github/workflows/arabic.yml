@@ -75,8 +75,19 @@ jobs:
           git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
           cp media/tools/treasures.json content/library/treasures.json
           node -e 'const fs=require("fs"); const t=JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")); const a=JSON.parse(fs.readFileSync("media/tools/arabic-treasures.json","utf8")); Object.assign(t,a); fs.writeFileSync("content/library/treasures.json", JSON.stringify(t, null, 2));'
-          echo "EP=arabic" >> "$GITHUB_ENV"
+      - name: Pick the topic (the clock starts this with no inputs)
+        run: |
+          set -uo pipefail
+          ID="${{ inputs.arabic_id }}"
+          if [ -z "$ID" ] && [ -z "${{ inputs.source }}" ]; then
+            for t in $(node -e 'console.log(Object.keys(require("./media/tools/arabic-treasures.json")).join(" "))'); do
+              if ! aws s3 ls "s3://${R2_BUCKET}/renders/$t/publish/" --endpoint-url "$E" | grep -q '\.mp4'; then ID="$t"; break; fi
+            done
+          fi
+          echo "ID=$ID" >> "$GITHUB_ENV"
+          echo "Today: ${ID:-${{ inputs.source }}}"
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
+        if: env.ID != '' || inputs.source != ''
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev
@@ -88,16 +99,18 @@ jobs:
           pip install --quiet pillow arabic-reshaper python-bidi
           python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
           /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
-          for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
-          # carry on where the last run stopped: the scenes already rendered and the last review (only what it found is fixed)
-          aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
-          aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
-          mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
+          for d in meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+          # only this topic's voice and half-made scenes, not every English episode's
+          if [ -n "$ID" ]; then
+            aws s3 sync "s3://${R2_BUCKET}/render-cache/voice/$ID" "media/cache/voice/$ID" --endpoint-url "$E" --no-progress || true
+            aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$ID" "media/tmp/render/$ID" --endpoint-url "$E" --no-progress || true
+          fi
       - name: 1 — Arabic script (original or translated)
+        if: env.ID != '' || inputs.source != ''
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
-          ARABIC_ID="${{ inputs.arabic_id }}"
+          ARABIC_ID="$ID"
           SOURCE="${{ inputs.source }}"
           VOICE="${{ inputs.voice }}"
           if [ -n "$ARABIC_ID" ]; then
@@ -114,6 +127,7 @@ jobs:
             echo "ERROR: set arabic_id (original) or source (translate)"; exit 1
           fi
       - name: 2 — Make and check (no outbox, no publishing)
+        if: env.ID != ''
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
@@ -126,15 +140,19 @@ jobs:
           done
           echo "PASS=$pass" >> "$GITHUB_ENV"
       - name: Save to R2 (preview only)
-        if: always()
+        if: always() && (env.ID != '' || inputs.source != '')
         run: |
+          if [ -n "${ID:-}" ]; then
+            if [ "${PASS:-no}" = yes ]; then aws s3 rm "s3://${R2_BUCKET}/render-cache/work/$ID" --recursive --endpoint-url "$E" --quiet || true
+            elif [ -d "media/tmp/render/$ID" ]; then aws s3 sync "media/tmp/render/$ID" "s3://${R2_BUCKET}/render-cache/work/$ID" --endpoint-url "$E" --no-progress --exclude "*.ass" || true; fi
+          fi
           aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress --exclude "outbox.json" --exclude "meta-queue.json"
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -n "${ID:-}" ] && [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
           [ -n "${ID:-}" ] && [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
           aws s3 cp run.log "s3://${R2_BUCKET}/renders/${ID:-arabic}/run.log" --endpoint-url "$E" --no-progress || true
       - name: Telegram (the video, for the owner to watch)
-        if: always()
+        if: always() && (env.ID != '' || inputs.source != '')
         run: |
           v=$(ls media/out/${ID:-x}/publish/*.mp4 2>/dev/null | head -1)
           cap="ZALA عربي: ${ID:-?} — الفحص: ${PASS:-no}. مش متجدول، مستني موافقتك."
