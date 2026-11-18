@@ -110,7 +110,11 @@ function cutByPauses(chunk, texts) {
 /** Cuts one narration into line files, by the words heard when that is possible. Throws rather than cut a line wrongly. */
 export function splitChunk(chunk, texts, files) {
   const saveWords = (i, t0, t1, heard) => fs.writeFileSync(`${files[i]}.words.json`, JSON.stringify(heard.filter((w) => w.end > t0 && w.start < t1).map((w) => ({ w: w.w, start: Math.max(0, w.start - t0), end: Math.min(t1 - t0, w.end - t0) }))));
-  const heard = heardWords(chunk);
+  // words.py runs an English-only model: on Arabic it recognises almost nothing, cutsFromWords always throws below its
+  // 60% floor, and the caller retries with ever-smaller chunks — burning the whole day's voice quota on one line (found
+  // on ZV-AR01: 3 keys used up in one round). Go straight to the pause-only cut instead of attempting this at all.
+  const arabic = texts.some((t) => /[؀-ۿ]/.test(t));
+  const heard = arabic ? null : heardWords(chunk);
   if (texts.length === 1) { ff(['-i', chunk, '-ar', '48000', files[0]]); if (heard?.length) saveWords(0, 0, durationOf(chunk), heard); return; }
   let lines = null;
   if (heard?.length) {
@@ -118,8 +122,9 @@ export function splitChunk(chunk, texts, files) {
     const cut = cutsFromWords(texts, heard, silences, durationOf(chunk));
     lines = cut.lines;
     console.log(`  words recognised: ${Math.round(cut.recognised * 100)}%`);
+  } else if (!arabic && process.env.CI) {
+    throw new Error('word timing is not available on the server');
   } else {
-    if (process.env.CI) throw new Error('word timing is not available on the server');
     lines = cutByPauses(chunk, texts);
   }
   lines.forEach((l, i) => {

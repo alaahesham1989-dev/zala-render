@@ -20,6 +20,9 @@ export function detectSilences(file, noise = '-40dB', minDur = 0.22) {
 
 const NUM = { '2013': 'twenty thirteen' };
 export function syllables(text) {
+  // no vowel letters to count the English way here: ~2.3 syllables per word is a reasonable average for Egyptian Arabic,
+  // and this only sets relative pacing within one narration chunk, never a value anyone reads on its own
+  if (/[؀-ۿ]/.test(text)) return Math.max(1, Math.round(String(text).split(/\s+/).filter(Boolean).length * 2.3));
   let t = text.toLowerCase();
   for (const [k, v] of Object.entries(NUM)) t = t.replace(new RegExp(k, 'g'), v);
   t = t.replace(/\bbc\b/g, 'bee see').replace(/\bv i p\b/g, 'vee eye pee').replace(/\bdot com\b/g, 'dot com');
