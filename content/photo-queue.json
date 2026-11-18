@@ -212,5 +212,77 @@
     "sourceUrl": "https://www.artic.edu/artworks/64312",
     "author": "Egyptian; probably from Hawara, Egypt",
     "license": "CC0"
+  },
+  {
+    "id": "ZV-S202611121-2026-11-18-1",
+    "topic": "ZV-S202611121",
+    "queuedAt": "2026-11-18T06:09:00.270Z",
+    "hook": "Could Queen Nefertiti be resting inches behind King Tut's burial wall?",
+    "article": [
+      "Radar scans inside King Tut's tomb suggest hidden chambers might exist right behind the painted walls of the burial room. The lost resting place of the great queen could be waiting to rewrite history just inches away.",
+      "Howard Carter discovered King Tut's tomb in the Valley of the Kings in 1922, sparking a massive global media frenzy. Before young King Tut took the throne, some scholars believe Nefertiti briefly ruled Egypt as a female pharaoh after her husband died.",
+      "She had previously ruled as a powerful queen alongside Pharaoh Akhenaten during the wealthiest period of ancient Egyptian history. Decades after Carter's discovery, the possibility remains that her lost mummy is hidden behind a secret wall."
+    ],
+    "words": "SECRET CHAMBER BEHIND WALL",
+    "tags": [
+      "archaeology",
+      "ancienthistory",
+      "mummy",
+      "pharaoh"
+    ],
+    "engage": "Do you think archaeologists will ever find hidden chambers behind those painted walls?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-S202611121-2026-11-18-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/544526",
+    "author": "Unknown",
+    "license": "CC0"
+  },
+  {
+    "id": "ZV-S202611141-2026-11-18-1",
+    "topic": "ZV-S202611141",
+    "queuedAt": "2026-11-18T06:10:54.334Z",
+    "hook": "Deep under the desert, massive stone coffins were hidden—not for pharaohs, but for bulls.",
+    "article": [
+      "Deep under the desert in pitch-black tunnels, giant stone sarcophagi weighing up to sixty-two tons were hidden away. They were actually constructed to entomb sacred Apis bulls, which were believed to be living gods.",
+      "Priests spent sixty-eight days embalming each holy bull before moving the massive stone coffins into underground vaults. Ancient workers lowered these forty-ton boxes into place using levers, winches, and by slowly draining sand beneath them.",
+      "Over fourteen hundred years, at least sixty divine bulls received these magnificent royal burials. Walking through those pitch-black underground vaults today brings you face-to-face with the astonishing scale of these sixty-two-ton stone monuments."
+    ],
+    "words": "GIANT SACRED STONE SARCOPHAGI",
+    "tags": [
+      "ancientegypt",
+      "archaeology",
+      "ancienthistory",
+      "sarcophagus"
+    ],
+    "engage": "Which detail surprises you more: lowering forty-ton stone boxes by draining sand, or spending sixty-eight days embalming a sacred bull?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-S202611141-2026-11-18-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/551899",
+    "author": "Unknown",
+    "license": "CC0"
+  },
+  {
+    "id": "ZV-D03-2026-11-18-1",
+    "topic": "ZV-D03",
+    "queuedAt": "2026-11-18T06:11:30.695Z",
+    "hook": "Did thousands of sacred ancient Egyptian mummies really get crushed into fertilizer?",
+    "article": [
+      "In 1890, a massive shipment carrying thousands of ancient animal mummies sailed from Egypt to Liverpool, England. Tragically, a large portion of this ancient sacred treasure was sold off to be crushed into agricultural fertilizer.",
+      "These bundles were uncovered after an Egyptian farmer digging near Istabl Antar in 1888 stumbled upon hundreds of thousands of cat mummies buried deep in the sand. Ancient worshippers had purchased these embalmed creatures believing they harbored divine souls and secured eternal blessings.",
+      "Today, modern CT scans allow scientists to peer inside sealed mummies without unwrapping fragile linen bands. Seeing these delicate, sacred offerings preserved in museums makes the reality of thousands being ground down for farm soil feel completely staggering."
+    ],
+    "words": "Crushed Into Agricultural Fertilizer",
+    "tags": [
+      "ancientegypt",
+      "archaeology",
+      "catmummies",
+      "historyfacts"
+    ],
+    "engage": "How would you react if you discovered that thousands of ancient sacred treasures were once ground up for farm soil?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-D03-2026-11-18-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/552371",
+    "author": "Unknown",
+    "license": "CC0"
   }
 ]
