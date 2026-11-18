@@ -682,7 +682,22 @@
       "ig"
     ],
     "at": "2026-11-18T20:00:00Z",
-    "done": false
+    "done": "2026-11-18T20:01:35.433Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1441417857976586",
+        "url": "https://www.facebook.com/reel/1441417857976586"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18104923742567619",
+        "url": "https://www.instagram.com/reel/Df5UK1dkawf/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T03",
