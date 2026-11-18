@@ -117,24 +117,30 @@ for (let i = 0; i < 5; i++) {
 sheet(outro, 5, 1, path.join(out, 'outro.jpg'));
 
 // what is really heard, in the finished mix
-console.log('Hearing every line');
-const allAudio = path.join(tmp, 'all.mp3');
-ff(['-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', allAudio]);
-const heardRun = spawnSync(process.env.WHISPER_PY, [path.join(path.dirname(new URL(import.meta.url).pathname), 'words.py'), allAudio], { encoding: 'utf8', maxBuffer: 1 << 28 });
-if (heardRun.status !== 0) throw new Error(`hearing failed: ${String(heardRun.stderr).slice(-300)}`);
-const heardWords = JSON.parse(heardRun.stdout);
-for (const s of srt) {
-  s.seconds = s.end - s.start;
-  s.secPerWord = s.seconds / words(s.text).length;
-  const mid = (w) => (w.start + w.end) / 2;
-  s.heard = heardWords.filter((w) => mid(w) >= s.start - 0.15 && mid(w) <= s.end - 0.05).map((w) => w.w).join(' ');
-  Object.assign(s, compare(s.text, s.heard));
-  // a line that seems empty gets its own hearing before anyone calls it missing
-  if (s.missing.length > words(s.text).length * 0.6) {
-    const clip = path.join(tmp, `again${s.n}.mp3`);
-    ff(['-ss', Math.max(0, s.start - 0.3).toFixed(2), '-to', (s.end + 0.3).toFixed(2), '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', clip]);
-    const again = spawnSync(process.env.WHISPER_PY, [path.join(path.dirname(new URL(import.meta.url).pathname), 'words.py'), clip], { encoding: 'utf8', maxBuffer: 1 << 26 });
-    if (again.status === 0) { s.heard = JSON.parse(again.stdout).map((w) => w.w).join(' '); Object.assign(s, compare(s.text, s.heard)); }
+// words.py runs an English-only model with language forced to "en": on Arabic audio it hears nothing real, and
+// words() keeps only a-z0-9 anyway, so comparing against it would fail or pass lines at random, never for a real reason
+if (script.lang === 'ar') {
+  console.log('Hearing every line: skipped (no Arabic speech-to-text wired in yet); picture, silence and black-frame checks still run');
+} else {
+  console.log('Hearing every line');
+  const allAudio = path.join(tmp, 'all.mp3');
+  ff(['-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', allAudio]);
+  const heardRun = spawnSync(process.env.WHISPER_PY, [path.join(path.dirname(new URL(import.meta.url).pathname), 'words.py'), allAudio], { encoding: 'utf8', maxBuffer: 1 << 28 });
+  if (heardRun.status !== 0) throw new Error(`hearing failed: ${String(heardRun.stderr).slice(-300)}`);
+  const heardWords = JSON.parse(heardRun.stdout);
+  for (const s of srt) {
+    s.seconds = s.end - s.start;
+    s.secPerWord = s.seconds / words(s.text).length;
+    const mid = (w) => (w.start + w.end) / 2;
+    s.heard = heardWords.filter((w) => mid(w) >= s.start - 0.15 && mid(w) <= s.end - 0.05).map((w) => w.w).join(' ');
+    Object.assign(s, compare(s.text, s.heard));
+    // a line that seems empty gets its own hearing before anyone calls it missing
+    if (s.missing.length > words(s.text).length * 0.6) {
+      const clip = path.join(tmp, `again${s.n}.mp3`);
+      ff(['-ss', Math.max(0, s.start - 0.3).toFixed(2), '-to', (s.end + 0.3).toFixed(2), '-i', video, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', clip]);
+      const again = spawnSync(process.env.WHISPER_PY, [path.join(path.dirname(new URL(import.meta.url).pathname), 'words.py'), clip], { encoding: 'utf8', maxBuffer: 1 << 26 });
+      if (again.status === 0) { s.heard = JSON.parse(again.stdout).map((w) => w.w).join(' '); Object.assign(s, compare(s.text, s.heard)); }
+    }
   }
 }
 
@@ -215,9 +221,12 @@ const pkg = fs.existsSync(pkgFile) ? JSON.parse(fs.readFileSync(pkgFile, 'utf8')
 const lastSpeech = srt[srt.length - 1].end;
 if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, the script ${lines.length}`);
 for (const l of report.lines) {
-  if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
-  else if ((l.missing || []).length > words(l.text).length * 0.6) fail.push(`line ${l.n}: most words were not heard: ${l.text.slice(0, 60)}`);
-  else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  // the hearing check above never ran for Arabic: no l.heard to judge, so none of these three apply
+  if (script.lang !== 'ar') {
+    if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
+    else if ((l.missing || []).length > words(l.text).length * 0.6) fail.push(`line ${l.n}: most words were not heard: ${l.text.slice(0, 60)}`);
+    else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
+  }
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
   const source = lines[l.n - 1] || {};

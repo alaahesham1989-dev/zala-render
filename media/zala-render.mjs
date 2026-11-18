@@ -1705,7 +1705,9 @@ async function main() {
     if (cmd === 'story') return;
   }
   const script = loadScript(target);
-  if (script.lang === 'ar') { LANG_FONT = 'Noto Kufi Arabic'; process.env.ZALA_CAPTION_FONT = LANG_FONT; }
+  // arabic.yml only installs/bundles Noto Naskh Arabic (apt fonts-noto-naskh-arabic, media/brand/fonts/NotoNaskhArabic-Bold.ttf);
+  // "Noto Kufi Arabic" is never on that machine, so libass fell back to a font with no Arabic glyphs — boxes on screen
+  if (script.lang === 'ar') { LANG_FONT = 'Noto Naskh Arabic'; process.env.ZALA_CAPTION_FONT = LANG_FONT; }
   const flat = flatten(script, limit);
 
   if (cmd === 'check') { process.exit(stageCheck(script, flat, { voiceFrom }) ? 0 : 1); }
