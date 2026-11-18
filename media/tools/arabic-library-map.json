@@ -1,0 +1,1445 @@
+{
+  "ZV-AR01": {
+    "titleAr": "محاكمة الموتى",
+    "imageCount": 22,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "f33087bce5969a",
+        "title": "Gold Mask of Tutankhamun",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/artifacts/tutankhamun-gold-mask.jpg"
+      },
+      {
+        "id": "0b85329454bff3",
+        "title": "Anubis Shrine of Tutankhamun",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/artifacts/tutankhamun-anubis-shrine.jpg"
+      },
+      {
+        "id": "0d4f1db24afe2f",
+        "title": "Abydos",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/abydos.jpg"
+      },
+      {
+        "id": "c6518a7e43aa72",
+        "title": "Dakka Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/dakka-temple.jpg"
+      },
+      {
+        "id": "3af6e90d3e45f7",
+        "title": "Pyramid of Ahmose",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/pyramid-of-ahmose.jpg"
+      },
+      {
+        "id": "9aedfa2d94bd8c",
+        "title": "Step Pyramid of Djoser",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/step-pyramid-of-djoser.jpg"
+      },
+      {
+        "id": "079d48dcccf7c2",
+        "title": "Umm El Qa'ab",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/umm-el-qaab.jpg"
+      },
+      {
+        "id": "f29d4bfaa87ada",
+        "title": "Mountain of the Dead (Gebel Al-Mawta)",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/gebel-al-mawta-siwa.jpg"
+      },
+      {
+        "id": "cd6f10b459bd1e",
+        "title": "Taposiris Magna",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/taposiris-magna.jpg"
+      },
+      {
+        "id": "b4129f90f0b33b",
+        "title": "Khanqah of Faraj ibn Barquq",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/khanqah-of-faraj-ibn-barquq.jpg"
+      },
+      {
+        "id": "1eb9553112c3c3",
+        "title": "Sultan Qaytbay Complex",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/sultan-qaytbay-complex.jpg"
+      },
+      {
+        "id": "98b04c16568245",
+        "title": "Taghribirdi Mosque",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/taghribirdi-mosque.jpg"
+      },
+      {
+        "id": "898cfad116480f",
+        "title": "Amada Temple: painted relief king and Thoth",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/amada-temple/14.jpg"
+      },
+      {
+        "id": "3edb4ca42ad995",
+        "title": "Behbeit El Hagar: Relief of offering figures, Nectanebo II",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/behbeit-el-hagar/6.jpg"
+      },
+      {
+        "id": "84d041553ab2b1",
+        "title": "Behbeit El Hagar: Relief detail, king offering vessels",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/behbeit-el-hagar/5.jpg"
+      },
+      {
+        "id": "fd2f764d080276",
+        "title": "Hatshepsut Temple: Temple in warm sun with cliffs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/7.jpg"
+      },
+      {
+        "id": "b5cfe32c87201c",
+        "title": "Hatshepsut Temple: Painted relief interior",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/13.jpg"
+      },
+      {
+        "id": "cebf4166f781e4",
+        "title": "Meidum: Pyramid with funerary temple entrance",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/meidum/10.jpg"
+      },
+      {
+        "id": "97c842a0f3ff0f",
+        "title": "Catacombs of Kom el-Shoqafa: Anubis mummifying relief",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/catacombs-of-kom-el-shoqafa/11.jpg"
+      },
+      {
+        "id": "b8e7df6a22264b",
+        "title": "Taposiris Magna: Lighthouse tower on hill",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/taposiris-magna/3.jpg"
+      },
+      {
+        "id": "915bf55e19edec",
+        "title": "Taposiris Magna: Osiris temple enclosure wall",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/taposiris-magna/2.jpg"
+      },
+      {
+        "id": "c9859545219cef",
+        "title": "Ptolemy before Isis & Osiris, Dendera Temple",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Ptolemy_before_Isis_%26_Osiris%2C_Dendera_Temple.jpg"
+      }
+    ]
+  },
+  "ZV-AR02": {
+    "titleAr": "أوزيريس",
+    "imageCount": 28,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "cea55df8b7e410",
+        "title": "Statue of Khafre Enthroned",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/artifacts/statue-of-khafre-enthroned.jpg"
+      },
+      {
+        "id": "0d4f1db24afe2f",
+        "title": "Abydos",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/abydos.jpg"
+      },
+      {
+        "id": "9c97606b1dbea8",
+        "title": "Behbeit El Hagar",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/behbeit-el-hagar.jpg"
+      },
+      {
+        "id": "2b9e759655c347",
+        "title": "Edfu Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/edfu-temple.jpg"
+      },
+      {
+        "id": "43207768f8df81",
+        "title": "Philae Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/philae.jpg"
+      },
+      {
+        "id": "3af6e90d3e45f7",
+        "title": "Pyramid of Ahmose",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/pyramid-of-ahmose.jpg"
+      },
+      {
+        "id": "079d48dcccf7c2",
+        "title": "Umm El Qa'ab",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/umm-el-qaab.jpg"
+      },
+      {
+        "id": "f8920185a20233",
+        "title": "Nekhen (Hierakonpolis)",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monument/nekhen.jpg"
+      },
+      {
+        "id": "c74e8c9b1c1b3b",
+        "title": "Philae Temple Complex (Isis Sanctuary)",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/philae-temple-complex.jpg"
+      },
+      {
+        "id": "cd6f10b459bd1e",
+        "title": "Taposiris Magna",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/taposiris-magna.jpg"
+      },
+      {
+        "id": "dc14af71cc5994",
+        "title": "Abydos: Painted reliefs in Seti I temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/12.jpg"
+      },
+      {
+        "id": "41fa56164befa7",
+        "title": "Abydos: Temple entrance and ruins",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/7.jpg"
+      },
+      {
+        "id": "beabe5f6991277",
+        "title": "Abydos: Colored relief figures",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/4.jpg"
+      },
+      {
+        "id": "3344a9e5a4d910",
+        "title": "Abydos: Columned hall",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/11.jpg"
+      },
+      {
+        "id": "f960e20cb3080a",
+        "title": "Abydos: Hypostyle columns interior",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/10.jpg"
+      },
+      {
+        "id": "3bface7d253816",
+        "title": "Abydos: Temple facade blocks",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/3.jpg"
+      },
+      {
+        "id": "6eefdeb99a39f6",
+        "title": "Abydos: Carved relief figures",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abydos/5.jpg"
+      },
+      {
+        "id": "90fcba874c9230",
+        "title": "Alexandria National Museum: falcon-headed statue detail in the collection",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-national-museum/1.jpg"
+      },
+      {
+        "id": "3edb4ca42ad995",
+        "title": "Behbeit El Hagar: Relief of offering figures, Nectanebo II",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/behbeit-el-hagar/6.jpg"
+      },
+      {
+        "id": "84d041553ab2b1",
+        "title": "Behbeit El Hagar: Relief detail, king offering vessels",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/behbeit-el-hagar/5.jpg"
+      },
+      {
+        "id": "770bb58485933c",
+        "title": "Edfu Temple: Distant view of temple from the approach",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/edfu-temple/12.jpg"
+      },
+      {
+        "id": "bedd1faa394e81",
+        "title": "Philae Temple: Temple island seen from the Nile",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/philae/2.jpg"
+      },
+      {
+        "id": "9182d30a8a0992",
+        "title": "Umm El Qa'ab: wide view of the royal tombs field with mud-brick pits",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/umm-el-qaab/11.jpg"
+      },
+      {
+        "id": "b8e7df6a22264b",
+        "title": "Taposiris Magna: Lighthouse tower on hill",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/taposiris-magna/3.jpg"
+      },
+      {
+        "id": "915bf55e19edec",
+        "title": "Taposiris Magna: Osiris temple enclosure wall",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/taposiris-magna/2.jpg"
+      },
+      {
+        "id": "ceb3fe00f36683",
+        "title": "SFEC-DENDERA-2010-085",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/SFEC-DENDERA-2010-085.JPG"
+      },
+      {
+        "id": "c9859545219cef",
+        "title": "Ptolemy before Isis & Osiris, Dendera Temple",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Ptolemy_before_Isis_%26_Osiris%2C_Dendera_Temple.jpg"
+      },
+      {
+        "id": "1742f2b60d4511",
+        "title": "Dendera, Temple of Hathor, 19th century pictures, 1870-1888, photo 6 of 9 - Archivio fotografico Museo Egizio, Turin INV12 007",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/58/Dendera%2C_Temple_of_Hathor%2C_19th_century_pictures%2C_1870-1888%2C_photo_6_of_9_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV12_007.jpg/3840px-Dendera%2C_Temple_of_Hathor%2C_19th_century_pictures%2C_1870-1888%2C_photo_6_of_9_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV12_007.jpg"
+      }
+    ]
+  },
+  "ZV-AR03": {
+    "titleAr": "أنوبيس",
+    "imageCount": 22,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "0b85329454bff3",
+        "title": "Anubis Shrine of Tutankhamun",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/artifacts/tutankhamun-anubis-shrine.jpg"
+      },
+      {
+        "id": "aad3ccdcdcf576",
+        "title": "Abusir",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/abusir.jpg"
+      },
+      {
+        "id": "af6f4ddb23a643",
+        "title": "Dahshur",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/dahshur.jpg"
+      },
+      {
+        "id": "0405d5bffee95e",
+        "title": "Giza Pyramids",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/giza-pyramids.jpg"
+      },
+      {
+        "id": "0b385e30c259da",
+        "title": "Imhotep Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/imhotep-museum.jpg"
+      },
+      {
+        "id": "b97dd76abb51e1",
+        "title": "Layer Pyramid",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/layer-pyramid.jpg"
+      },
+      {
+        "id": "3faad39777a521",
+        "title": "Mummification Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/mummification-museum.jpg"
+      },
+      {
+        "id": "f4a1d2e239646c",
+        "title": "Qurnet Murai",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/qurnet-murai.jpg"
+      },
+      {
+        "id": "58c597b523695f",
+        "title": "Saqqara",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/saqqara.jpg"
+      },
+      {
+        "id": "9aedfa2d94bd8c",
+        "title": "Step Pyramid of Djoser",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/step-pyramid-of-djoser.jpg"
+      },
+      {
+        "id": "cb1447797106cb",
+        "title": "El-Assasif Tombs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/tombs-of-el-assasif.jpg"
+      },
+      {
+        "id": "079d48dcccf7c2",
+        "title": "Umm El Qa'ab",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/umm-el-qaab.jpg"
+      },
+      {
+        "id": "f8be5decc30ac3",
+        "title": "Valley of the Queens",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/valley-of-the-queens.jpg"
+      },
+      {
+        "id": "583840d0eaa5d3",
+        "title": "Al-Sayyida Nafisa Mosque",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/al-sayyida-nafisa-mosque.jpg"
+      },
+      {
+        "id": "fd2f764d080276",
+        "title": "Hatshepsut Temple: Temple in warm sun with cliffs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/7.jpg"
+      },
+      {
+        "id": "b5cfe32c87201c",
+        "title": "Hatshepsut Temple: Painted relief interior",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/13.jpg"
+      },
+      {
+        "id": "461d5c0f3abce3",
+        "title": "Mummification Museum: mummy in coffin display",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/mummification-museum/1.jpg"
+      },
+      {
+        "id": "9182d30a8a0992",
+        "title": "Umm El Qa'ab: wide view of the royal tombs field with mud-brick pits",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/umm-el-qaab/11.jpg"
+      },
+      {
+        "id": "97c842a0f3ff0f",
+        "title": "Catacombs of Kom el-Shoqafa: Anubis mummifying relief",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/catacombs-of-kom-el-shoqafa/11.jpg"
+      },
+      {
+        "id": "c6f0bd0d6b8fc3",
+        "title": "Graeco-Roman Museum: wrapped mummy in display",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/graeco-roman-museum/5.jpg"
+      },
+      {
+        "id": "25a6a02154c8cd",
+        "title": "City of the Dead: Tomb alley toward domed mausoleum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/city-of-the-dead/11.jpg"
+      },
+      {
+        "id": "52efe249e882b7",
+        "title": "City of the Dead: Ornate tomb gate at dusk",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/city-of-the-dead/6.jpg"
+      }
+    ]
+  },
+  "ZV-AR04": {
+    "titleAr": "ست",
+    "imageCount": 0,
+    "needsGeneration": true,
+    "generationNote": "Only 0 images in R2 — render will need Flow/Nano Banana shots for missing moments",
+    "r2Images": []
+  },
+  "ZV-AR05": {
+    "titleAr": "كتاب الموتى",
+    "imageCount": 3,
+    "needsGeneration": true,
+    "generationNote": "Only 3 images in R2 — render will need Flow/Nano Banana shots for missing moments",
+    "r2Images": [
+      {
+        "id": "7cb22ac74df126",
+        "title": "Luxor Temple: colossus of Ramesses II and papyrus columns",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/luxor-temple/3.jpg"
+      },
+      {
+        "id": "416c894e7a1d17",
+        "title": "Medinet Habu Temple: Papyrus capital against sky",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/medinet-habu/10.jpg"
+      },
+      {
+        "id": "11ed4ee9f32e92",
+        "title": "Sheikh Abd el-Qurna: Tomb of Ramose excavated area",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/sheikh-abd-el-qurna/6.jpg"
+      }
+    ]
+  },
+  "ZV-AR06": {
+    "titleAr": "حتشبسوت",
+    "imageCount": 21,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "e097b00623694c",
+        "title": "Amada Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/amada-temple.jpg"
+      },
+      {
+        "id": "12a7cb033ff555",
+        "title": "Hatshepsut Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/hatshepsut-temple.jpg"
+      },
+      {
+        "id": "63020b78641924",
+        "title": "Obelisk of Senusret I",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/obelisk-of-senusret-i.jpg"
+      },
+      {
+        "id": "0d6ac795ba4edf",
+        "title": "Speos Artemidos",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/speos-artemidos.jpg"
+      },
+      {
+        "id": "9b45106c5dd531",
+        "title": "Unfinished Obelisk",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/unfinished-obelisk.jpg"
+      },
+      {
+        "id": "c5ae9a7f15f0d0",
+        "title": "Hatshepsut Temple: Frontal view of colonnades and ramp",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/2.jpg"
+      },
+      {
+        "id": "86a6c04cb28ae5",
+        "title": "Hatshepsut Temple: Terraces below cliffs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/3.jpg"
+      },
+      {
+        "id": "2b546dec8cce58",
+        "title": "Hatshepsut Temple: Hathor-headed columns",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/4.jpg"
+      },
+      {
+        "id": "edb997a49a819c",
+        "title": "Hatshepsut Temple: Temple in front of cliffs, blue sky",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/5.jpg"
+      },
+      {
+        "id": "fd2f764d080276",
+        "title": "Hatshepsut Temple: Temple in warm sun with cliffs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/7.jpg"
+      },
+      {
+        "id": "b5cfe32c87201c",
+        "title": "Hatshepsut Temple: Painted relief interior",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/hatshepsut-temple/13.jpg"
+      },
+      {
+        "id": "95a083b91b108a",
+        "title": "Karnak Temple: Hatshepsut obelisks",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/karnak/12.jpg"
+      },
+      {
+        "id": "3700fbf78895f9",
+        "title": "Karnak Temple: ruins with obelisk wide view",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/karnak/11.jpg"
+      },
+      {
+        "id": "bdda6c20bc47ae",
+        "title": "Luxor Temple: pylon, obelisk and colossi at sunset",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/luxor-temple/1.jpg"
+      },
+      {
+        "id": "b4a44beb800b29",
+        "title": "Nubian Museum: Obelisk of Ramses II in the museum garden",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/nubian-museum/1.jpg"
+      },
+      {
+        "id": "bf633db4ae1126",
+        "title": "Tahrir Square: Obelisk monument at night",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/tahrir-square/9.jpg"
+      },
+      {
+        "id": "85368bf487555e",
+        "title": "Unfinished Obelisk: the unfinished obelisk with the crack and quarry trench",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/unfinished-obelisk/4.jpg"
+      },
+      {
+        "id": "bea65b50877b06",
+        "title": "Unfinished Obelisk: long view of the obelisk lying in its granite quarry",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/unfinished-obelisk/2.jpg"
+      },
+      {
+        "id": "ea1ea60bdd0273",
+        "title": "Unfinished Obelisk: obelisk end behind chain barrier",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/unfinished-obelisk/3.jpg"
+      },
+      {
+        "id": "6d6d8e4be0cbab",
+        "title": "Unfinished Obelisk: obelisk surface with tool marks and quarry beyond",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/unfinished-obelisk/6.jpg"
+      },
+      {
+        "id": "c90c5a5753876b",
+        "title": "Grand Egyptian Museum: Obelisk in the great hall",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/grand-egyptian-museum/3.jpg"
+      }
+    ]
+  },
+  "ZV-AR07": {
+    "titleAr": "الأهرامات من الداخل",
+    "imageCount": 0,
+    "needsGeneration": true,
+    "generationNote": "Only 0 images in R2 — render will need Flow/Nano Banana shots for missing moments",
+    "r2Images": []
+  },
+  "ZV-AR08": {
+    "titleAr": "نيفرتيتي",
+    "imageCount": 14,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "eb97a4555df0fb",
+        "title": "Bust of Nefertiti",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/artifacts/nefertiti-bust.jpg"
+      },
+      {
+        "id": "411b5621e27c1a",
+        "title": "Amarna Tombs of the Nobles",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/amarna-tombs-of-the-nobles.jpg"
+      },
+      {
+        "id": "8cb0751d9dc930",
+        "title": "Royal Tomb of Akhenaten",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/royal-tomb-of-akhenaten.jpg"
+      },
+      {
+        "id": "8203b709a666d0",
+        "title": "Amarna",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/tell-el-amarna.jpg"
+      },
+      {
+        "id": "5c07727cefac65",
+        "title": "Great Temple of the Aten, Amarna",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/temple/great-aten-temple.jpg"
+      },
+      {
+        "id": "3a32f33868c324",
+        "title": "Amarna Tombs of the Nobles: royal family relief under the Aten",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/amarna-tombs-of-the-nobles/5.jpg"
+      },
+      {
+        "id": "fe1c9ff2446fef",
+        "title": "Amarna Tombs of the Nobles: chariot relief",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/amarna-tombs-of-the-nobles/2.jpg"
+      },
+      {
+        "id": "c9b837a716686e",
+        "title": "Amarna Tombs of the Nobles: kneeling figure relief",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/amarna-tombs-of-the-nobles/1.jpg"
+      },
+      {
+        "id": "a6d2819fd931f6",
+        "title": "Amarna Tombs of the Nobles: hall wall reliefs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/amarna-tombs-of-the-nobles/4.jpg"
+      },
+      {
+        "id": "1913fff3ae9ed5",
+        "title": "Royal Tomb of Akhenaten: Descending corridor of the tomb",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/royal-tomb-of-akhenaten/1.jpg"
+      },
+      {
+        "id": "59493e317ef026",
+        "title": "Royal Tomb of Akhenaten: Burial chamber with pillars",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/royal-tomb-of-akhenaten/6.jpg"
+      },
+      {
+        "id": "8660322474afdb",
+        "title": "Royal Tomb of Akhenaten: Sun disk relief with rays",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/royal-tomb-of-akhenaten/2.jpg"
+      },
+      {
+        "id": "9ca07eeeea52c6",
+        "title": "Amarna: Ruins of the central city",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/tell-el-amarna/7.jpg"
+      },
+      {
+        "id": "f103081568cf4a",
+        "title": "Amarna: Temple foundations at the little Aten temple area",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/tell-el-amarna/13.jpg"
+      }
+    ]
+  },
+  "ZV-AR09": {
+    "titleAr": "الغرفة المخفية في الهرم",
+    "imageCount": 0,
+    "needsGeneration": true,
+    "generationNote": "Only 0 images in R2 — render will need Flow/Nano Banana shots for missing moments",
+    "r2Images": []
+  },
+  "ZV-AR10": {
+    "titleAr": "أبو سمبل",
+    "imageCount": 9,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "776313e27f72ef",
+        "title": "The Great Temple of Abu Simbel",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/abu-simbel-great-temple.jpg"
+      },
+      {
+        "id": "342eb5661f8004",
+        "title": "Abu Simbel Temples",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/abu-simbel.jpg"
+      },
+      {
+        "id": "8d8f238a2534df",
+        "title": "Abu Simbel Temples: Great Temple facade with four colossi",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/10.jpg"
+      },
+      {
+        "id": "13e8459407f5be",
+        "title": "Abu Simbel Temples: Great Temple lit at night",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/2.jpg"
+      },
+      {
+        "id": "c4c3629180c3ac",
+        "title": "Abu Simbel Temples: Colossal seated statues close up",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/4.jpg"
+      },
+      {
+        "id": "3bf11f26395891",
+        "title": "Abu Simbel Temples: Small Temple of Nefertari facade",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/3.jpg"
+      },
+      {
+        "id": "70c6ccfcfdaf39",
+        "title": "Abu Simbel Temples: Both temples seen together",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/9.jpg"
+      },
+      {
+        "id": "61c460c0270dcc",
+        "title": "Abu Simbel Temples: Wide panorama of both temples",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/6.jpg"
+      },
+      {
+        "id": "64d70e32e1d376",
+        "title": "Abu Simbel Temples: Both temples in clear light",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-simbel/13.jpg"
+      }
+    ]
+  },
+  "ZV-AR11": {
+    "titleAr": "الموميا",
+    "imageCount": 6,
+    "needsGeneration": true,
+    "generationNote": "Only 6 images in R2 — render will need Flow/Nano Banana shots for missing moments",
+    "r2Images": [
+      {
+        "id": "3faad39777a521",
+        "title": "Mummification Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/mummification-museum.jpg"
+      },
+      {
+        "id": "815293e14dc9c0",
+        "title": "Valley of the Golden Mummies",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/valley-of-the-golden-mummies.jpg"
+      },
+      {
+        "id": "461d5c0f3abce3",
+        "title": "Mummification Museum: mummy in coffin display",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/mummification-museum/1.jpg"
+      },
+      {
+        "id": "f57a2436520600",
+        "title": "Valley of the Golden Mummies: gilded mummy face with painted cartonnage",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/valley-of-the-golden-mummies/1.jpg"
+      },
+      {
+        "id": "97c842a0f3ff0f",
+        "title": "Catacombs of Kom el-Shoqafa: Anubis mummifying relief",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/catacombs-of-kom-el-shoqafa/11.jpg"
+      },
+      {
+        "id": "c6f0bd0d6b8fc3",
+        "title": "Graeco-Roman Museum: wrapped mummy in display",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/graeco-roman-museum/5.jpg"
+      }
+    ]
+  },
+  "ZV-AR12": {
+    "titleAr": "كليوباترا",
+    "imageCount": 145,
+    "needsGeneration": false,
+    "generationNote": null,
+    "r2Images": [
+      {
+        "id": "01e09e83af6f90",
+        "title": "Alexandria National Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/alexandria-national-museum.jpg"
+      },
+      {
+        "id": "d11acfc4a08983",
+        "title": "Kom Ombo Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/kom-ombo.jpg"
+      },
+      {
+        "id": "43207768f8df81",
+        "title": "Philae Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/philae.jpg"
+      },
+      {
+        "id": "2847b3057e9003",
+        "title": "Qasr Qarun Temple",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/qasr-qarun-temple.jpg"
+      },
+      {
+        "id": "7dfc0a907464e9",
+        "title": "Cleopatra’s Spring (Ain Guba) Siwa",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/ancient/monuments/cleopatras-spring-siwa.jpg"
+      },
+      {
+        "id": "4bf6d9411b96ea",
+        "title": "Bibliotheca Alexandrina",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/contemporary/monument/bibliotheca-alexandrina.jpg"
+      },
+      {
+        "id": "62b742d42aada4",
+        "title": "Abu Mena",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/coptic/monuments/abu-mena.jpg"
+      },
+      {
+        "id": "d535b678cfb662",
+        "title": "Wadi El Natrun Monasteries",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/coptic/monuments/wadi-el-natrun.jpg"
+      },
+      {
+        "id": "12185b1c89f086",
+        "title": "Saint Mark's Coptic Orthodox Cathedral, Alexandria",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/coptic/religious/saint-marks-coptic-orthodox-cathedral.jpg"
+      },
+      {
+        "id": "96973016677fe7",
+        "title": "Pompey's Pillar in Alexandria",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/pompeys-pillar-alexandria.jpg"
+      },
+      {
+        "id": "57d5dba25ced8a",
+        "title": "Dendera Temple of Hathor",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/dendera-temple-hathor.jpg"
+      },
+      {
+        "id": "df2c2d633b2f73",
+        "title": "Catacombs of Kom el-Shoqafa",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/catacombs-of-kom-el-shoqafa.jpg"
+      },
+      {
+        "id": "1cd31d589a6661",
+        "title": "Graeco-Roman Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/graeco-roman-museum.jpg"
+      },
+      {
+        "id": "6d14a6c1b4cc17",
+        "title": "Karanis",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/karanis.jpg"
+      },
+      {
+        "id": "ab4de5134e7876",
+        "title": "Kom el-Dikka",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/kom-el-dikka.jpg"
+      },
+      {
+        "id": "212c1eeb6e9723",
+        "title": "Mons Claudianus",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/mons-claudianus.jpg"
+      },
+      {
+        "id": "74903fafc2edbb",
+        "title": "Pompey's Pillar",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/pompeys-pillar.jpg"
+      },
+      {
+        "id": "cd6f10b459bd1e",
+        "title": "Taposiris Magna",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/graeco_roman/monuments/taposiris-magna.jpg"
+      },
+      {
+        "id": "d26c20c456a7c1",
+        "title": "Citadel of Qaitbay in Alexandria",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/palace/citadel-of-qaitbay-alexandria.jpg"
+      },
+      {
+        "id": "b9d64e0430d3af",
+        "title": "Abu al-Abbas al-Mursi Mosque",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/abu-al-abbas-al-mursi-mosque.jpg"
+      },
+      {
+        "id": "a29abfae0a4c78",
+        "title": "Attarine Mosque",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/attarine-mosque.jpg"
+      },
+      {
+        "id": "0875c9c0443119",
+        "title": "Citadel of Qaitbay",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/islamic/monuments/qaitbay-citadel.jpg"
+      },
+      {
+        "id": "86aee172821e31",
+        "title": "Alexandria Zoo",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/leisure_nature/monuments/alexandria-zoo.jpg"
+      },
+      {
+        "id": "09fd14c89f43da",
+        "title": "Shallalat Gardens",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/leisure_nature/monuments/shallalat-gardens.jpg"
+      },
+      {
+        "id": "fc1b2411293fa3",
+        "title": "Antoniadis Palace",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/monuments/antoniadis-palace.jpg"
+      },
+      {
+        "id": "8cb7d5ff378ff7",
+        "title": "Cavafy Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/monuments/cavafy-museum.jpg"
+      },
+      {
+        "id": "91d7c4f88a6e45",
+        "title": "Montaza Palace and Gardens",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/monuments/montaza-palace-gardens.jpg"
+      },
+      {
+        "id": "f3f28148c56c72",
+        "title": "Montazah Royal Gardens",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/monuments/montazah-royal-gardens.jpg"
+      },
+      {
+        "id": "bed941d77836c0",
+        "title": "Ras El Tin Palace",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/monuments/ras-el-tin-palace.jpg"
+      },
+      {
+        "id": "384b6a6ba9914e",
+        "title": "Royal Jewelry Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/monuments/royal-jewelry-museum.jpg"
+      },
+      {
+        "id": "eac981d98cc330",
+        "title": "Alexandria Vintage Tram & Historic Corniche",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/modern_monarchy/classic_coastal/alexandria-vintage-tram-corniche.jpg"
+      },
+      {
+        "id": "efb05bd7cbecf4",
+        "title": "Alexandria National Museum: museum villa facade",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-national-museum/2.jpg"
+      },
+      {
+        "id": "13b5f86ca941cc",
+        "title": "Alexandria National Museum: museum entrance and stairs",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-national-museum/4.jpg"
+      },
+      {
+        "id": "90fcba874c9230",
+        "title": "Alexandria National Museum: falcon-headed statue detail in the collection",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-national-museum/1.jpg"
+      },
+      {
+        "id": "4c52d5b7e6fd4f",
+        "title": "Alexandria National Museum: royal stone head close-up in the collection",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-national-museum/3.jpg"
+      },
+      {
+        "id": "aea3a5265f7646",
+        "title": "El-Tod Temple: Relief inside the Ptolemaic pronaos",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/el-tod-temple/14.jpg"
+      },
+      {
+        "id": "6ebf30b740f349",
+        "title": "Bibliotheca Alexandrina: Interior reading hall columns",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/bibliotheca-alexandrina/5.jpg"
+      },
+      {
+        "id": "29a0944b5f5635",
+        "title": "Bibliotheca Alexandrina: Black and white roof detail with clouds",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/bibliotheca-alexandrina/3.jpg"
+      },
+      {
+        "id": "d37aed910dd43c",
+        "title": "Pompey's Pillar: Pillar against blue sky",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/pompeys-pillar/8.jpg"
+      },
+      {
+        "id": "285c66d19653eb",
+        "title": "Pompey's Pillar: Sphinx with pillar behind",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/pompeys-pillar/9.jpg"
+      },
+      {
+        "id": "ade8e68f5a5fa9",
+        "title": "Pompey's Pillar: Pillar flanked by two sphinxes",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/pompeys-pillar/10.jpg"
+      },
+      {
+        "id": "c8f8e839c1054b",
+        "title": "Pompey's Pillar: Moody view of pillar over Serapeum ruins",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/pompeys-pillar/11.jpg"
+      },
+      {
+        "id": "c49c7aa29aba1e",
+        "title": "Abu al-Abbas al-Mursi Mosque: Mosque facade under blue sky",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-al-abbas-al-mursi-mosque/2.jpg"
+      },
+      {
+        "id": "000537c13a8652",
+        "title": "Abu al-Abbas al-Mursi Mosque: Entrance with fountain",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/abu-al-abbas-al-mursi-mosque/12.jpg"
+      },
+      {
+        "id": "614de50515e964",
+        "title": "Citadel of Qaitbay: Breakwater and Alexandria skyline from citadel",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/qaitbay-citadel/2.jpg"
+      },
+      {
+        "id": "b1f15fde23d5a5",
+        "title": "Alexandria Zoo: aerial view of zoo gardens",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-zoo/2.jpg"
+      },
+      {
+        "id": "bf486b0f840ab0",
+        "title": "Alexandria Zoo: cage pavilion in the zoo",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/alexandria-zoo/3.jpg"
+      },
+      {
+        "id": "03ef98bc621bc0",
+        "title": "Shallalat Gardens: Secret Keeper statue at night",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/shallalat-gardens/2.jpg"
+      },
+      {
+        "id": "ac8f292a49cb3f",
+        "title": "Montaza Palace and Gardens: palace seen from the sea",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/montaza-palace-gardens/14.jpg"
+      },
+      {
+        "id": "23be9cfdbf0007",
+        "title": "Royal Jewelry Museum: Palace gallery with chandelier",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/vault/galleries/royal-jewelry-museum/2.jpg"
+      },
+      {
+        "id": "950fa1a40f91ff",
+        "title": "Cleopatra-VII-Antikensammlung-Berlin",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/library/images/950fa1a40f91ff.jpg"
+      },
+      {
+        "id": "dc155f4f2d9cc2",
+        "title": "Caesar-looking-at-Cleopatra-VII-Antikensammlung-Berlin",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/library/images/dc155f4f2d9cc2.jpg"
+      },
+      {
+        "id": "3d247106b51995",
+        "title": "Bust of Cleopatra at the Royal Ontario Museum",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/library/images/3d247106b51995.jpg"
+      },
+      {
+        "id": "45cf020aa073a9",
+        "title": "Bust of Cleopatra VII - Back Profile",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/library/images/45cf020aa073a9.jpg"
+      },
+      {
+        "id": "7ae1af0d927f68",
+        "title": "Bust of Cleopatra VII - Side Profile",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/library/images/7ae1af0d927f68.jpg"
+      },
+      {
+        "id": "9950f99ae5ddf5",
+        "title": "Berlín Cleopatra 01",
+        "url": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/library/images/9950f99ae5ddf5.jpg"
+      },
+      {
+        "id": "8c9c9c456742e5",
+        "title": "Bust of Cleopatra VII - Altes Museum - Berlin - Germany 2017 (2)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/54/Bust_of_Cleopatra_VII_-_Altes_Museum_-_Berlin_-_Germany_2017_%282%29.jpg"
+      },
+      {
+        "id": "39c549a0add017",
+        "title": "Bust of Cleopatra VII - Altes Museum - Berlin - Germany 2017 (3)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Bust_of_Cleopatra_VII_-_Altes_Museum_-_Berlin_-_Germany_2017_%283%29.jpg"
+      },
+      {
+        "id": "d9f926cc41ef68",
+        "title": "Bust of Cleopatra VII - Altes Museum - Berlin - Germany 2017",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/bb/Bust_of_Cleopatra_VII_-_Altes_Museum_-_Berlin_-_Germany_2017.jpg"
+      },
+      {
+        "id": "972fd73100814b",
+        "title": "Cleopatra VII, 40-30 BCE; Altes Museum, Berlin (2) (28399851109)",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Cleopatra_VII%2C_40-30_BCE%3B_Altes_Museum%2C_Berlin_%282%29_%2828399851109%29.jpg/3840px-Cleopatra_VII%2C_40-30_BCE%3B_Altes_Museum%2C_Berlin_%282%29_%2828399851109%29.jpg"
+      },
+      {
+        "id": "fa212d313040bf",
+        "title": "Cleopatra VII, 40-30 BCE; Altes Museum, Berlin (1) (28399854659) (cropped)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Cleopatra_VII%2C_40-30_BCE%3B_Altes_Museum%2C_Berlin_%281%29_%2828399854659%29_%28cropped%29.jpg"
+      },
+      {
+        "id": "87d3dfbfb7d98c",
+        "title": "Statue of a Ptolemaic Queen, perhaps Cleopatra VII (ca. 200–30 BCE)",
+        "url": "https://images.metmuseum.org/CRDImages/eg/original/DT10854.jpg"
+      },
+      {
+        "id": "b33f11d0f529b6",
+        "title": "Bust of Cleopatra (one of a pair) (ca. 1720–30)",
+        "url": "https://images.metmuseum.org/CRDImages/es/original/ES3172.jpg"
+      },
+      {
+        "id": "cd158665b43c41",
+        "title": "Cleopatra VII tetradrachm Ascalon mint",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Cleopatra_VII_tetradrachm_Ascalon_mint.jpg"
+      },
+      {
+        "id": "8457e88a4abef3",
+        "title": "Cleopatra VII tetradrachm Syria mint",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Cleopatra_VII_tetradrachm_Syria_mint.jpg"
+      },
+      {
+        "id": "dbf9b3e7d53db3",
+        "title": "Antiochia (forse), tetradracma di cleopatra VII e marcantonio, 36 ac ca",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Antiochia_%28forse%29%2C_tetradracma_di_cleopatra_VII_e_marcantonio%2C_36_ac_ca.JPG"
+      },
+      {
+        "id": "5d71974d766cd9",
+        "title": "Tetradrachme representing Cleopatra VII 51-30 BC from Alexandria in Musée monétaire cantonal",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Tetradrachme_representing_Cleopatra_VII_51-30_BC_from_Alexandria_in_Mus%C3%A9e_mon%C3%A9taire_cantonal.jpg"
+      },
+      {
+        "id": "2dfa4c9ebcc62b",
+        "title": "Tehnica: Batere; Muchia: Netedă; Aversul: Capul lui Ptolemeu I Soter din profil spre dreapta.; Reversul: Acvilă spre stâ",
+        "url": "https://resource.culturalia.ro/public/2000/01/01/_B-MNIR_2021_01_ianuarir2021_P2_Numismatica_docpatv495/Imagini/6214040cbc3549e8b98b0cc5641c2c7c.TIF"
+      },
+      {
+        "id": "fc0d3422c039ad",
+        "title": "The Death of Cleopatra arthur",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/The_Death_of_Cleopatra_arthur.jpg"
+      },
+      {
+        "id": "628f295bffefbc",
+        "title": "Gerard Hoet (Dutch - The Death of Cleopatra - Google Art Project",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Gerard_Hoet_%28Dutch_-_The_Death_of_Cleopatra_-_Google_Art_Project.jpg/3840px-Gerard_Hoet_%28Dutch_-_The_Death_of_Cleopatra_-_Google_Art_Project.jpg"
+      },
+      {
+        "id": "f8239a0f9fbc2b",
+        "title": "Hans Makart - The Death of Cleopatra, 1875",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/4/42/Hans_Makart_-_The_Death_of_Cleopatra%2C_1875.jpg"
+      },
+      {
+        "id": "9af00a5db0650b",
+        "title": "The Death of Cleopatra MET DP375602",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/The_Death_of_Cleopatra_MET_DP375602.jpg"
+      },
+      {
+        "id": "f22e789cee769a",
+        "title": "Ca' Rezzonico - Cleopatra (Inv.305) - Pietro Vecchia",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/Ca%27_Rezzonico_-_Cleopatra_%28Inv.305%29_-_Pietro_Vecchia.jpg/3840px-Ca%27_Rezzonico_-_Cleopatra_%28Inv.305%29_-_Pietro_Vecchia.jpg"
+      },
+      {
+        "id": "a650160338c643",
+        "title": "Cleopatra - (Death by Ouraeus)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Cleopatra_-_%28Death_by_Ouraeus%29.jpg"
+      },
+      {
+        "id": "aa2cacc7b76301",
+        "title": "Death of Cleopatra - Johann Liss",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Death_of_Cleopatra_-_Johann_Liss.jpg/3840px-Death_of_Cleopatra_-_Johann_Liss.jpg"
+      },
+      {
+        "id": "c0d6c5c032658c",
+        "title": "The Death of Cleopatra by Alessandro Turchi, Louvre",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/83/The_Death_of_Cleopatra_by_Alessandro_Turchi%2C_Louvre.jpg"
+      },
+      {
+        "id": "e9499f662c9ffe",
+        "title": "The Death of Cleopatra (ca. 1645–55)",
+        "url": "https://images.metmuseum.org/CRDImages/ep/original/DP375602.jpg"
+      },
+      {
+        "id": "302d2c2f4f7f11",
+        "title": "Cleopatra (1858, carved 1869)",
+        "url": "https://images.metmuseum.org/CRDImages/ad/original/DT10855.jpg"
+      },
+      {
+        "id": "a3c6a41b4393f0",
+        "title": "Cleopatra (ca. 1598)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP825433.jpg"
+      },
+      {
+        "id": "89e1d6d75326b5",
+        "title": "The Meeting of Antony and Cleopatra (ca. 1745–47)",
+        "url": "https://images.metmuseum.org/CRDImages/ep/original/DT293615.jpg"
+      },
+      {
+        "id": "27f8659e2ad3f3",
+        "title": "The Death of Cleopatra from a set of The Story of Antony and Cleopatra (designed ca. 1650, woven 1650–77)",
+        "url": "https://images.metmuseum.org/CRDImages/es/original/501.jpg"
+      },
+      {
+        "id": "15d600a252efe1",
+        "title": "The Death of Cleopatra",
+        "url": "https://ids.si.edu/ids/deliveryService?id=SAAM-1994.17_1"
+      },
+      {
+        "id": "6182dac343dc86",
+        "title": "Cleopatra",
+        "url": "https://ids.si.edu/ids/deliveryService?id=SAAM-1973.164_1"
+      },
+      {
+        "id": "011f344f25dee6",
+        "title": "Death of Cleopatra, after a painting by Guido Reni",
+        "url": "https://iip-thumb.smk.dk/iiif/jp2/kksgb7687.tif.jp2/full/full/0/native.jpg"
+      },
+      {
+        "id": "464bdd5cfdc020",
+        "title": "The Death of Cleopatra. Laterally reversed copy after Caspar Netscher in the Staatliche Kunsthalle in Karlsruhe",
+        "url": "https://iip-thumb.smk.dk/iiif/jp2/kms812_verso.tif.jp2/full/full/0/native.jpg"
+      },
+      {
+        "id": "a481d5deaa97cb",
+        "title": "Jan de Bray - The de Bray Family (The Banquet of Antony and Cleopatra) - WGA03122",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Jan_de_Bray_-_The_de_Bray_Family_%28The_Banquet_of_Antony_and_Cleopatra%29_-_WGA03122.jpg"
+      },
+      {
+        "id": "91976722068726",
+        "title": "Sir Lawrence Alma-Tadema - The Meeting of Antony and Cleopatra",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bd/Sir_Lawrence_Alma-Tadema_-_The_Meeting_of_Antony_and_Cleopatra.jpg/3840px-Sir_Lawrence_Alma-Tadema_-_The_Meeting_of_Antony_and_Cleopatra.jpg"
+      },
+      {
+        "id": "980e397993e787",
+        "title": "Alma-tadema-antony-cleopatra",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Alma-tadema-antony-cleopatra.jpeg/3840px-Alma-tadema-antony-cleopatra.jpeg"
+      },
+      {
+        "id": "08efed0f609b23",
+        "title": "Antony and Cleopatra, by Mathijs Naiveu",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/10/Antony_and_Cleopatra%2C_by_Mathijs_Naiveu.jpg"
+      },
+      {
+        "id": "c7f2685f5dd18e",
+        "title": "Neroccio di Bartolomeo de' Landi, The Visit of Cleopatra to Antony (circa 1475–1480)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/13/Neroccio_di_Bartolomeo_de%27_Landi%2C_The_Visit_of_Cleopatra_to_Antony_%28circa_1475%E2%80%931480%29.jpg"
+      },
+      {
+        "id": "c2d0f5480aed28",
+        "title": "Thomas Stothard (1755-1834) - Intemperance, Mark Antony and Cleopatra - N00321 - National Gallery",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/Thomas_Stothard_%281755-1834%29_-_Intemperance%2C_Mark_Antony_and_Cleopatra_-_N00321_-_National_Gallery.jpg"
+      },
+      {
+        "id": "c0e30d7a54dc45",
+        "title": "Johann Heinrich Tischbein - Antony and Cleopatra - 211612 MNW - National Museum in Warsaw",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/6/68/Johann_Heinrich_Tischbein_-_Antony_and_Cleopatra_-_211612_MNW_-_National_Museum_in_Warsaw.jpg"
+      },
+      {
+        "id": "0b938b4dc3ccc1",
+        "title": "The Meeting of Antony and Cleopatra from a set of The Story of Antony and Cleopatra (designed ca. 1650, woven 1650–77)",
+        "url": "https://images.metmuseum.org/CRDImages/es/original/2406.jpg"
+      },
+      {
+        "id": "25f62a7270744f",
+        "title": "Cleopatra, Eros, Antony, Charmian and Iras (Shakespeare, Antony and Cleopatra, Act 3, Scene 9) (1825–40)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP870108.jpg"
+      },
+      {
+        "id": "9bce2b2db09bd8",
+        "title": "Het feestmaal van Cleopatra",
+        "url": "https://lh3.googleusercontent.com/ZRK3FDOXtvZEF29nWrrH06BRErXcbWweoODvCwwLZXdahoY7bovCmuTd_r40NXOuXxPeLimVoj4szse8e16S7nTQsFE=s0"
+      },
+      {
+        "id": "7304161066a468",
+        "title": "Antonia Minor, the youngest daughter of Octavia Minor and Mark Antony, 1st century A.D., Palazzo Massimo alle Terme, Rome (12971148975)",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Antonia_Minor%2C_the_youngest_daughter_of_Octavia_Minor_and_Mark_Antony%2C_1st_century_A.D.%2C_Palazzo_Massimo_alle_Terme%2C_Rome_%2812971148975%29.jpg/1920px-Antonia_Minor%2C_the_youngest_daughter_of_Octavia_Minor_and_Mark_Antony%2C_1st_century_A.D.%2C_Palazzo_Massimo_alle_Terme%2C_Rome_%2812971148975%29.jpg"
+      },
+      {
+        "id": "09c38fdf7c3ba0",
+        "title": "Roman coin , Denarius of Mark Antony (reverse) (FindID 620934)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/6/65/Roman_coin_%2C_Denarius_of_Mark_Antony_%28reverse%29_%28FindID_620934%29.jpg"
+      },
+      {
+        "id": "85753c8ad891bd",
+        "title": "Roman coin , Denarius of Mark Antony (obverse) (FindID 620934)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Roman_coin_%2C_Denarius_of_Mark_Antony_%28obverse%29_%28FindID_620934%29.jpg"
+      },
+      {
+        "id": "c28d0be4522daa",
+        "title": "Mark Antony & Cleopatra, denarius, 34 BC, 543-1",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Mark_Antony_%26_Cleopatra%2C_denarius%2C_34_BC%2C_543-1.jpg"
+      },
+      {
+        "id": "ea3b533e7ad4a6",
+        "title": "Bust of a Woman Possibly Octavia Minor sister of the Emperor Augustus and wife of Mark Antony Roman 20-10 BCE Marble",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Bust_of_a_Woman_Possibly_Octavia_Minor_sister_of_the_Emperor_Augustus_and_wife_of_Mark_Antony_Roman_20-10_BCE_Marble.jpg"
+      },
+      {
+        "id": "0373b3fd206bad",
+        "title": "Marble bust of Mark Antony (Vatican Museums)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/19/Marble_bust_of_Mark_Antony_%28Vatican_Museums%29.jpg"
+      },
+      {
+        "id": "d078e79ccf97ab",
+        "title": "Ptolemy making an offering to a bust of Julius Caesar",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Ptolemy_making_an_offering_to_a_bust_of_Julius_Caesar.jpg"
+      },
+      {
+        "id": "0c6d8bba40fcd2",
+        "title": "Gold aureus of Mark Antony (38 BCE)",
+        "url": "https://images.metmuseum.org/CRDImages/gr/original/SF99357.jpg"
+      },
+      {
+        "id": "d314f0e58d6a01",
+        "title": "Bust of Mark Antony (one of a pair) (ca. 1720–30)",
+        "url": "https://images.metmuseum.org/CRDImages/es/original/ES3171.jpg"
+      },
+      {
+        "id": "fbfe559ee4f6e0",
+        "title": "The Death of Mark Antony (Shakespeare, Antony and Cleopatra, Act 4, Scene 15) (January 1, 1780)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP859438.jpg"
+      },
+      {
+        "id": "6f210602c662ea",
+        "title": "The Battle of Actium from a set of The Story of Antony and Cleopatra MET 2405",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/The_Battle_of_Actium_from_a_set_of_The_Story_of_Antony_and_Cleopatra_MET_2405.jpg/3840px-The_Battle_of_Actium_from_a_set_of_The_Story_of_Antony_and_Cleopatra_MET_2405.jpg"
+      },
+      {
+        "id": "7328d211f8235e",
+        "title": "The Battle of Actium from a set of The Story of Antony and Cleopatra (designed ca. 1650, woven 1650–77)",
+        "url": "https://images.metmuseum.org/CRDImages/es/original/2405.jpg"
+      },
+      {
+        "id": "c80553db5b4556",
+        "title": "Retrato femenino (26771127162)",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/90/Retrato_femenino_%2826771127162%29.jpg"
+      },
+      {
+        "id": "6d7cc33e96eabc",
+        "title": "Posthumous painted portrait of Cleopatra VII of Egypt, from Herculaneum, Italy",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/Posthumous_painted_portrait_of_Cleopatra_VII_of_Egypt%2C_from_Herculaneum%2C_Italy.jpg/1920px-Posthumous_painted_portrait_of_Cleopatra_VII_of_Egypt%2C_from_Herculaneum%2C_Italy.jpg"
+      },
+      {
+        "id": "da32bfe339b0e6",
+        "title": "Musicians, Hedgehog Cosmetic Pot, Ring with Portrait, Coin of Cleopatra VII, Ptolemaic Period (10450394476)",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/45/Musicians%2C_Hedgehog_Cosmetic_Pot%2C_Ring_with_Portrait%2C_Coin_of_Cleopatra_VII%2C_Ptolemaic_Period_%2810450394476%29.jpg/3840px-Musicians%2C_Hedgehog_Cosmetic_Pot%2C_Ring_with_Portrait%2C_Coin_of_Cleopatra_VII%2C_Ptolemaic_Period_%2810450394476%29.jpg"
+      },
+      {
+        "id": "34c5319c79a0a2",
+        "title": "Marble portrait head of Cleopatra VII, known as the 'Berlin Cleopatra'",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/4/46/Marble_portrait_head_of_Cleopatra_VII%2C_known_as_the_%27Berlin_Cleopatra%27.jpg"
+      },
+      {
+        "id": "44d9b39ca9eae7",
+        "title": "Bronze figure of a boy in Eastern dress (mid-late 1st century BCE)",
+        "url": "https://images.metmuseum.org/CRDImages/gr/original/DP-39819-001.jpg"
+      },
+      {
+        "id": "6cabb3d7b453fb",
+        "title": "Marble head of a Ptolemaic queen (ca. 270–250 BCE)",
+        "url": "https://images.metmuseum.org/CRDImages/gr/original/DP333700.jpg"
+      },
+      {
+        "id": "1b712c65480f0e",
+        "title": "Dendera Cesarion",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/54/Dendera_Cesarion.jpg"
+      },
+      {
+        "id": "ceb3fe00f36683",
+        "title": "SFEC-DENDERA-2010-085",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/SFEC-DENDERA-2010-085.JPG"
+      },
+      {
+        "id": "145b5adeae2815",
+        "title": "The Famous Relief of Cleopatra at Temple at Denderah (1900) - TIMEA",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/33/The_Famous_Relief_of_Cleopatra_at_Temple_at_Denderah_%281900%29_-_TIMEA.jpg"
+      },
+      {
+        "id": "7e7326ed7eb98c",
+        "title": "Dendera Tempel 13",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/94/Dendera_Tempel_13.JPG"
+      },
+      {
+        "id": "2a8b7e79c104c8",
+        "title": "Dendera Tempel 14",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Dendera_Tempel_14.JPG"
+      },
+      {
+        "id": "46ef5b43532629",
+        "title": "Cleopatra.",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Cleopatra..jpg"
+      },
+      {
+        "id": "c9859545219cef",
+        "title": "Ptolemy before Isis & Osiris, Dendera Temple",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Ptolemy_before_Isis_%26_Osiris%2C_Dendera_Temple.jpg"
+      },
+      {
+        "id": "1742f2b60d4511",
+        "title": "Dendera, Temple of Hathor, 19th century pictures, 1870-1888, photo 6 of 9 - Archivio fotografico Museo Egizio, Turin INV12 007",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/58/Dendera%2C_Temple_of_Hathor%2C_19th_century_pictures%2C_1870-1888%2C_photo_6_of_9_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV12_007.jpg/3840px-Dendera%2C_Temple_of_Hathor%2C_19th_century_pictures%2C_1870-1888%2C_photo_6_of_9_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV12_007.jpg"
+      },
+      {
+        "id": "7559fe01fe2b90",
+        "title": "Dendera. Hathortempel Exterieur Reliëf op de zuidelijke façade met centraal offerscène van Caesarion en Cleopatra VII Philopator aan de enneade van Dendera, GDE001186",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/Dendera._Hathortempel_Exterieur_Reli%C3%ABf_op_de_zuidelijke_fa%C3%A7ade_met_centraal_offersc%C3%A8ne_van_Caesarion_en_Cleopatra_VII_Philopator_aan_de_enneade_van_Dendera%2C_GDE001186.jpg/3840px-thumbnail.jpg"
+      },
+      {
+        "id": "12ea4024ba8187",
+        "title": "The Lighthouse of Alexandria by Magdalena van de Pasee",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d2/The_Lighthouse_of_Alexandria_by_Magdalena_van_de_Pasee.jpg"
+      },
+      {
+        "id": "38a835d39cd2a8",
+        "title": "The pharos of Alexandria. Coloured engraving, ca. 1804-1811. Wellcome L0047776",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/The_pharos_of_Alexandria._Coloured_engraving%2C_ca._1804-1811._Wellcome_L0047776.jpg/3840px-The_pharos_of_Alexandria._Coloured_engraving%2C_ca._1804-1811._Wellcome_L0047776.jpg"
+      },
+      {
+        "id": "5d0587c3c09647",
+        "title": "Philip Galle, after Maerten van Heemskerck, Pharos (The Lighthouse at Alexandria), 1572, NGA 156115",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/01/Philip_Galle%2C_after_Maerten_van_Heemskerck%2C_Pharos_%28The_Lighthouse_at_Alexandria%29%2C_1572%2C_NGA_156115.jpg/3840px-Philip_Galle%2C_after_Maerten_van_Heemskerck%2C_Pharos_%28The_Lighthouse_at_Alexandria%29%2C_1572%2C_NGA_156115.jpg"
+      },
+      {
+        "id": "5b8f10dfecb14c",
+        "title": "Philips Galle, Fyrtårnet i Alexandria, 1572, KKSgb10002-2, Statens Museum for Kunst",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b5/Philips_Galle%2C_Fyrt%C3%A5rnet_i_Alexandria%2C_1572%2C_KKSgb10002-2%2C_Statens_Museum_for_Kunst.jpg/3840px-Philips_Galle%2C_Fyrt%C3%A5rnet_i_Alexandria%2C_1572%2C_KKSgb10002-2%2C_Statens_Museum_for_Kunst.jpg"
+      },
+      {
+        "id": "adafe9a46fd740",
+        "title": "Philips Galle, Fyrtårnet i Alexandria, 1572, KKSgb10001-2, Statens Museum for Kunst",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Philips_Galle%2C_Fyrt%C3%A5rnet_i_Alexandria%2C_1572%2C_KKSgb10001-2%2C_Statens_Museum_for_Kunst.jpg/3840px-Philips_Galle%2C_Fyrt%C3%A5rnet_i_Alexandria%2C_1572%2C_KKSgb10001-2%2C_Statens_Museum_for_Kunst.jpg"
+      },
+      {
+        "id": "2477f07633e54f",
+        "title": "St. Catherine of Alexandria (1644–52)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP822903.jpg"
+      },
+      {
+        "id": "bd4690321cb4f9",
+        "title": "Saint Catherine of Alexandria (1824)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP887963.jpg"
+      },
+      {
+        "id": "570f861a57401c",
+        "title": "St. Catherine of Alexandria (ca. 1644–50)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP891185.jpg"
+      },
+      {
+        "id": "0ab71ab2da48c5",
+        "title": "Martyrdom of Saint Catherine of Alexandria (1567)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP883157.jpg"
+      },
+      {
+        "id": "0f1201ae44cf65",
+        "title": "Saint Catherine of Alexandria (ca. 1630)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP874287.jpg"
+      },
+      {
+        "id": "8bdff4509a1416",
+        "title": "The pharos of Alexandria. Coloured engraving, ca. 1804-1811.",
+        "url": "https://iiif.wellcomecollection.org/image/L0047776.jpg/full/512,/0/default.jpg"
+      },
+      {
+        "id": "c5dd3f0bdfa783",
+        "title": "AntonyAndCleopatraCoin",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/AntonyAndCleopatraCoin.jpg"
+      },
+      {
+        "id": "043014165d30a3",
+        "title": "The Death of Mark Antony with Cleopatra at left (1778)",
+        "url": "https://images.metmuseum.org/CRDImages/dp/original/DP885876.jpg"
+      },
+      {
+        "id": "40193101cd5ef3",
+        "title": "Giovanni Battista Tiepolo - The Banquet of Cleopatra (detail) - WGA22310",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Giovanni_Battista_Tiepolo_-_The_Banquet_of_Cleopatra_%28detail%29_-_WGA22310.jpg"
+      },
+      {
+        "id": "d0ac216c88b177",
+        "title": "Gerard Hoet (Dutch - The Banquet of Cleopatra - Google Art Project",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bd/Gerard_Hoet_%28Dutch_-_The_Banquet_of_Cleopatra_-_Google_Art_Project.jpg/3840px-Gerard_Hoet_%28Dutch_-_The_Banquet_of_Cleopatra_-_Google_Art_Project.jpg"
+      },
+      {
+        "id": "8eba0d7119482b",
+        "title": "Giambattista Tiepolo - The Banquet of Cleopatra - Google Art Project",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Giambattista_Tiepolo_-_The_Banquet_of_Cleopatra_-_Google_Art_Project.jpg/3840px-Giambattista_Tiepolo_-_The_Banquet_of_Cleopatra_-_Google_Art_Project.jpg"
+      },
+      {
+        "id": "52bf4786318190",
+        "title": "Het feestmaal van Cleopatra Rijksmuseum SK-A-2115",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Het_feestmaal_van_Cleopatra_Rijksmuseum_SK-A-2115.jpeg/3840px-Het_feestmaal_van_Cleopatra_Rijksmuseum_SK-A-2115.jpeg"
+      },
+      {
+        "id": "47d8eb3ed69087",
+        "title": "Tiepolo - Banquet of Cleopatra - Arkhangelskoe",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/13/Tiepolo_-_Banquet_of_Cleopatra_-_Arkhangelskoe.jpg/3840px-Tiepolo_-_Banquet_of_Cleopatra_-_Arkhangelskoe.jpg"
+      },
+      {
+        "id": "1c2bd49ad65108",
+        "title": "Gerard Hoet - The Banquet of Cleopatra - 69.PA.14 - J. Paul Getty Museum",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/Gerard_Hoet_-_The_Banquet_of_Cleopatra_-_69.PA.14_-_J._Paul_Getty_Museum.jpg/3840px-Gerard_Hoet_-_The_Banquet_of_Cleopatra_-_69.PA.14_-_J._Paul_Getty_Museum.jpg"
+      },
+      {
+        "id": "beb9f0ac2b4eee",
+        "title": "Alessandro allori, banchetto di cleopatra, 1570-73 ca. 01",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Alessandro_allori%2C_banchetto_di_cleopatra%2C_1570-73_ca._01.jpg"
+      },
+      {
+        "id": "030fc12e65a3d9",
+        "title": "Jan Steen - The Banquet of Cleopatra d5949977g",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Jan_Steen_-_The_Banquet_of_Cleopatra_d5949977g.jpg"
+      },
+      {
+        "id": "98778ff59bfc14",
+        "title": "Sebastiano Mazzoni - The Banquet of Cleopatra - 1929.6.89 - Smithsonian American Art Museum",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Sebastiano_Mazzoni_-_The_Banquet_of_Cleopatra_-_1929.6.89_-_Smithsonian_American_Art_Museum.jpg"
+      },
+      {
+        "id": "5771013305fe27",
+        "title": "The Banquet of Cleopatra (Tiepolo paintings) - Stockholms universitet",
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/The_Banquet_of_Cleopatra_%28Tiepolo_paintings%29_-_Stockholms_universitet.jpg/3840px-The_Banquet_of_Cleopatra_%28Tiepolo_paintings%29_-_Stockholms_universitet.jpg"
+      }
+    ]
+  }
+}

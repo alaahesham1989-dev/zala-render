@@ -1,0 +1,54 @@
+name: expand-library
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Topic ID (e.g. ZV-AR04) — blank = all gap topics'
+        required: false
+        default: ''
+      limit:
+        description: 'Max images per topic'
+        required: false
+        default: '20'
+      dry_run:
+        description: 'Dry run (no upload, no commit)'
+        type: boolean
+        default: false
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install AWS SDK
+        run: npm install --no-save @aws-sdk/client-s3
+
+      - name: Run expand-library
+        env:
+          CLOUDFLARE_R2_ENDPOINT:          ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_BUCKET:            ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID:     ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_PUBLIC_URL:        ${{ secrets.CLOUDFLARE_R2_PUBLIC_URL }}
+        run: |
+          ARGS=""
+          [ -n "${{ github.event.inputs.topic }}" ] && ARGS="$ARGS --topic ${{ github.event.inputs.topic }}"
+          ARGS="$ARGS --limit ${{ github.event.inputs.limit }}"
+          [ "${{ github.event.inputs.dry_run }}" = "true" ] && ARGS="$ARGS --dry-run"
+          node media/tools/expand-library.mjs $ARGS
+
+      - name: Commit updated items.jsonl
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name  "ZALA Render Bot"
+          git config user.email "bot@zalavip.com"
+          git add content/library/items.jsonl
+          git diff --cached --quiet || git commit -m "chore(library): expand R2 image library [expand-library]"
+          git push

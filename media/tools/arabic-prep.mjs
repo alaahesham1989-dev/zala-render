@@ -22,29 +22,33 @@ const UA  = { 'User-Agent': 'ZALA-VIP-arabic-prep/1.0 (https://www.zalavip.com)'
 fs.mkdirSync(YT, { recursive: true });
 fs.mkdirSync(path.join(REPO, 'content', 'factbank'), { recursive: true });
 
-// ── direction rules (الحكواتي المتحمس) ──────────────────────────────
-const DIRECTION = `أسلوب الحكواتي المتحمس — قناة ZALA عربي:
+// ── Load style guide ─────────────────────────────────────────────────
+const STYLE_FILE = path.join(import.meta.dirname, 'arabic-style.json');
+const STYLE = JSON.parse(fs.readFileSync(STYLE_FILE, 'utf8'));
 
-الشخصية: الراوي مش مذيع ومش دكتور. بيحكيلك على القهوة وعينيه بتلمع. بيفاجئك مش بيشرحلك.
+const DIRECTION = `أسلوب الراوي — قناة ZALA عربي:
 
-قانون الهوك — السطر الأول (أهم سطر):
-- لازم يكون مفاجأة أو سؤال بيوجع أو رقم صادم، مش مقدمة أبدًا.
-- يخلي المشاهد يحس إنه لو عدّى هيفوت حاجة.
-- أمثلة: "لما تموت قلبك بيتوزن — والحكم في ثانية واحدة" / "بناه من غير آلات، ومرتين في السنة الشمس بتلمس وشه"
+الشخصية: ${STYLE.persona.description}
+الطاقة: ${STYLE.persona.energy}
+
+قانون الهوك (السطر الأول — أهم سطر):
+- ${STYLE.structure.hook.formula}
+- أمثلة: ${STYLE.structure.hook.examples.map(e => `"${e}"`).join(' / ')}
+- ${STYLE.structure.hook.rule}
 
 بنية الحلقة:
-Hook صادم ← "بس استنى" / "والغريب إن" ← المعلومة الحقيقية بتفاصيل حسية ← الربط بيننا ودلوقتي ← جملة أخيرة بتفضل في الدماغ.
+Hook صادم ← (${STYLE.structure.bridge_phrases.slice(0,3).join(' / ')}) ← ${STYLE.structure.body} ← ${STYLE.structure.connection} ← ${STYLE.structure.close}
 
 قواعد الأسلوب:
-- روابط الحكي المصري لما تيجي طبيعية: "بس استنى"، "وهنا بقى"، "والغريب إن"، "طب إزاي؟"، "ماعرفوش".
-- الأرقام بالكلام المصري: "تلت آلاف سنة" مش "3000". مقارنات حسية: مش "كان ضخم" ← "أعلى من ٥ طوابق".
-- الأسماء بكتابتها العربي المعروفة. مش كلام إنجليزي ولا إيموجي.
-- كل سطر فكرة واحدة، جملة قصيرة، كلام يتقال بصوت عالي بسهولة.
-- الحقائق زي ما هي بالظبط: ما تزودش ولا تشيل معلومة أو رقم، ما تخترعش.
-- آخر سطر يقفل الحكاية بجملة تفضل في الدماغ أو سؤال يخلي الناس تعلّق.
+- ${STYLE.rules.language}
+- ${STYLE.rules.numbers}
+- ${STYLE.rules.sentences}
+- ${STYLE.rules.facts}
 
 ممنوع تمامًا:
-"في هذا الفيديو سنتحدث عن..." / "دعونا نستكشف..." / "يُعدّ" / "تُعتبر" / أي كلام إنشائي تقيل.`;
+${STYLE.forbidden.join(' / ')}`;
+
+const VOICE_STYLE = STYLE.voice_direction.gemini_instruction;
 
 const SHOT_RULES = `How to write a Flow prompt (a video model):
 - Describe only what is in the frame and how the view moves. Never name filming equipment.
