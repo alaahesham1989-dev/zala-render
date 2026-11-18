@@ -17,12 +17,13 @@ const gh = (...a) => execFileSync('gh', a, { encoding: 'utf8', stdio: ['ignore',
 
 // daily slots, UTC. days: 0 Sunday … 6 Saturday. The four that render share one lane (GitHub keeps one waiting
 // run per lane and drops an older waiting one), so a render is only started when nothing is waiting in that lane.
-const LANE = ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml'];
+const LANE = ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml', 'arabic.yml'];
 const SLOTS = [
   { wf: 'shorts.yml', at: '00:17' },
   { wf: 'prep.yml', at: '01:41' },
   { wf: 'tours.yml', at: '02:53', inputs: ['-f', 'place=auto'] },   // a new place on Tuesday and Friday, other days only a tour still being fixed
   { wf: 'factory.yml', at: '04:23' },
+  { wf: 'arabic.yml', at: '05:30' },
   { wf: 'photo-prep.yml', at: '06:05' },
   { wf: 'insights.yml', at: '09:47' },
   { wf: 'photos.yml', at: '18:00', inputs: ['-f', 'now=true'] },   // 1pm US Eastern
