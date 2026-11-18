@@ -450,8 +450,17 @@
       "fb"
     ],
     "at": "2026-11-18T12:00:00Z",
-    "done": false,
-    "note": "older episode already public on YouTube"
+    "done": "2026-11-18T12:00:34.782Z",
+    "note": "older episode already public on YouTube",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "1456331413322094",
+        "url": "https://www.facebook.com/108172631323930/videos/1456331413322094"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-OLD-S001",
