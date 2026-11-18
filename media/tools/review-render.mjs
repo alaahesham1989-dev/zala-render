@@ -61,8 +61,11 @@ async function ask(parts) {
 const frameOf = (file, t, filter, target) => ff(['-ss', t.toFixed(2), '-i', file, '-frames:v', '1', '-vf', filter, '-q:v', '5', target]);
 
 function sheet(frames, columns, rows, target) {
+  // a frame ffmpeg could not grab (a seek that landed past the last frame) is skipped, not a crash of the whole review
+  const have = frames.filter((f) => fs.existsSync(f));
+  if (!have.length) { console.log(`Note: sheet skipped, no frames grabbed (${target})`); return; }
   const dir = fs.mkdtempSync(path.join(tmp, 'sheet-'));
-  frames.forEach((f, i) => fs.copyFileSync(f, path.join(dir, `${String(i + 1).padStart(3, '0')}.jpg`)));
+  have.forEach((f, i) => fs.copyFileSync(f, path.join(dir, `${String(i + 1).padStart(3, '0')}.jpg`)));
   ff(['-framerate', '1', '-i', path.join(dir, '%03d.jpg'), '-vf', `tile=${columns}x${rows}:padding=4:color=black`, '-frames:v', '1', '-q:v', '6', target]);
 }
 
@@ -99,7 +102,8 @@ const main = [];
 for (const s of srt) {
   for (const [part, at] of [['a', 0.25], ['b', 0.75]]) {
     const f = path.join(tmp, `L${String(s.n).padStart(2, '0')}${part}.jpg`);
-    frameOf(video, s.start + (s.end - s.start) * at, `scale=384:216,${label(`L${s.n}${part}`, 24)}`, f);
+    // clamped: a line whose end time lands at or past the video's own last frame (rounding, trimmed tail) must not seek past EOF
+    frameOf(video, Math.min(s.start + (s.end - s.start) * at, report.seconds - 0.08), `scale=384:216,${label(`L${s.n}${part}`, 24)}`, f);
     main.push(f);
   }
 }
