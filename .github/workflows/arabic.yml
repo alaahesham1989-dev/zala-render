@@ -1,33 +1,17 @@
-name: ZALA Arabic Short (original or translated, review only)
+name: ZALA Arabic Short (render + review only)
 
-# Two modes:
-#   ORIGINAL  — leave source empty, set arabic_id (e.g. ZV-AR01): arabic-prep.mjs writes an original
-#               60-second Egyptian Arabic script from arabic-treasures.json, then make+quality run.
-#   TRANSLATE — set source to an English short id/title: arabic.mjs translates it, then make+quality run.
-# Neither mode publishes: the video goes to R2 and Telegram for the owner to watch first.
+# Render + review stage only — a separate stage from prep, same split as prep.yml -> factory.yml for the
+# English line. arabic-prep.yml writes content/youtube/<id>.json first (facts, script, editor pass); this
+# workflow only takes a topic whose script already exists there, makes the video and checks it. It never
+# writes a script itself and never publishes: the video goes to R2 and Telegram for the owner to watch first.
 on:
   workflow_dispatch:
     inputs:
       arabic_id:
-        description: "Arabic topic id from arabic-treasures.json (e.g. ZV-AR01) — ORIGINAL mode"
+        description: "Arabic topic id already prepared by arabic-prep.yml (e.g. ZV-AR01, or the AR_ID: its translate mode wrote). Empty = the next prepared one not yet rendered"
         required: false
         default: ""
         type: string
-      source:
-        description: "English short id or title words — TRANSLATE mode (leave empty for original)"
-        required: false
-        default: ""
-        type: string
-      voice:
-        description: "Gemini voice"
-        required: false
-        default: Orus
-        type: string
-      force:
-        description: "true: delete the saved script for arabic_id first and write it fresh (after a prompt/style fix)"
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: zala-arabic
@@ -80,22 +64,19 @@ jobs:
           git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
           cp media/tools/treasures.json content/library/treasures.json
           node -e 'const fs=require("fs"); const t=JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")); const a=JSON.parse(fs.readFileSync("media/tools/arabic-treasures.json","utf8")); Object.assign(t,a); fs.writeFileSync("content/library/treasures.json", JSON.stringify(t, null, 2));'
-      - name: Pick the topic (the clock starts this with no inputs)
+      - name: Pick the topic (the clock starts this with no inputs; needs a script arabic-prep.yml already wrote)
         run: |
           set -uo pipefail
           ID="${{ inputs.arabic_id }}"
-          if [ -z "$ID" ] && [ -z "${{ inputs.source }}" ]; then
+          if [ -z "$ID" ]; then
             for t in $(node -e 'console.log(Object.keys(require("./media/tools/arabic-treasures.json")).join(" "))'); do
-              if ! aws s3 ls "s3://${R2_BUCKET}/renders/$t/publish/" --endpoint-url "$E" | grep -q '\.mp4'; then ID="$t"; break; fi
+              if [ -f "content/youtube/$t.json" ] && ! aws s3 ls "s3://${R2_BUCKET}/renders/$t/publish/" --endpoint-url "$E" | grep -q '\.mp4'; then ID="$t"; break; fi
             done
           fi
           echo "ID=$ID" >> "$GITHUB_ENV"
-          echo "Today: ${ID:-${{ inputs.source }}}"
-          if [ "${{ inputs.force }}" = "true" ] && [ -n "$ID" ]; then
-            rm -f "content/youtube/$ID.json"; echo "force: cleared the saved script for $ID"
-          fi
+          echo "Today: ${ID:-nothing prepared yet — run arabic-prep.yml first}"
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
-        if: env.ID != '' || inputs.source != ''
+        if: env.ID != ''
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev
@@ -113,28 +94,7 @@ jobs:
             aws s3 sync "s3://${R2_BUCKET}/render-cache/voice/$ID" "media/cache/voice/$ID" --endpoint-url "$E" --no-progress || true
             aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$ID" "media/tmp/render/$ID" --endpoint-url "$E" --no-progress || true
           fi
-      - name: 1 — Arabic script (original or translated)
-        if: env.ID != '' || inputs.source != ''
-        run: |
-          set -uo pipefail
-          exec > >(tee -a run.log) 2>&1
-          ARABIC_ID="$ID"
-          SOURCE="${{ inputs.source }}"
-          VOICE="${{ inputs.voice }}"
-          if [ -n "$ARABIC_ID" ]; then
-            echo "MODE: original — $ARABIC_ID"
-            out=$(node media/tools/arabic-prep.mjs "$ARABIC_ID" "$VOICE") || { echo "$out"; exit 1; }
-            echo "$out"
-            echo "ID=$ARABIC_ID" >> "$GITHUB_ENV"
-          elif [ -n "$SOURCE" ]; then
-            echo "MODE: translate — $SOURCE"
-            out=$(node media/tools/arabic.mjs "$SOURCE" "$VOICE") || { echo "$out"; exit 1; }
-            echo "$out"
-            echo "ID=$(echo "$out" | grep -o 'AR_ID:.*' | cut -d: -f2)" >> "$GITHUB_ENV"
-          else
-            echo "ERROR: set arabic_id (original) or source (translate)"; exit 1
-          fi
-      - name: 2 — Make and check (no outbox, no publishing)
+      - name: 1 — Make and check (no outbox, no publishing)
         if: env.ID != ''
         run: |
           set -uo pipefail
@@ -148,7 +108,7 @@ jobs:
           done
           echo "PASS=$pass" >> "$GITHUB_ENV"
       - name: Save to R2 (preview only)
-        if: always() && (env.ID != '' || inputs.source != '')
+        if: always() && env.ID != ''
         run: |
           if [ -n "${ID:-}" ]; then
             if [ "${PASS:-no}" = yes ]; then aws s3 rm "s3://${R2_BUCKET}/render-cache/work/$ID" --recursive --endpoint-url "$E" --quiet || true
@@ -160,7 +120,7 @@ jobs:
           [ -n "${ID:-}" ] && [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
           aws s3 cp run.log "s3://${R2_BUCKET}/renders/${ID:-arabic}/run.log" --endpoint-url "$E" --no-progress || true
       - name: Telegram (the video, for the owner to watch)
-        if: always() && (env.ID != '' || inputs.source != '')
+        if: always() && env.ID != ''
         run: |
           v=$(ls media/out/${ID:-x}/publish/*.mp4 2>/dev/null | head -1)
           cap="ZALA عربي: ${ID:-?} — الفحص: ${PASS:-no}. مش متجدول، مستني موافقتك."
