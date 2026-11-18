@@ -226,7 +226,9 @@ async function main() {
     id,
     lang: 'ar',
     voice,
-    voiceStyle: 'Speak only in Egyptian Arabic dialect (عامية مصرية). Passionate Egyptian storyteller tone — warm, energetic, lively pace, like a great Cairo kahwa storyteller. اتكلم بلهجة مصرية شعبية متحمسة زي حكواتي شاطر بيحكي حكاية بتشد:',
+    // no English word in this instruction at all: an English clause here ("Speak only in...") may be what nudged
+    // the model into reading some lines in English too, found after ZV-AR01 came back half Arabic half English
+    voiceStyle: 'اتكلم عربي بالعامية المصرية بس، من غير ولا كلمة إنجليزي أو فصحى. نفس نغمة حكواتي قهوة مصري شاطر بيحكي حكاية بتشد: صوت دافي، متحمس، حيّ.',
     voiceTempo: 1,
     verticalOnly: true,
     packaged: true,

@@ -23,6 +23,11 @@ on:
         required: false
         default: Orus
         type: string
+      force:
+        description: "true: delete the saved script for arabic_id first and write it fresh (after a prompt/style fix)"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: zala-arabic
@@ -86,6 +91,9 @@ jobs:
           fi
           echo "ID=$ID" >> "$GITHUB_ENV"
           echo "Today: ${ID:-${{ inputs.source }}}"
+          if [ "${{ inputs.force }}" = "true" ] && [ -n "$ID" ]; then
+            rm -f "content/youtube/$ID.json"; echo "force: cleared the saved script for $ID"
+          fi
       - name: Install ffmpeg, fonts, drawing libraries and picture tools
         if: env.ID != '' || inputs.source != ''
         run: |
