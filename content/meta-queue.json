@@ -263,7 +263,22 @@
       "ig"
     ],
     "at": "2026-11-18T16:00:00Z",
-    "done": false
+    "done": "2026-11-18T16:01:50.420Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "2365536867320840",
+        "url": "https://www.facebook.com/reel/2365536867320840"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18115085171144859",
+        "url": "https://www.instagram.com/reel/Df44ugUDC1m/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T01",
