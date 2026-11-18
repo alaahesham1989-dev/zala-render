@@ -143,14 +143,17 @@ console.log('Pictures against words');
 for (let i = 0; i < srt.length; i += 6) {
   const group = srt.slice(i, i + 6);
   const parts = [{ text: `These frames come from a true-history video: "${script.title}". For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Set nudity true if bare breasts, genitals or a naked body are visible, even in art. Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","nudity":false,"shows":"what is really visible, short","problem":""}]}.` }];
+  const present = [];
   group.forEach((s, k) => {
     const f = path.join(tmp, `check${s.n}.jpg`);
-    frameOf(video, (s.start + s.end) / 2, 'scale=640:-2', f);
-    parts.push({ text: `Frame ${k}. Spoken: ${s.text}` });
+    frameOf(video, Math.min((s.start + s.end) / 2, report.seconds - 0.08), 'scale=640:-2', f);
+    if (!fs.existsSync(f)) return;   // s.fits stays undefined: the verdict below already fails a line with no picture check
+    present.push(k);
+    parts.push({ text: `Frame ${present.length - 1}. Spoken: ${s.text}` });
     parts.push({ inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } });
   });
-  const a = (await ask(parts)) || (await ask(parts));
-  (a?.items || []).forEach((r) => { const s = group[r.n]; if (s) Object.assign(s, { fits: r.fits, nudity: !!r.nudity, shows: r.shows, pictureProblem: r.problem || '' }); });
+  const a = present.length ? ((await ask(parts)) || (await ask(parts))) : null;
+  (a?.items || []).forEach((r) => { const s = group[present[r.n]]; if (s) Object.assign(s, { fits: r.fits, nudity: !!r.nudity, shows: r.shows, pictureProblem: r.problem || '' }); });
   console.log(`  ${Math.min(i + 6, srt.length)}/${srt.length}`);
   await sleep(5000);
 }
@@ -161,11 +164,11 @@ report.lines = srt.map(({ clip, ...s }, i) => ({ ...s, label: lines[i]?.label, p
 // a weak one sends the first line back to make with its picture refused, so a stronger one is chosen
 if (script.verticalOnly && report.lines.length) {
   const f = path.join(tmp, 'opening.jpg');
-  frameOf(video, 0.7, 'scale=720:-2', f);
-  const o = await ask([{ text: `This is the very first frame of a YouTube Short about "${script.title}" (ancient Egypt). It decides whether people stop scrolling.
+  frameOf(video, Math.min(0.7, report.seconds - 0.08), 'scale=720:-2', f);
+  const o = fs.existsSync(f) ? await ask([{ text: `This is the very first frame of a YouTube Short about "${script.title}" (ancient Egypt). It decides whether people stop scrolling.
 Judge it like a top creator: professional and eye-catching means sharp, rich colour and light, one clear strong subject that fits the topic, and the big hook text easy to read without covering the subject's face.
 Not professional: an old pale scan, a drawing or engraving, black and white, blurry, dull, dark, cluttered, or a subject that is cut off.
-Return only JSON {"pro": true, "score": 1-10, "problem": ""}` }, { inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } }]);
+Return only JSON {"pro": true, "score": 1-10, "problem": ""}` }, { inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } }]) : null;
   report.opening = o;
   console.log(`Opening frame: ${o ? `${o.score}/10 ${o.problem || ''}` : 'not checked'}`);
   if (o && (!o.pro || o.score < 7)) { report.lines[0].fits = 'no'; report.lines[0].shows = `weak opening frame: ${o.problem || ''}`; }
@@ -188,7 +191,7 @@ for (const name of fs.readdirSync(publish).filter((f) => /-R\d+\.mp4$/.test(f)).
   for (let i = 0; i < 12; i++) {
     const f = path.join(tmp, `${name}-${i}.jpg`);
     frameOf(file, Math.min(seconds - 0.2, 0.2 + i * (seconds / 12)), `scale=240:-2,${label(String(Math.round(i * (seconds / 12))), 22)}`, f);
-    frames.push(f);
+    if (fs.existsSync(f)) frames.push(f);
   }
   sheet(frames, 6, 2, path.join(out, `reel-${name.replace(/.*-(R\d+)\.mp4/, '$1')}.jpg`));
   const clip = path.join(tmp, `${name}.mp3`);

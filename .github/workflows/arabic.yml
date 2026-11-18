@@ -156,7 +156,10 @@ jobs:
         run: |
           v=$(ls media/out/${ID:-x}/publish/*.mp4 2>/dev/null | head -1)
           cap="ZALA عربي: ${ID:-?} — الفحص: ${PASS:-no}. مش متجدول، مستني موافقتك."
-          if [ -n "$v" ]; then r=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" -F chat_id="$TELEGRAM_CHAT_ID" -F video=@"$v" -F caption="$cap")
+          # a link to R2, not the raw file: sendVideo's upload refused one over Telegram's ~50MB bot limit (413)
+          if [ -n "$v" ]; then link="${VITE_MEDIA_BASE_URL%/}/renders/${ID}/publish/$(basename "$v")"
+            r=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$cap
+          $link")
           else r=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$cap (مفيش فيديو، راجع السجل)"); fi
           echo "$r" | grep -o '"ok":[a-z]*'
           # on a refusal print Telegram's own reason too, not just true/false, so the next failure is not a guess
