@@ -1,8 +1,8 @@
-// Gemini keys for the server: GEMINI_API_KEYS (comma separated) first, then GEMINI_API_KEY.
+// Gemini keys for the server: GEMINI_API_KEYS (comma separated), GEMINI_API_KEY, GEMINI_API_KEY_3.
 // Free limits belong to a project, so each key here should come from its own project.
 // A key is left for the rest of the run, for one model, once that model's day is used up on it. Keys are never logged.
 export const geminiKeys = [...new Set(
-  [...String(process.env.GEMINI_API_KEYS || '').split(/[,\s]+/), String(process.env.GEMINI_API_KEY || '').trim()].filter(Boolean),
+  [...String(process.env.GEMINI_API_KEYS || '').split(/[,\s]+/), String(process.env.GEMINI_API_KEY || '').trim(), String(process.env.GEMINI_API_KEY_3 || '').trim()].filter(Boolean),
 )];
 
 const spent = new Set();
