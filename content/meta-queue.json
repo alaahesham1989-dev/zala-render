@@ -827,7 +827,16 @@
       "fb"
     ],
     "at": "2026-11-19T20:00:00Z",
-    "done": false
+    "done": "2026-11-19T20:00:43.559Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "4434298963485893",
+        "url": "https://www.facebook.com/108172631323930/videos/4434298963485893"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T04",
