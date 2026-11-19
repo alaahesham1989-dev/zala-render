@@ -51,6 +51,8 @@ jobs:
             aws s3 cp "s3://${R2_BUCKET}/render-state/content/youtube/$E2.json" "s_old_$E2.json" --endpoint-url "$E" --no-progress 2>/dev/null || true
             aws s3 cp "s3://${R2_BUCKET}/render-state-ar/content/youtube/$E2.json" "s_ar_$E2.json" --endpoint-url "$E" --no-progress 2>/dev/null || true
           done
+          echo '== object times (UTC) ==' | tee -a out/script.txt
+          for P in render-state-ar render-state; do aws s3 ls "s3://${R2_BUCKET}/$P/content/youtube/" --endpoint-url "$E" 2>/dev/null | grep -E 'ZV-AR0[12]\.json' | sed "s|^|$P |" | tee -a out/script.txt; done
           cat > sum.js <<'JS'
           const fs=require("fs");
           for (const f of fs.readdirSync(".").filter(x=>/^s_.*\.json$/.test(x))) {
@@ -59,7 +61,8 @@ jobs:
             const lines=(j.chapters||[]).flatMap(c=>c.lines||[]);
             console.log("lines: "+lines.length+"  keys of line 1: "+Object.keys(lines[0]||{}).join(","));
             lines.slice(0,5).forEach((l,i)=>console.log(" "+(i+1)+" en="+JSON.stringify(String(l.en||"").slice(0,70))+" ar="+JSON.stringify(String(l.ar||"").slice(0,70))+" say="+JSON.stringify(String(l.say||"").slice(0,50))+" card="+JSON.stringify(l.card||null)));
-            console.log(" hook="+JSON.stringify(String(j.hook||"").slice(0,90))+"  narration="+JSON.stringify(String(j.narration||"").slice(0,90)));
+            console.log(" prepared="+JSON.stringify(j.prepared||null)+" keys="+Object.keys(j).join(","));
+  console.log(" hook="+JSON.stringify(String(j.hook||"").slice(0,90))+"  narration="+JSON.stringify(String(j.narration||"").slice(0,90)));
           }
           JS
           node sum.js | tee out/script.txt
@@ -99,3 +102,4 @@ jobs:
           retention-days: 3
 # rerun 2026-11-19T19:22:50
 # rerun 2026-11-19T22:07:41
+# rerun 2026-11-19T22:11:37
