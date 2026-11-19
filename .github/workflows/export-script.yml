@@ -1,0 +1,30 @@
+name: Export one script (our own content, nothing published)
+on:
+  push:
+    branches: [ar02-export]
+    paths: ['.github/workflows/export-script.yml']
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - name: Copy the English ZV-AR02 safe and export it
+        run: |
+          mkdir -p out
+          aws s3 cp "s3://${R2_BUCKET}/render-state-ar/content/youtube/ZV-AR02.json" out/ZV-AR02.json --endpoint-url "$E" --no-progress
+          aws s3 cp out/ZV-AR02.json "s3://${R2_BUCKET}/render-state-ar/content/youtube/ZV-AR02.english-backup.json" --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/ZV-AR02/publish/ZV-AR02.mp4" - --endpoint-url "$E" 2>/dev/null | aws s3 cp - "s3://${R2_BUCKET}/renders/ZV-AR02-english-backup/ZV-AR02.mp4" --endpoint-url "$E" --no-progress || echo "mp4 backup skipped"
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ar02-script
+          path: out/
+          retention-days: 3
