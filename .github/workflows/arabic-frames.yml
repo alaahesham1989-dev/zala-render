@@ -74,3 +74,4 @@ jobs:
           name: arabic-frames
           path: out/
           retention-days: 3
+# rerun 2026-11-19T19:22:50
