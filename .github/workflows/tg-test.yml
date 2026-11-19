@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Check both chats and send a test line
         run: |
-          for pair in "en:5304637919:ZALA - جروب رندر إنجليزي: متوصل وشغال" "ar:5334078538:ZALA - جروب رندر عربي: متوصل وشغال"; do
+          for pair in "en:-5304637919:ZALA - جروب رندر إنجليزي: متوصل وشغال" "ar:-5334078538:ZALA - جروب رندر عربي: متوصل وشغال"; do
             line=${pair%%:*}; rest=${pair#*:}; id=${rest%%:*}; text=${rest#*:}
             info=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getChat" -d chat_id="$id")
             echo "$line getChat: $(echo "$info" | jq -r 'if .ok then "ok, type=\(.result.type)" else "not ok: \(.description)" end')"
