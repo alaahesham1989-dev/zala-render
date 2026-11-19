@@ -1,0 +1,58 @@
+name: ZALA Arabic frames check (looks at the burned-in captions, nothing published)
+
+# Pulls a finished Arabic video from R2, saves a few frames and the font facts of this runner as an artifact,
+# so the captions can be looked at with eyes before anyone says they are fine.
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Arabic episode id"
+        required: false
+        default: "ZV-AR01"
+        type: string
+  push:
+    branches: [arabic-frames]
+    paths: ['.github/workflows/arabic-frames.yml']
+
+concurrency:
+  group: zala-arabic-frames
+  cancel-in-progress: true
+
+jobs:
+  frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      EP: ${{ inputs.episode || 'ZV-AR01' }}
+    steps:
+      - name: Tools and the same font packages the Arabic render installs
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core
+          sudo apt-get install -y fonts-noto-naskh-arabic 2>/dev/null || echo "fonts-noto-naskh-arabic: not installable here"
+      - name: Font facts
+        run: |
+          mkdir -p out
+          { echo "== Arabic fonts known to fontconfig =="; fc-list :lang=ar family | sort -u | head -40
+            echo "== what libass will get for the caption font =="; fc-match "Noto Naskh Arabic" family style file
+            echo "== ffmpeg libass / harfbuzz =="; ffmpeg -hide_banner -buildconf 2>/dev/null | grep -E "libass|harfbuzz|fribidi" || true
+            ffmpeg -hide_banner -version | head -1; } > out/facts.txt 2>&1
+          cat out/facts.txt
+      - name: Frames of the finished video
+        run: |
+          aws s3 cp "s3://${R2_BUCKET}/renders/${EP}/publish/${EP}.mp4" video.mp4 --endpoint-url "$E" --no-progress
+          d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 video.mp4); echo "duration $d" >> out/facts.txt
+          for t in 3 8 14 22 30 40; do ffmpeg -y -v error -ss "$t" -i video.mp4 -frames:v 1 -vf scale=540:-2 -q:v 3 "out/f_$t.jpg" || true; done
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arabic-frames
+          path: out/
+          retention-days: 3
