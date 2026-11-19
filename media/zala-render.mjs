@@ -1202,7 +1202,7 @@ const aesc = (s) => String(s).replace(/[{}]/g, '').replace(/\\/g, '').replace(/\
 const RLM = '\u200F';
 const ASS_FORMAT = 'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding';
 const style = (name, font, size, color, { bold = 0, sp = 0, out = 2, sh = 1, an = 7, mv = 0, ml = 0 } = {}) =>
-  `Style: ${name},${LANG_FONT || font},${size},${color},${color},&H00000000,&H90000000,${bold},0,0,0,100,100,${sp},0,1,${out},${sh},${an},${ml},${ml},${mv},1`;
+  `Style: ${name},${LANG_FONT || font},${size},${color},${color},&H00000000,&H90000000,${bold},0,0,0,100,100,${LANG_FONT ? 0 : sp},0,1,${out},${sh},${an},${ml},${ml},${mv},1`;   // letter spacing breaks Arabic joining in libass
 
 function chunkText(s, max = 64) {
   if (s.length <= max) return [s];
