@@ -74,7 +74,7 @@ jobs:
           ID="${{ inputs.arabic_id }}"
           if [ -z "$ID" ]; then
             for t in $(node -e 'console.log(Object.keys(require("./media/tools/arabic-treasures.json")).join(" "))'); do
-              if [ -f "content/youtube/$t.json" ] && ! aws s3 ls "s3://${R2_BUCKET}/renders/$t/publish/" --endpoint-url "$E" | grep -q '\.mp4'; then ID="$t"; break; fi
+              if [ -f "content/youtube/$t.json" ]; then listing=$(aws s3 ls "s3://${R2_BUCKET}/renders/$t/publish/" --endpoint-url "$E" 2>/dev/null || true); case "$listing" in *.mp4*) ;; *) ID="$t"; break ;; esac; fi   # no grep -q in a pipe: with pipefail it made every topic look unrendered
             done
           fi
           echo "ID=$ID" >> "$GITHUB_ENV"
