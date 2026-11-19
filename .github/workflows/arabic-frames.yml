@@ -52,16 +52,16 @@ jobs:
             aws s3 cp "s3://${R2_BUCKET}/render-state-ar/content/youtube/$E2.json" "s_ar_$E2.json" --endpoint-url "$E" --no-progress 2>/dev/null || true
           done
           cat > sum.js <<'JS'
-const fs=require("fs");
-for (const f of fs.readdirSync(".").filter(x=>/^s_.*\.json$/.test(x))) {
-  const j=JSON.parse(fs.readFileSync(f,"utf8"));
-  console.log("== "+f+"  id="+j.id+" lang="+j.lang+" voice="+j.voice+" title="+String(j.title||"").slice(0,60));
-  const lines=(j.chapters||[]).flatMap(c=>c.lines||[]);
-  console.log("lines: "+lines.length+"  keys of line 1: "+Object.keys(lines[0]||{}).join(","));
-  lines.slice(0,5).forEach((l,i)=>console.log(" "+(i+1)+" en="+JSON.stringify(String(l.en||"").slice(0,70))+" ar="+JSON.stringify(String(l.ar||"").slice(0,70))+" say="+JSON.stringify(String(l.say||"").slice(0,50))+" card="+JSON.stringify(l.card||null)));
-  console.log(" hook="+JSON.stringify(String(j.hook||"").slice(0,90))+"  narration="+JSON.stringify(String(j.narration||"").slice(0,90)));
-}
-JS
+          const fs=require("fs");
+          for (const f of fs.readdirSync(".").filter(x=>/^s_.*\.json$/.test(x))) {
+            const j=JSON.parse(fs.readFileSync(f,"utf8"));
+            console.log("== "+f+"  id="+j.id+" lang="+j.lang+" voice="+j.voice+" title="+String(j.title||"").slice(0,60));
+            const lines=(j.chapters||[]).flatMap(c=>c.lines||[]);
+            console.log("lines: "+lines.length+"  keys of line 1: "+Object.keys(lines[0]||{}).join(","));
+            lines.slice(0,5).forEach((l,i)=>console.log(" "+(i+1)+" en="+JSON.stringify(String(l.en||"").slice(0,70))+" ar="+JSON.stringify(String(l.ar||"").slice(0,70))+" say="+JSON.stringify(String(l.say||"").slice(0,50))+" card="+JSON.stringify(l.card||null)));
+            console.log(" hook="+JSON.stringify(String(j.hook||"").slice(0,90))+"  narration="+JSON.stringify(String(j.narration||"").slice(0,90)));
+          }
+          JS
           node sum.js | tee out/script.txt
       - name: Frames of the finished video
         run: |
