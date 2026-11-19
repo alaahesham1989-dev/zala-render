@@ -1,0 +1,21 @@
+name: Telegram chat test (type only, then one test message each)
+on:
+  push:
+    branches: [tg-test]
+    paths: ['.github/workflows/tg-test.yml']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    steps:
+      - name: Check both chats and send a test line
+        run: |
+          for pair in "en:5304637919:ZALA - جروب رندر إنجليزي: متوصل وشغال" "ar:5334078538:ZALA - جروب رندر عربي: متوصل وشغال"; do
+            line=${pair%%:*}; rest=${pair#*:}; id=${rest%%:*}; text=${rest#*:}
+            info=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getChat" -d chat_id="$id")
+            echo "$line getChat: $(echo "$info" | jq -r 'if .ok then "ok, type=\(.result.type)" else "not ok: \(.description)" end')"
+            sent=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$id" --data-urlencode "text=$text")
+            echo "$line send: $(echo "$sent" | jq -r 'if .ok then "ok" else "not ok: \(.description)" end')"
+          done
