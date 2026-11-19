@@ -22,8 +22,7 @@ export function heardOf(voiceFile) {
  * so anything unmatched is spread evenly between its matched neighbours. Returns times inside [0, dur].
  */
 export function timedWords(text, heard, dur) {
-  // a lone dash or other mark between two words is not a word: it must never get its own turn on the screen
-  const shown = String(text).split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
+  const shown = String(text).split(/\s+/).filter(Boolean);
   const weight = (w) => w.length + 1.5;
   const even = (from, to, list) => {
     const sum = list.reduce((a, w) => a + weight(w), 0);
@@ -63,7 +62,7 @@ function groupWords(words, maxWords, maxChars) {
   let cur = [];
   for (const w of words) {
     const len = cur.reduce((n, x) => n + x.w.length + 1, 0) + w.w.length;
-    const ended = cur.length && /[.!?,:;،؛؟…]$/.test(cur[cur.length - 1].w);
+    const ended = cur.length && /[.!?,:;]$/.test(cur[cur.length - 1].w);
     if (cur.length && (cur.length >= maxWords || len > maxChars || ended)) { out.push(cur); cur = []; }
     cur.push(w);
   }
