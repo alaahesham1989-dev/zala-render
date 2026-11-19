@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 10
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_EN || secrets.TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
       - name: Validate every workflow file's YAML
@@ -53,4 +53,4 @@ jobs:
         if: failure()
         run: |
           MSG="ZALA: ملف تشغيلة بايظ (YAML غلط) ومش هيشتغل خالص لحد ما يتصلح: ${BAD:-}"
-          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && [ -n "${MSG:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

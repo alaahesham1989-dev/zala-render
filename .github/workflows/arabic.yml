@@ -42,7 +42,7 @@ jobs:
       VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
       META_COOKIES: ${{ secrets.META_COOKIES }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_AR || secrets.TELEGRAM_CHAT_ID }}
       FFMPEG_PATH: /usr/bin/ffmpeg
       FFPROBE_PATH: /usr/bin/ffprobe
       CHROME_PATH: /usr/bin/google-chrome

@@ -54,7 +54,7 @@ jobs:
       ZALA_LINE: ar
       GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_AR || secrets.TELEGRAM_CHAT_ID }}
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +94,6 @@ jobs:
       - name: Telegram (quiet status, same as prep.yml)
         if: always() && (env.ID != '' || inputs.source != '')
         run: |
-          if [ -f "content/youtube/${ID:-x}.json" ]; then MSG="ZALA عربي - تحضير: ${ID:-${{ inputs.source }}} جاهز للريندر."
+          if [ -f "content/youtube/${ID:-x}.json" ]; then MSG=""
           else MSG="ZALA عربي - تحضير: ${ID:-${{ inputs.source }}} فشل، شوف السجل."; fi
-          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && [ -n "${MSG:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

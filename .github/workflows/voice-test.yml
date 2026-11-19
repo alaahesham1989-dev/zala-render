@@ -50,7 +50,7 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_EN || secrets.TELEGRAM_CHAT_ID }}
           VOICE: ${{ inputs.voice }}
         run: |
           aws s3 cp voice-test.mp3 "s3://${R2_BUCKET}/preview/voice-test-${VOICE}.mp3" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress

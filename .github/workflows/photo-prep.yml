@@ -40,7 +40,7 @@ jobs:
       VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
       LIB_PY: /tmp/p/bin/python
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_EN || secrets.TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,6 +65,6 @@ jobs:
           line=$(grep -o '\[prep\] done:.*' prep.log || echo "")
           made=$(echo "$line" | grep -o '^[^0-9]*[0-9]*' | grep -o '[0-9]*' || echo 0)
           waiting=$(echo "$line" | grep -oE '[0-9]+ waiting' | grep -o '[0-9]*' || echo "?")
-          if [ "${made:-0}" -gt 0 ] 2>/dev/null; then MSG="ZALA تحضير الصور: $made صورة جديدة اتجهزت، $waiting مستنية النشر."
+          if [ "${made:-0}" -gt 0 ] 2>/dev/null; then MSG=""
           else MSG="ZALA تحضير الصور: محتاج نظرة، النهارده مفيش صورة واحدة اتجهزت (راجع السجل)."; fi
-          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && [ -n "${MSG:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
