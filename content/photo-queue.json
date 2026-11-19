@@ -1,28 +1,5 @@
 [
   {
-    "topic": "ZV-T03",
-    "queuedAt": "2026-11-14T13:30:30.015Z",
-    "hook": "Did you know ancient Egyptian royal wigs were crafted with over a thousand individual gold rings?",
-    "article": [
-      "Royal princesses wore intricate wigs adorned with 1,251 gold rings, creating a shimmering effect as they moved through the court. Princess Sithathoriunet's wig was reconstructed to show how these gold stripes caught the desert sunlight.",
-      "The princesses also used cosmetic vessels to store black kohl derived from galena to darken their eyes and protect them from infection. A study suggests the lead in their makeup actually helped boost nitric oxide, preventing eye diseases.",
-      "Today, these treasures stand as a testament to Middle Kingdom artistry and the luxurious lives of the royal princesses. As the light catches the carnelian and lapis, we are reminded of the humans who once wore them."
-    ],
-    "words": "Ancient Royal Gold Wig Rings",
-    "tags": [
-      "AncientEgypt",
-      "MiddleKingdom",
-      "RoyalJewelry",
-      "Archaeology"
-    ],
-    "engage": "Which detail of ancient Egyptian royal beauty care surprised you the most?",
-    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T03-2026-11-14.jpg",
-    "isAI": false,
-    "sourceUrl": "https://www.metmuseum.org/art/collection/search/656816",
-    "author": "Unknown",
-    "license": "CC0"
-  },
-  {
     "topic": "ZV-T04",
     "queuedAt": "2026-11-14T13:32:21.441Z",
     "hook": "Did you know ancient Egypt's highest military award for battlefield bravery was a set of golden flies?",
