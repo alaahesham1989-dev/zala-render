@@ -101,13 +101,16 @@ def draw_thumb(d, cx, cy, size, fill, bg):
 
 
 class Cue:
-    def __init__(self, ctype, length, press, cfg, lang, W, H):
+    def __init__(self, ctype, length, press, cfg, lang, W, H, voiced=False):
         self.ctype, self.L, self.press, self.lang = ctype, length, press, lang
         self.rtl = lang == 'ar'
         self.u = u = min(W, H) / 1080.0
         lab, tag = cfg['labels'], cfg['taglines']
         if ctype == 'short':
-            self.tag, self.b0, self.b1, self.style = tag['short'], lab['follow'], lab['followed'], 'gold'
+            if voiced:   # the spoken line says subscribe, so the button says it too
+                self.tag, self.b0, self.b1, self.style = tag['short'], lab['subscribe'], lab['subscribed'], 'red'
+            else:
+                self.tag, self.b0, self.b1, self.style = tag['short'], lab['follow'], lab['followed'], 'gold'
         elif ctype == 'main':
             self.tag, self.b0, self.b1, self.style = tag['long_main'], lab['subscribe'], lab['subscribed'], 'red'
         else:
@@ -205,7 +208,7 @@ class Cue:
 
 
 # ---------- plan ----------
-def plan(kind, dur, cfg, lang, W, H):
+def plan(kind, dur, cfg, lang, W, H, voiced=False):
     cues = []
     if kind == 'long':
         main_start = max(dur - 21.0, dur * 0.75)
@@ -216,7 +219,7 @@ def plan(kind, dur, cfg, lang, W, H):
     else:
         start = max(3.5, dur - 3.3)
         if dur >= 7:
-            cues.append((Cue('short', 3.0, 1.0, cfg, lang, W, H), start))
+            cues.append((Cue('short', 3.0, 1.0, cfg, lang, W, H, voiced), start))
     return cues
 
 
@@ -226,7 +229,9 @@ def process(src, out, lang, kind, vid, force):
     dur, W, H, has_audio = probe(src)
     if kind == 'auto':
         kind = 'short' if (H > W or dur <= 75) else 'long'
-    cues = plan(kind, dur, cfg, lang, W, H)
+    files = sorted(glob.glob(os.path.join(ROOT, cfg['voice_dir'], '*.mp3')) + glob.glob(os.path.join(ROOT, cfg['voice_dir'], '*.wav')))
+    voice = files[int(hashlib.sha1(vid.encode()).hexdigest(), 16) % len(files)] if files else None
+    cues = plan(kind, dur, cfg, lang, W, H, bool(voice))
     if not cues:
         print(f'cta: {os.path.basename(src)} too short for a cue, skipped')
         return
@@ -253,11 +258,7 @@ def process(src, out, lang, kind, vid, force):
         chimes.append(f'[ch{n}]')
         idx += 1
     voice_note = None
-    voice = None
-    if kind == 'long':
-        files = sorted(glob.glob(os.path.join(ROOT, cfg['voice_dir'], '*.mp3')) + glob.glob(os.path.join(ROOT, cfg['voice_dir'], '*.wav')))
-        if files:
-            voice = files[int(hashlib.sha1(vid.encode()).hexdigest(), 16) % len(files)]
+    tail = 0.0   # a short whose last seconds are too few for the spoken line is held on its last frame so the line can finish
     if has_audio:
         base = '[0:a]aformat=sample_rates=48000:channel_layouts=stereo'
     else:
@@ -269,8 +270,12 @@ def process(src, out, lang, kind, vid, force):
         vd = float(run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', voice]).stdout.strip())
         main_c, main_start = cues[-1]
         vs = main_start + 0.4
+        if kind == 'short':
+            tail = max(0.0, vs + vd + 0.5 - dur)
         cmd += ['-i', voice]
         base += f",volume=0.55:enable='between(t,{vs:.3f},{vs + vd:.3f})'"
+        if tail > 0:
+            base += f",apad=pad_dur={tail:.3f}"
         vparts.append(f'[{idx}:a]aformat=sample_rates=48000:channel_layouts=stereo,adelay={int(vs * 1000)}:all=1[vv]')
         voice_note = {'file': os.path.relpath(voice, ROOT), 'start': round(vs, 2), 'seconds': round(vd, 2)}
         idx += 1
@@ -278,17 +283,17 @@ def process(src, out, lang, kind, vid, force):
     fc += vparts
     mix_in = ['[a0]'] + chimes + (['[vv]'] if voice else [])
     fc.append(''.join(mix_in) + f'amix=inputs={len(mix_in)}:normalize=0:duration=first:dropout_transition=0,alimiter=limit=0.95[a]')
-    fc.append(f'[{vlabel}]format=yuv420p[v]')
+    fc.append(f'[{vlabel}]tpad=stop_mode=clone:stop_duration={tail:.3f},format=yuv420p[v]' if tail > 0 else f'[{vlabel}]format=yuv420p[v]')
     tmp_out = out + '.tmp.mp4'
     cmd += ['-filter_complex', ';'.join(fc), '-map', '[v]', '-map', '[a]', '-map_metadata', '0', '-c:v', 'libx264', '-preset', 'medium', '-crf', '17',
             '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', tmp_out]
     run(cmd)
     d2 = probe(tmp_out)[0]
-    if abs(d2 - dur) > 0.6:
+    if abs(d2 - (dur + tail)) > 0.6:
         os.remove(tmp_out)
-        raise RuntimeError(f'duration changed {dur:.2f} -> {d2:.2f}')
+        raise RuntimeError(f'duration changed {dur + tail:.2f} -> {d2:.2f}')
     os.replace(tmp_out, out)
-    side = {'lang': lang, 'kind': kind, 'size': [W, H], 'duration': round(dur, 2), 'voice': voice_note,
+    side = {'lang': lang, 'kind': kind, 'size': [W, H], 'duration': round(dur + tail, 2), 'tail': round(tail, 2), 'voice': voice_note,
             'cues': [{'type': c.ctype, 'start': round(s, 2), 'end': round(s + c.L, 2), 'press': round(s + c.press, 2), 'box': c.box()} for c, s in cues],
             'out_sha1': sha1(out)}
     json.dump(side, open(out + '.cta.json', 'w'), indent=2)
