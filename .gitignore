@@ -14,3 +14,6 @@ content/youtube/*.json
 content/
 !content/youtube/
 !content/youtube/pronunciation.json
+
+# the two spoken cue lines per language are small and belong in git
+!media/brand/cta/**/*.mp3
