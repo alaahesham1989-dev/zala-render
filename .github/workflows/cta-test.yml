@@ -6,7 +6,7 @@ name: ZALA audience-cue test (preview only, nothing published)
 on:
   workflow_dispatch:
   push:
-    branches: [lanes-live]
+    branches: [lanes-live, cta-voice]
     paths: ['media/tools/cta.py', 'media/tools/lines.mjs', 'media/brand/cta/**', 'media/lines/**', '.github/workflows/cta-test.yml']
 
 concurrency:
@@ -75,7 +75,7 @@ jobs:
               for c in s['cues']:
                   x, y, w, h = c['box']
                   ok = ok and x >= 0.03 * W and x + w <= 0.97 * W and y + h <= 0.84 * H and c['end'] <= s['duration']
-              print(('ok   ' if ok else 'BAD  ') + f.split('/')[-1], s['kind'], [(c['type'], c['start']) for c in s['cues']])
+              print(('ok   ' if ok else 'BAD  ') + f.split('/')[-1], s['kind'], s['duration'], 'tail', s.get('tail'), 'voice', bool(s.get('voice')), [(c['type'], c['start']) for c in s['cues']])
               bad += 0 if ok else 1
           sys.exit(1 if bad else 0)
           PY
@@ -87,6 +87,6 @@ jobs:
             n=$(basename "$f" .mp4)
             aws s3 cp "$f" "s3://${R2_BUCKET}/renders/cta-test/$n.mp4" --endpoint-url "$E" --no-progress || true
             # Telegram takes about 50 MB: send a small copy of the long videos (the cue looks the same); the short ones went out already
-            case "$n" in *_long_*) ffmpeg -y -v error -i "$f" -vf scale=-2:540 -c:v libx264 -preset veryfast -crf 29 -c:a aac -b:a 96k "/tmp/cta/prev_$n.mp4" ;; *) continue ;; esac
+            case "$n" in *_long_*|ar_short*) ffmpeg -y -v error -i "$f" -vf scale=-2:540 -c:v libx264 -preset veryfast -crf 29 -c:a aac -b:a 96k "/tmp/cta/prev_$n.mp4" ;; *) continue ;; esac
             curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" -F chat_id="$TELEGRAM_CHAT_ID" -F video=@"/tmp/cta/prev_$n.mp4" -F caption="ZALA تجربة دعوة الاشتراك: $n. مش منشور، للمعاينة بس." | grep -o '"ok":[a-z]*'
           done
