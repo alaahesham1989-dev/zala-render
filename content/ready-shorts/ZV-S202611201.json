@@ -1,0 +1,65 @@
+{
+    "id":  "ZV-S202611201",
+    "series":  "ZALA VIP Shorts",
+    "verticalOnly":  true,
+    "kind":  "mystery",
+    "title":  "Ancient Egypt: The Oldest Resurrection Story",
+    "thumbnailText":  "HE ROSE AGAIN",
+    "description":  "Osiris, Isis and the oldest story of coming back to life.",
+    "tags":  [
+                 "ancient egypt",
+                 "osiris",
+                 "isis",
+                 "egyptian mythology",
+                 "afterlife"
+             ],
+    "chapters":  [
+                     {
+                         "title":  "The Oldest Resurrection Story",
+                         "lines":  [
+                                       {
+                                           "en":  "He died and rose again. This is not a new story. It is the oldest tale of coming back to life known to humanity."
+                                       },
+                                       {
+                                           "en":  "Osiris was a great king. His brother Seth betrayed him, cut his body into pieces, and scattered them across Egypt."
+                                       },
+                                       {
+                                           "en":  "His wife Isis traveled the world to gather his body parts and brought him back to life with her magic, making him the god of rebirth and the afterlife."
+                                       },
+                                       {
+                                           "en":  "People even made small clay figures filled with seeds to show life returning from death."
+                                       },
+                                       {
+                                           "en":  "The fight between his son Horus and his brother Seth was more than a battle. It brought order and justice back to the whole universe."
+                                       },
+                                       {
+                                           "en":  "The pharaohs were seen as Horus while alive, and as Osiris after death, to secure their place in eternity."
+                                       },
+                                       {
+                                           "en":  "This story was written on pyramid walls over four thousand years ago to show every Egyptian that death is not the end."
+                                       },
+                                       {
+                                           "en":  "He died, was torn apart, and rose again. It was just the start of a new journey, and temple walls still tell his story today."
+                                       },
+                                       {
+                                           "en":  "Why do you think the ancient Egyptians were so focused on the idea that death is not the end of the road?"
+                                       }
+                                   ]
+                     }
+                 ],
+    "reels":  [
+                  {
+                      "chapter":  1,
+                      "from":  0,
+                      "title":  "The Oldest Resurrection Story",
+                      "hook":  "WHO ROSE FROM THE DEAD FIRST?",
+                      "badge":  "ANCIENT EGYPT",
+                      "sub":  "The story of Osiris"
+                  }
+              ],
+    "prepared":  {
+                     "at":  "2026-11-19T20:20:00.5342733Z",
+                     "shots":  0,
+                     "kind":  "mystery"
+                 }
+}

@@ -181,6 +181,22 @@ function schedule(id, at) {
 /** Shorts planned in the last two days that never reached the outbox: made again first, before any new topic
  * (the owner's rule: fix, never drop). A short already waiting in the queue or the outbox is left alone. */
 function pending() {
+  // ready-made scripts (content/ready-shorts/<id>.json) join the stock once: a good story made elsewhere is not thrown away
+  try {
+    const ready = path.join(CONTENT, 'ready-shorts');
+    if (fs.existsSync(ready)) {
+      for (const f of fs.readdirSync(ready).filter((x) => x.endsWith('.json'))) {
+        const rid = f.replace(/\.json$/, '');
+        const dest = path.join(CONTENT, 'youtube', `${rid}.json`);
+        if (fs.existsSync(dest) || state.made.some((m) => m.id === rid)) continue;
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.copyFileSync(path.join(ready, f), dest);
+        state.made.push({ id: rid, at: new Date().toISOString(), topic: readJson(dest, {}).title || rid });
+        fs.writeFileSync(STATE, JSON.stringify(state, null, 2) + '\n');
+        log(`${rid}: a ready script was taken in`);
+      }
+    }
+  } catch (e) { log(`ready scripts skipped: ${e.message}`); }
   const outbox = readJson(path.join(CONTENT, 'outbox.json'), []);
   const queue = readJson(path.join(CONTENT, 'meta-queue.json'), []);
   const since = Date.now() - 2 * 86400e3;
