@@ -23,10 +23,10 @@
       "story check: after the hook, calm documented narration, no hype",
       "shot list for the director",
       "audience cue plan (subscribe / follow / like) from media/brand/cta/ar.json, mirrored right to left",
-      "voice plan: Lahajati audio made by Antigravity; Gemini voice only for the preview"
+      "voice plan: Gemini voice (Lahajati only for the fixed cue voice lines)"
     ]
   },
-  "voice": { "engine": "lahajati", "preview": "gemini", "default": "Orus" },
+  "voice": { "engine": "gemini", "default": "Orus", "lahajati": "only for small fixed assets (the cue voice lines), by Antigravity order" },
   "tone": { "hook": "question or mystery", "body": "calm, documented, no hype" },
   "cta": { "config": "media/brand/cta/ar.json", "long_style": "youtube", "short_style": "universal" },
   "state": {
