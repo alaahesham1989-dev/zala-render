@@ -84,6 +84,9 @@ jobs:
         run: |
           for f in /tmp/cta/*_cta.mp4; do
             [ -f "$f" ] || continue
-            aws s3 cp "$f" "s3://${R2_BUCKET}/renders/cta-test/$(basename "$f")" --endpoint-url "$E" --no-progress || true
-            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" -F chat_id="$TELEGRAM_CHAT_ID" -F video=@"$f" -F caption="ZALA تجربة دعوة الاشتراك: $(basename "$f" .mp4). مش منشور، للمعاينة بس." | grep -o '"ok":[a-z]*'
+            n=$(basename "$f" .mp4)
+            aws s3 cp "$f" "s3://${R2_BUCKET}/renders/cta-test/$n.mp4" --endpoint-url "$E" --no-progress || true
+            # Telegram takes about 50 MB: send a small copy of the long videos (the cue looks the same); the short ones went out already
+            case "$n" in *_long_*) ffmpeg -y -v error -i "$f" -vf scale=-2:540 -c:v libx264 -preset veryfast -crf 29 -c:a aac -b:a 96k "/tmp/cta/prev_$n.mp4" ;; *) continue ;; esac
+            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" -F chat_id="$TELEGRAM_CHAT_ID" -F video=@"/tmp/cta/prev_$n.mp4" -F caption="ZALA تجربة دعوة الاشتراك: $n. مش منشور، للمعاينة بس." | grep -o '"ok":[a-z]*'
           done
