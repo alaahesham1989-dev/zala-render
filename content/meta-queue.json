@@ -1150,8 +1150,23 @@
       "ig"
     ],
     "at": "2026-11-19T19:00:00Z",
-    "done": false,
-    "youtube": "https://youtu.be/_voTKGMPhGo"
+    "done": "2026-11-19T19:01:56.326Z",
+    "youtube": "https://youtu.be/_voTKGMPhGo",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1794146521814270",
+        "url": "https://www.facebook.com/reel/1794146521814270"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18351877492283446",
+        "url": "https://www.instagram.com/reel/Df7yIkrDq8S/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T05",
