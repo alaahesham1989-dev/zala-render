@@ -1,0 +1,13 @@
+{
+  "lang": "ar",
+  "labels": { "subscribe": "اشترك", "subscribed": "تم الاشتراك", "follow": "تابعنا", "followed": "بنتابعك" },
+  "taglines": {
+    "long_main": "حكايات جديدة من مصر القديمة",
+    "short": "تابعنا للحكاية الجاية"
+  },
+  "voice_lines": [
+    { "id": "main-1", "text": "لو الحكاية شدّتك، اشترك وفعّل الجرس." },
+    { "id": "main-2", "text": "اشترك وفعّل الجرس، علشان الحكاية الجاية توصلك." }
+  ],
+  "voice_dir": "media/brand/cta/ar"
+}

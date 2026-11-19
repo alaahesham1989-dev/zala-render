@@ -1,0 +1,13 @@
+{
+  "lang": "en",
+  "labels": { "subscribe": "Subscribe", "subscribed": "Subscribed", "follow": "Follow", "followed": "Following" },
+  "taglines": {
+    "long_main": "New stories from ancient Egypt",
+    "short": "Follow for the next story"
+  },
+  "voice_lines": [
+    { "id": "main-1", "text": "If this story pulled you in, subscribe for the next one." },
+    { "id": "main-2", "text": "Hit subscribe and ring the bell, so you do not miss the next story." }
+  ],
+  "voice_dir": "media/brand/cta/en"
+}

@@ -28,4 +28,6 @@ if [ -n "$REVIEW" ] && [ -f "$REVIEW" ]; then node media/tools/gapfill.mjs "$ID"
 
 node media/zala-render.mjs all "$ID" || exit 1
 if [ $SHORT = yes ]; then node media/tools/shorts.mjs package "$ID" || exit 1; $PY media/tools/thumbs.py "media/out/${ID}/publish" "$ID" || true; else $PY media/tools/thumbs.py "media/out/${ID}/publish" "$ID" || true; fi
+# audience cue (subscribe / follow / like): switched per language in media/brand/cta/enabled.json, never fatal
+$PY media/tools/cta.py "$ID" --lang "${ZALA_LINE:-en}" --dir "media/out/${ID}/publish" || python3 media/tools/cta.py "$ID" --lang "${ZALA_LINE:-en}" --dir "media/out/${ID}/publish" || echo "make: cue skipped for $ID"
 echo "MAKE: $ID done"

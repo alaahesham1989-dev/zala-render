@@ -1,0 +1,88 @@
+name: ZALA audience-cue test (preview only, nothing published)
+
+# Makes four sample videos (English and Arabic, long and short), puts the subscribe / follow / like cue on them,
+# checks the timing and the safe zones, saves them to R2 and sends them to Telegram for the owner to watch.
+# Also runs the guard that keeps the English and Arabic machines apart.
+on:
+  workflow_dispatch:
+  push:
+    branches: [lanes-live]
+    paths: ['media/tools/cta.py', 'media/tools/lines.mjs', 'media/brand/cta/**', 'media/lines/**', '.github/workflows/cta-test.yml']
+
+concurrency:
+  group: zala-cta-test
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-naskh-arabic fonts-lato
+          pip install --quiet pillow arabic-reshaper python-bidi
+          node media/tools/fetch-fonts.mjs || true
+      - name: Guard - the two machines stay apart
+        run: |
+          node media/tools/lines.mjs check
+          node media/tools/lines.mjs prep en
+          node media/tools/lines.mjs prep ar
+      - name: Sample videos
+        run: |
+          mkdir -p /tmp/cta
+          mk() { ffmpeg -y -v error -f lavfi -i "testsrc2=size=$2:rate=30" -f lavfi -i "sine=frequency=220:sample_rate=48000" -t "$3" -c:v libx264 -preset veryfast -pix_fmt yuv420p -c:a aac "/tmp/cta/$1.mp4"; }
+          mk en_long 1920x1080 80
+          mk ar_long 1920x1080 80
+          mk en_short 1080x1920 22
+          mk ar_short 1080x1920 22
+      - name: Put the cue on
+        run: |
+          python3 media/tools/cta.py t1 --lang en --kind long  --file /tmp/cta/en_long.mp4  --out /tmp/cta/en_long_cta.mp4  --force
+          python3 media/tools/cta.py t2 --lang ar --kind long  --file /tmp/cta/ar_long.mp4  --out /tmp/cta/ar_long_cta.mp4  --force
+          python3 media/tools/cta.py t3 --lang en --kind short --file /tmp/cta/en_short.mp4 --out /tmp/cta/en_short_cta.mp4 --force
+          python3 media/tools/cta.py t4 --lang ar --kind short --file /tmp/cta/ar_short.mp4 --out /tmp/cta/ar_short_cta.mp4 --force
+      - name: Check timing and safe zones
+        run: |
+          python3 - <<'PY'
+          import json, glob, sys
+          bad = 0
+          for f in sorted(glob.glob('/tmp/cta/*_cta.mp4.cta.json')):
+              s = json.load(open(f)); W, H = s['size']
+              first = min(c['start'] for c in s['cues'])
+              need = 15 if s['kind'] == 'long' else 3
+              ok = first >= need
+              for c in s['cues']:
+                  x, y, w, h = c['box']
+                  ok = ok and x >= 0.03 * W and x + w <= 0.97 * W and y + h <= 0.84 * H and c['end'] <= s['duration']
+              print(('ok   ' if ok else 'BAD  ') + f.split('/')[-1], s['kind'], [(c['type'], c['start']) for c in s['cues']])
+              bad += 0 if ok else 1
+          sys.exit(1 if bad else 0)
+          PY
+      - name: Save to R2 and send to Telegram
+        if: always()
+        run: |
+          for f in /tmp/cta/*_cta.mp4; do
+            [ -f "$f" ] || continue
+            aws s3 cp "$f" "s3://${R2_BUCKET}/renders/cta-test/$(basename "$f")" --endpoint-url "$E" --no-progress || true
+            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" -F chat_id="$TELEGRAM_CHAT_ID" -F video=@"$f" -F caption="ZALA تجربة دعوة الاشتراك: $(basename "$f" .mp4). مش منشور، للمعاينة بس." | grep -o '"ok":[a-z]*'
+          done

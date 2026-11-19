@@ -1,0 +1,45 @@
+{
+  "line": "en",
+  "label": "English machine (@zalavip)",
+  "language": "English",
+  "audience": "USA, men 45+, simple words",
+  "live": true,
+  "topics": {
+    "source": "media/tools/treasures.json",
+    "id_prefix": "ZV-",
+    "skip_id_prefix": ["ZV-AR"]
+  },
+  "prep": {
+    "script": "media/tools/prep.mjs",
+    "workflow": "prep.yml",
+    "writes": ["content/youtube/<ID>.json", "content/factbank/<id>-facts.json"],
+    "checklist": [
+      "pick the next topic that is not done (never a ZV-AR id)",
+      "facts from open sources, each with its source link; no number or date without a source",
+      "pictures from the shared library on R2: clean, checked against the story, AI reconstructions labelled on screen",
+      "hook: first 3 s of a short / first 15 s of a long is a question or a mystery; no logo, no intro, no 'Welcome to'",
+      "story check: after the hook, calm documented narration, no hype",
+      "shot list for the director",
+      "audience cue plan (subscribe / follow / like) from media/brand/cta/en.json",
+      "voice plan: Gemini voice"
+    ]
+  },
+  "voice": { "engine": "gemini", "default": "Orus" },
+  "tone": { "hook": "question or mystery", "body": "calm, documented, no hype" },
+  "cta": { "config": "media/brand/cta/en.json", "long_style": "youtube", "short_style": "universal" },
+  "state": {
+    "r2_prefix": "render-state/content",
+    "outbox": "content/outbox.json",
+    "meta_queue": "content/meta-queue.json"
+  },
+  "keys": {
+    "gemini": ["GEMINI_API_KEY", "GEMINI_API_KEY_3", "GEMINI_API_KEYS"],
+    "youtube_token": "YOUTUBE_REFRESH_TOKEN",
+    "meta_token": "META_SYSTEM_USER_TOKEN",
+    "_note": "The Meta system user is shared; the page and Instagram ids are what keep the lines apart."
+  },
+  "run": {
+    "concurrency": "zala-episode",
+    "workflows": ["shorts.yml", "prep.yml", "tours.yml", "factory.yml"]
+  }
+}

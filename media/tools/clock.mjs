@@ -18,14 +18,15 @@ const gh = (...a) => execFileSync('gh', a, { encoding: 'utf8', stdio: ['ignore',
 // daily slots, UTC. days: 0 Sunday … 6 Saturday. The four that render share one lane (GitHub keeps one waiting
 // run per lane and drops an older waiting one), so a render is only started when nothing is waiting in that lane.
 const LANE = ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml'];
+const LANE_AR = ['arabic-prep.yml', 'arabic.yml'];   // the Arabic machine has its own lane: it never waits for, or blocks, the English one
+const ARABIC_LIVE = process.env.ARABIC_LIVE === '1';   // the owner's go-live word (repository variable ARABIC_LIVE)
 const SLOTS = [
   { wf: 'shorts.yml', at: '00:17' },
   { wf: 'prep.yml', at: '01:41' },
   { wf: 'tours.yml', at: '02:53', inputs: ['-f', 'place=auto'] },   // a new place on Tuesday and Friday, other days only a tour still being fixed
   { wf: 'factory.yml', at: '04:23' },
-  // arabic-prep.yml and arabic.yml: owner's order 2026-11-18 — stopped until Arabic has its own Gemini project/keys,
-  // so testing it never again eats the English factory's shared daily voice quota. Re-add both lines above this one
-  // (arabic-prep.yml at 05:00, arabic.yml at 05:30) once those keys exist.
+  { wf: 'arabic-prep.yml', at: '05:00', needs: 'ARABIC_LIVE' },   // Arabic machine: off until the owner sets ARABIC_LIVE=1
+  { wf: 'arabic.yml', at: '05:30', needs: 'ARABIC_LIVE' },
   { wf: 'photo-prep.yml', at: '06:05' },
   { wf: 'insights.yml', at: '09:47' },
   { wf: 'photos.yml', at: '18:00', inputs: ['-f', 'now=true'] },   // 1pm US Eastern
@@ -43,6 +44,7 @@ function slots(now) {
   for (const s of SLOTS) {
     const key = `${day} ${s.wf} ${s.at}`;
     if (settled.has(key) || (s.days && !s.days.includes(now.getUTCDay()))) continue;
+    if (s.needs === 'ARABIC_LIVE' && !ARABIC_LIVE) continue;
     const due = Date.parse(`${day}T${s.at}:00Z`);
     if (now.getTime() < due) continue;
     // a slot nobody needs any more (a comments round three hours old) is dropped, not caught up
@@ -50,7 +52,8 @@ function slots(now) {
     const list = runs(s.wf);
     if (!list) continue;                                             // GitHub did not answer: next minute
     if (list.some((r) => Date.parse(r.createdAt) >= due - 120e3)) { settled.add(key); continue; }   // it ran (or is running) since its slot
-    if (LANE.includes(s.wf) && LANE.some((w) => waiting(w))) continue;   // the lane has a run waiting: next minute
+    const lane = LANE_AR.includes(s.wf) ? LANE_AR : LANE.includes(s.wf) ? LANE : null;
+    if (lane && lane.some((w) => waiting(w))) continue;   // the lane has a run waiting: next minute
     if (start(s.wf, s.inputs)) { settled.add(key); return; }             // one start a minute keeps the lane check honest
   }
 }

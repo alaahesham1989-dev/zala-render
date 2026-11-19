@@ -1,0 +1,49 @@
+{
+  "line": "ar",
+  "label": "Arabic machine (@zalavip-AR)",
+  "language": "Egyptian Arabic",
+  "audience": "Arabic-speaking viewers, simple Egyptian Arabic",
+  "live": false,
+  "gate": "repository variable ARABIC_LIVE=1 (the owner's word); until then the clock never starts this machine",
+  "topics": {
+    "source": "media/tools/arabic-treasures.json",
+    "id_prefix": "ZV-AR",
+    "skip_id_prefix": []
+  },
+  "prep": {
+    "script": "media/tools/arabic-prep.mjs",
+    "workflow": "arabic-prep.yml",
+    "writes": ["content/youtube/<ID>.json", "content/factbank/<id>-facts.json"],
+    "checklist": [
+      "pick the next Arabic topic with no script yet (arabic_id=auto) or the one given",
+      "facts from open sources, each with its source link; no number or date without a source",
+      "pictures from the shared library on R2 (read only): the same story, the same checked pictures",
+      "script in Egyptian Arabic following the Arabic style guide, not a word-for-word translation",
+      "hook: first 3 s of a short / first 15 s of a long is a question or a mystery; no logo, no intro",
+      "story check: after the hook, calm documented narration, no hype",
+      "shot list for the director",
+      "audience cue plan (subscribe / follow / like) from media/brand/cta/ar.json, mirrored right to left",
+      "voice plan: Lahajati audio made by Antigravity; Gemini voice only for the preview"
+    ]
+  },
+  "voice": { "engine": "lahajati", "preview": "gemini", "default": "Orus" },
+  "tone": { "hook": "question or mystery", "body": "calm, documented, no hype" },
+  "cta": { "config": "media/brand/cta/ar.json", "long_style": "youtube", "short_style": "universal" },
+  "state": {
+    "r2_prefix": "render-state-ar/content",
+    "outbox": "content/outbox-ar.json",
+    "meta_queue": "content/meta-queue-ar.json"
+  },
+  "keys": {
+    "gemini": ["GEMINI_API_KEY_AR"],
+    "gemini_borrows_shared_until_own_key": true,
+    "youtube_token": "YOUTUBE_REFRESH_TOKEN_AR",
+    "meta_token": "META_SYSTEM_USER_TOKEN",
+    "_note": "The Meta system user is shared; the owner assigns the Zalavip-AR page and @zalavip_ar to it. Until GEMINI_API_KEY_AR exists the Arabic machine borrows the shared Gemini keys (workflow fallback)."
+  },
+  "run": {
+    "concurrency": "zala-arabic",
+    "also_concurrency": ["zala-arabic-prep"],
+    "workflows": ["arabic-prep.yml", "arabic.yml"]
+  }
+}

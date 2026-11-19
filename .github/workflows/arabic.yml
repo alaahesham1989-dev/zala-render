@@ -31,9 +31,11 @@ jobs:
       AWS_DEFAULT_REGION: auto
       AWS_REQUEST_CHECKSUM_CALCULATION: when_required
       AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
-      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+      # the Arabic machine has its own Gemini quota (GEMINI_API_KEY_AR); until that secret exists it borrows the shared keys
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_AR != '' && secrets.GEMINI_API_KEY_AR || secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_AR == '' && secrets.GEMINI_API_KEY_3 || '' }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEY_AR == '' && secrets.GEMINI_API_KEYS || '' }}
+      ZALA_LINE: ar
       GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
       MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
@@ -59,11 +61,13 @@ jobs:
       - name: Bring scripts, picture index and plans from R2
         run: |
           set -euo pipefail
-          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress   # the English machine's state: read only here
+          aws s3 sync "s3://${R2_BUCKET}/render-state-ar/content" content --endpoint-url "$E" --no-progress || true   # this machine's own state on top
           git checkout -- content/meta-queue.json
           git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
           cp media/tools/treasures.json content/library/treasures.json
           node -e 'const fs=require("fs"); const t=JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")); const a=JSON.parse(fs.readFileSync("media/tools/arabic-treasures.json","utf8")); Object.assign(t,a); fs.writeFileSync("content/library/treasures.json", JSON.stringify(t, null, 2));'
+          sleep 2; touch /tmp/ar-start   # what the job writes after this moment is the Arabic machine's own state
       - name: Pick the topic (the clock starts this with no inputs; needs a script arabic-prep.yml already wrote)
         run: |
           set -uo pipefail
@@ -114,7 +118,7 @@ jobs:
             if [ "${PASS:-no}" = yes ]; then aws s3 rm "s3://${R2_BUCKET}/render-cache/work/$ID" --recursive --endpoint-url "$E" --quiet || true
             elif [ -d "media/tmp/render/$ID" ]; then aws s3 sync "media/tmp/render/$ID" "s3://${R2_BUCKET}/render-cache/work/$ID" --endpoint-url "$E" --no-progress --exclude "*.ass" || true; fi
           fi
-          aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress --exclude "outbox.json" --exclude "meta-queue.json"
+          if [ -f /tmp/ar-start ]; then mkdir -p /tmp/ar-out && (cd content && find . -type f -newer /tmp/ar-start ! -name outbox.json ! -name meta-queue.json -print0 | xargs -0 -r cp --parents -t /tmp/ar-out) && aws s3 sync /tmp/ar-out "s3://${R2_BUCKET}/render-state-ar/content" --endpoint-url "$E" --no-progress; fi   # only this machine's own files, into its own prefix
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -n "${ID:-}" ] && [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
           [ -n "${ID:-}" ] && [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
