@@ -885,7 +885,22 @@
       "ig"
     ],
     "at": "2026-11-21T20:00:00Z",
-    "done": false
+    "done": "2026-11-21T20:02:21.229Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "2629931297434421",
+        "url": "https://www.facebook.com/reel/2629931297434421"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18024018401949287",
+        "url": "https://www.instagram.com/reel/DgBCpAnE68O/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T04",
