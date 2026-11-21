@@ -214,5 +214,77 @@
     "sourceUrl": "https://www.metmuseum.org/art/collection/search/552371",
     "author": "Unknown",
     "license": "CC0"
+  },
+  {
+    "id": "ZV-L09-2026-11-21-1",
+    "topic": "ZV-L09",
+    "queuedAt": "2026-11-21T06:10:04.117Z",
+    "hook": "Did you know ancient sailors once transported living trees across the sea?",
+    "article": [
+      "Around the ninth year of the reign, an expedition set out for a distant land called Punt. When the delegation returned, it brought back thirty-one living myrrh trees to grow in the soil of Egypt.",
+      "The ships also brought home gold, ebony, and incense from that faraway place. Detailed carvings even show the people and animals that lived in that mysterious land.",
+      "Hatshepsut wanted this triumph remembered, so she carved the whole story into stone at her mortuary temple. Today, scenes of that historic voyage across the sea still survive on the temple walls."
+    ],
+    "words": "LIVING TREES ACROSS THE SEA",
+    "tags": [
+      "AncientHistory",
+      "Archaeology",
+      "MaritimeHistory",
+      "AncientEgypt"
+    ],
+    "engage": "How do you think ancient sailors managed to keep thirty-one trees alive during a voyage across the sea?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-L09-2026-11-21-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kneeling_statue_of_Hatshepsut_MET_DP116798.jpg",
+    "author": "Unknown",
+    "license": "CC0"
+  },
+  {
+    "id": "ZV-T01-2026-11-21-1",
+    "topic": "ZV-T01",
+    "queuedAt": "2026-11-21T06:10:43.227Z",
+    "hook": "Did you know an ancient Egyptian pharaoh was buried with a weapon forged from outer space?",
+    "article": [
+      "Tucked inside the young pharaoh's mummy wrappings was a ceremonial dagger with an incredible origin. Its rare iron blade was expertly forged from a fallen celestial meteorite.",
+      "The dagger rested inside three ornate coffins nested together, including an innermost coffin crafted entirely from solid gold weighing an astonishing one hundred and ten kilograms. Encasing the king's mummified head was his world-famous burial mask, constructed from ten kilograms of solid beaten gold inlaid with rich lapis lazuli and glass.",
+      "Today, all five thousand priceless treasures are displayed together at the new Grand Egyptian Museum near the Giza Pyramids. Over a century after Howard Carter first peered through the stone doorway with a flickering candle, millions of people worldwide remain spellbound by these glistening artifacts."
+    ],
+    "words": "FORGED FROM A METEORITE",
+    "tags": [
+      "ancientegypt",
+      "meteoritedagger",
+      "tutankhamun",
+      "archaeology"
+    ],
+    "engage": "Which detail surprises you more: a dagger forged from a celestial meteorite or a solid gold coffin weighing 110 kilograms?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T01-2026-11-21-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+    "author": "Roland Unger",
+    "license": "Public domain"
+  },
+  {
+    "id": "ZV-S202611122-2026-11-21-1",
+    "topic": "ZV-S202611122",
+    "queuedAt": "2026-11-21T06:13:07.997Z",
+    "hook": "Imagine watching an entire ancient pyramid disappear stone by stone.",
+    "article": [
+      "Centuries of quarrying completely destroyed a colossal structure that once rivaled Giza's giants. To dismantle it, stone was hauled away by hundreds of camels daily until the massive monument vanished.",
+      "Located eight kilometers north of Giza, this northernmost pyramid belonged to Djedefre, the son of Khufu. Though long thought to be unfinished, archaeologists now believe it was fully completed and stood as tall as the Pyramid of Menkaure.",
+      "It is staggering to realize that such a massive structure could be erased so thoroughly from the desert. Today, fifty mysterious mastabas still remain nearby, holding secrets from the very dawn of the dynasties."
+    ],
+    "words": "VANISHED STONE BY STONE",
+    "tags": [
+      "ancientegypt",
+      "lostpyramid",
+      "archaeology",
+      "egyptianhistory"
+    ],
+    "engage": "What surprises you more: that this pyramid was actually completed, or that hundreds of camels hauled it away stone by stone?",
+    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-S202611122-2026-11-21-1.jpg",
+    "isAI": false,
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/377686",
+    "author": "Stefano della Bella",
+    "license": "CC0"
   }
 ]
