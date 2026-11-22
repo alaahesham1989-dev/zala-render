@@ -226,6 +226,26 @@ async function main() {
 
   const script = await writeScript(bank, pics);
 
+  // Ensure every line has at least one real picture from pics (Director's Eye)
+  const isBw = (p) => /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`);
+  const colorPics = pics.filter((p) => !isBw(p));
+  const poolPics = colorPics.length ? colorPics : pics;
+  let picIdx = 0;
+  for (const c of script.chapters || []) {
+    for (const l of c.lines || []) {
+      if (!l.pictures || !l.pictures.length) {
+        const pick = poolPics[picIdx % poolPics.length];
+        if (pick) l.pictures = [pick.id];
+        picIdx++;
+      }
+    }
+  }
+  const allLines = (script.chapters || []).flatMap((c) => c.lines || []);
+  if (allLines.length && poolPics.length) {
+    const golden = [...poolPics].sort((a, b) => (b.shine || 0) - (a.shine || 0))[0];
+    if (golden) allLines[0].pictures = [golden.id];
+  }
+
   const doc = Object.assign({}, script, {
     id,
     lang: 'ar',

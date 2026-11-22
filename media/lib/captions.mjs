@@ -17,12 +17,14 @@ const ts = (t) => {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(c).padStart(2, '0')}`;
 };
 
-/** Reshapes a batch of Arabic lines in one Python call. Falls back to the raw text (never crashes a render over it). */
-export function shapeArabic(texts) {
+/** Reshapes a batch of Arabic lines in one Python call.
+ * For libass (ASS subtitles): bidi is false by default so libass handles RTL ordering natively without double-reversal. */
+export function shapeArabic(texts, { bidi = false } = {}) {
   if (!texts.length) return texts;
   const script = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', 'tools', 'arabic_shape.py');
   const py = process.env.MANIM_PY || (process.platform === 'win32' ? 'python' : 'python3');
-  const r = spawnSync(py, [script], { input: texts.join('\n'), encoding: 'utf8', timeout: 20000 });
+  const args = bidi ? [script] : [script, '--no-bidi'];
+  const r = spawnSync(py, args, { input: texts.join('\n'), encoding: 'utf8', timeout: 20000 });
   if (r.status !== 0 || !r.stdout) return texts;
   const out = r.stdout.split('\n');
   return texts.map((t, i) => out[i] ?? t);
@@ -48,8 +50,8 @@ function chunk(words, maxWords, maxChars) {
 export function buildAss(words, { W, H, mode }) {
   const short = mode === 'short';
   const arabic = words.some((w) => /[؀-ۿ]/.test(w.w));
-  const size = arabic ? (short ? 54 : 42) : (short ? Math.round(W * 0.12) : Math.round(H * 0.05));
-  const marginV = arabic ? (short ? 380 : Math.round(H * 0.07)) : (short ? Math.round(H * 0.27) : Math.round(H * 0.07));
+  const size = arabic ? (short ? 78 : 46) : (short ? Math.round(W * 0.12) : Math.round(H * 0.05));
+  const marginV = arabic ? (short ? 360 : Math.round(H * 0.07)) : (short ? Math.round(H * 0.27) : Math.round(H * 0.07));
   const font = arabic ? 'Noto Naskh Arabic' : (process.env.ZALA_CAPTION_FONT || (short ? 'Anton' : 'Lato'));
   const header = `[Script Info]
 ScriptType: v4.00+

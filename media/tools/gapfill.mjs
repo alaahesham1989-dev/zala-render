@@ -64,11 +64,34 @@ const isModern = (p) => p.seen.check?.modern || /^modern/.test(p.seen.check?.kin
 const textOf = (p) => [p.title, p.seen.subject, p.seen.what, p.seen.place, p.seen.period, p.note].join(' ');
 
 const TOPIC = (() => { try { return new RegExp(JSON.parse(fs.readFileSync(path.join(BASE, 'library', 'topics.json'), 'utf8'))[id]?.match || '$^', 'i'); } catch { return /$^/; } })();
+const AR_KW = [
+  [/قلب|فؤاد/i, ['heart', 'weighing', 'amulet']],
+  [/ميزان|عدل|عدالة|ماعت|ريشة/i, ['scale', 'scales', 'balance', 'maat', 'feather', 'justice']],
+  [/أنوبيس|ابن آوى|حنوط|تحنيط/i, ['anubis', 'jackal', 'embalm', 'mummif']],
+  [/أميت|وحش|تمساح|أسد|فرس/i, ['ammit', 'devourer', 'monster', 'crocodile']],
+  [/كتاب الموتى|بردي|بردية|نصوص/i, ['book of the dead', 'papyrus', 'hunefer', 'ani']],
+  [/جعران/i, ['scarab', 'pectoral', 'amulet']],
+  [/أوزيريس|دوات|عالم آخر|قبر|مقبرة/i, ['osiris', 'duat', 'underworld', 'tomb', 'necropolis']],
+  [/ذهب|كنز|توت عنخ/i, ['gold', 'golden', 'tutankh', 'treasure']],
+  [/فلسفة|حياة|مصير|حساب|موت/i, ['judgment', 'dead', 'afterlife', 'scene', 'papyrus']]
+];
+
 /** How well a picture's own description covers the line. A specific name must match (the episode's main place alone is not enough),
  *  and a picture of a named place is never used for a line about another place. */
 function score(line, p) {
   if (isModern(p) && !MODERN_LINE.test(line)) return 0;
   const hay = textOf(p).toLowerCase();
+  if (/[\u0600-\u06FF]/.test(line)) {
+    let arScore = 0;
+    for (const [re, engWords] of AR_KW) {
+      if (re.test(line)) {
+        for (const ew of engWords) {
+          if (hay.includes(ew)) arScore += 4;
+        }
+      }
+    }
+    if (arScore > 0) return arScore;
+  }
   const hayWords = new Set(words(hay));
   const nm = names(line).filter((n) => hay.includes(n));
   const strong = nm.filter((n) => !TOPIC.test(n));
@@ -299,6 +322,19 @@ for (const l of empty) {
   }
   const clip = script.kind === 'promo' ? await promoClip(l.en) : await pixabayClip(l.en);
   if (clip) { l.clip = clip; fromVideo++; continue; }
+  // For Arabic shorts: NEVER produce an empty/black Manim title scene. Use authentic artifacts from the library!
+  if (script.lang === 'ar' || script.verticalOnly) {
+    const isBw = (p) => /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`);
+    const available = clean.filter((p) => !banned.has(p.id) && !isBw(p) && (uses.get(p.id) || 0) < 3)
+      .sort((a, b) => (b.shine || 0) - (a.shine || 0));
+    if (available.length) {
+      const pick = available[0];
+      l.pictures = [pick.id];
+      uses.set(pick.id, (uses.get(pick.id) || 0) + 1);
+      fromLibrary++;
+      continue;
+    }
+  }
   // the title scene plays over a real picture from the same chapter, blurred and dark, so it never claims to show the line
   const near = chapterOf.get(l).lines.flatMap((x) => x.pictures || []).filter((x) => !banned.has(x)).map((x) => byId.get(x)).filter((p) => p && !/portrait|person|man |woman/i.test(p.seen.what || ''));
   const bg = near.length ? near[scenes.length % near.length] : clean.find((p) => TOPIC.test(textOf(p)));

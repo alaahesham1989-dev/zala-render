@@ -98,12 +98,14 @@ const report = { id, seconds: durationOf(video), srtLines: srt.length, scriptLin
 
 // picture sheets: two moments of every line
 console.log('Sheets: main video');
+const isVert = Boolean(script.verticalOnly);
+const scaleTile = isVert ? 'scale=216:384' : 'scale=384:216';
 const main = [];
 for (const s of srt) {
   for (const [part, at] of [['a', 0.25], ['b', 0.75]]) {
     const f = path.join(tmp, `L${String(s.n).padStart(2, '0')}${part}.jpg`);
     // clamped: a line whose end time lands at or past the video's own last frame (rounding, trimmed tail) must not seek past EOF
-    frameOf(video, Math.min(s.start + (s.end - s.start) * at, report.seconds - 0.08), `scale=384:216,${label(`L${s.n}${part}`, 24)}`, f);
+    frameOf(video, Math.min(s.start + (s.end - s.start) * at, report.seconds - 0.08), `${scaleTile},${label(`L${s.n}${part}`, 24)}`, f);
     main.push(f);
   }
 }
