@@ -202,5 +202,32 @@
       "Ptolemaic Egypt Greek rulers",
       "Cleopatra intelligence politician"
     ]
+  },
+  "ZV-VAR01": {
+    "title": "جولة أهرامات الجيزة الافتراضية — أسرار هضبة الفراعنة وأبو الهول",
+    "hook": "جولة افتراضية كاملة في قلب هضبة الأهرامات",
+    "seconds": 1500,
+    "match": "giza|pyramid|khufu|khafre|menkaure|sphinx|valley temple|solar boat|workers village",
+    "archive": "Giza Pyramids Plateau Great Sphinx Khufu Khafre Menkaure",
+    "queries": [
+      "giza pyramids aerial view plateau",
+      "great pyramid of giza khufu",
+      "khufu pyramid entrance al mamun",
+      "grand gallery great pyramid interior",
+      "kings chamber granite sarcophagus khufu",
+      "queens chamber khufu pyramid",
+      "scanpyramids big void great pyramid",
+      "pyramid of khafre summit casing",
+      "khafre valley temple granite pillars",
+      "khafre diorite statue horus cairo museum",
+      "great sphinx of giza dream stela paws",
+      "great sphinx aerial front face nemes",
+      "pyramid of menkaure aswan granite casing",
+      "khufu solar ship boat cedar wood",
+      "heit el ghurab giza workers village",
+      "tombs of the pyramid builders giza",
+      "giza pyramids sunset panoramic view",
+      "pyramids of giza illuminated night luxury"
+    ]
   }
 }

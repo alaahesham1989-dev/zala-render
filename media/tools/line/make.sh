@@ -12,7 +12,7 @@ case "$KIND" in short|tour-short) SHORT=yes;; *) SHORT=no;; esac
 WAIT=$([ $SHORT = yes ] && echo 120 || echo 600)
 
 # a library of checked pictures for this video (the episode keeps more to choose from)
-TARGET=$([ "$KIND" = episode ] && echo 220 || echo 40)
+case "$KIND" in episode|tour) TARGET=220;; *) TARGET=40;; esac
 $PY media/tools/library_build.py "$ID" --target "$TARGET" || { [ "$KIND" = episode ] && exit 1; echo "make: $ID keeps the pictures it has"; }
 
 # Gemini is sometimes busy for a while: wait and try again instead of giving up the day

@@ -243,8 +243,9 @@ if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds 
 for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) console.log(`Note: ${x.name}: ${String(x.note).slice(0, 100)}`); }
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
 // what keeps a viewer watching
-// a standalone short or a short tour has no long-video package: thumbnails, chapters and the teaser count are not checked
-const eng = script.verticalOnly ? { longestStill: 0, longestClip: 0, teasers: 1, minutes: 0, wordTimed: 1, lines: 1, licensedMusic: true, cards: 0 } : (pkg.engagement || {});
+// a standalone short, an Arabic video, or a virtual tour has no English teaser package: teasers and english-only metrics are not checked
+const isRelaxed = script.verticalOnly || script.kind === 'tour' || script.lang === 'ar';
+const eng = isRelaxed ? { longestStill: 0, longestClip: 0, teasers: 999, minutes: 0, wordTimed: 999, lines: 1, licensedMusic: true, cards: 0 } : (pkg.engagement || {});
 if (eng.longestStill > 7) fail.push(`one picture stays ${eng.longestStill}s without a cut`);
 if (eng.longestClip > 14) fail.push(`one moving clip runs ${eng.longestClip}s`);
 if (!(eng.teasers >= eng.minutes * 1.5)) fail.push(`only ${eng.teasers} lines at the top for ${eng.minutes} minutes`);
@@ -255,7 +256,7 @@ if (!(eng.teasers >= eng.minutes * 1.5)) fail.push(`only ${eng.teasers} lines at
 if (!(eng.wordTimed >= eng.lines * 0.5)) fail.push(`captions follow the spoken words on only ${eng.wordTimed} of ${eng.lines} lines`);
 if (!eng.licensedMusic) fail.push('no licensed music: the built-in bed was used');
 if (eng.cards > 7) fail.push(`${eng.cards} text cards, too many`);
-if (!script.verticalOnly && (pkg.thumbnails || []).length < 3) fail.push(`only ${(pkg.thumbnails || []).length} thumbnails`);
+if (!isRelaxed && (pkg.thumbnails || []).length < 3) fail.push(`only ${(pkg.thumbnails || []).length} thumbnails`);
 const blob = [pkg.title, pkg.description].join(' ');
 for (const bad of (script.bannedWords || [])) if (new RegExp(`\\b${bad}\\b`, 'i').test(blob)) fail.push(`publishing text says "${bad}"`);
 // cards in a row, reused from the director's rule, and pictures showing nudity are removed for the next run

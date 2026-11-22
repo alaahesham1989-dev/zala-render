@@ -1,0 +1,115 @@
+name: ZALA Giza Arabic Grand Virtual Tour (25 min Full HD)
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Topic ID (default: ZV-VAR01)"
+        required: false
+        default: "ZV-VAR01"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zala-giza-tour
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_AR != '' && secrets.GEMINI_API_KEY_AR || secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_AR == '' && secrets.GEMINI_API_KEY_3 || '' }}
+      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEY_AR == '' && secrets.GEMINI_API_KEYS || '' }}
+      ZALA_LINE: ar
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_AR || secrets.TELEGRAM_CHAT_ID }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+      NO_ARABIC_COPY: "1"
+      GH_TOKEN: ${{ github.token }}
+      MANIM_PY: /tmp/manim/bin/python
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      ID: ${{ inputs.id || 'ZV-VAR01' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bring state and library from R2
+        run: |
+          set -euo pipefail
+          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
+          aws s3 sync "s3://${R2_BUCKET}/render-state-ar/content" content --endpoint-url "$E" --no-progress || true
+          git checkout -- content/meta-queue.json 2>/dev/null || true
+          git checkout -- content/outbox.json 2>/dev/null || true
+          cp media/tools/treasures.json content/library/treasures.json
+          node -e 'const fs=require("fs"); const t=JSON.parse(fs.readFileSync("content/library/treasures.json","utf8")); const a=JSON.parse(fs.readFileSync("media/tools/arabic-treasures.json","utf8")); Object.assign(t,a); fs.writeFileSync("content/library/treasures.json", JSON.stringify(t, null, 2));'
+      - name: Install system dependencies, fonts, and Python picture tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev fonts-noto-naskh-arabic
+          cd media && npm ci && node tools/fetch-fonts.mjs && mkdir -p ~/.local/share/fonts && cp brand/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f && cd ..
+          python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
+          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+          python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1" "pillow==10.4.0"
+          pip install --quiet pillow arabic-reshaper python-bidi
+          python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
+          for d in meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
+          aws s3 sync "s3://${R2_BUCKET}/render-cache/voice/$ID" "media/cache/voice/$ID" --endpoint-url "$E" --no-progress || true
+          aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$ID" "media/tmp/render/$ID" --endpoint-url "$E" --no-progress || true
+      - name: 0 — Prepare Giza Arabic tour script
+        run: |
+          node media/tools/giza-tour-prep.mjs
+      - name: 1 — Make and render (25-minute Full HD documentary)
+        run: |
+          set -uo pipefail
+          exec > >(tee -a run.log) 2>&1
+          pass=no
+          for round in 1 2; do
+            review=""; [ "$round" -gt 1 ] && { review="quality-$ID/verdict.json"; [ -f "quality-$ID/review.json" ] && review="quality-$ID/review.json"; }
+            bash media/tools/line/make.sh "$ID" tour "$review" || { echo "make stopped ($round)"; continue; }
+            if bash media/tools/line/quality.sh "$ID" "quality-$ID"; then pass=yes; break; fi
+            echo "QUALITY: $ID round $round review saved"
+          done
+          echo "PASS=$pass" >> "$GITHUB_ENV"
+      - name: Save to R2
+        if: always()
+        run: |
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
+          [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
+          [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          aws s3 cp run.log "s3://${R2_BUCKET}/renders/$ID/run.log" --endpoint-url "$E" --no-progress || true
+      - name: Telegram Notification
+        if: always()
+        run: |
+          v=$(ls media/out/${ID}/publish/*.mp4 2>/dev/null | head -1)
+          cap="🏛️ ZALA جولة أهرامات الجيزة الكبرى (25 دقيقة): ${ID} — الفحص: ${PASS:-no}."
+          if [ -n "$v" ]; then
+            link="${VITE_MEDIA_BASE_URL%/}/renders/${ID}/publish/$(basename "$v")"
+            r=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$cap
+          $link")
+          else
+            r=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$cap (راجع السجل)")
+          fi
+          echo "$r" | grep -q '"ok":true' || echo "Telegram response: $r"
