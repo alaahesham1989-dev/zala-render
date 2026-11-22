@@ -203,7 +203,7 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   const rev = JSON.parse(fs.readFileSync(reviewAt, 'utf8'));
   for (const r of rev.lines || []) {
     const l = lines[r.n - 1];
-    if (!l || r.fits !== 'no') continue;
+    if (!l || (r.fits !== 'no' && !r.pictureProblem)) continue;
     for (const p of l.pictures || []) banned.add(p);
     if (l.clip?.page) banned.add(l.clip.page);
     if (l.clip?.prep) banned.add(l.clip.url);

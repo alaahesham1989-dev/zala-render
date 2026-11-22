@@ -18,6 +18,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageSta
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONTENT = os.path.join(REPO, "content")
 FONT = os.path.join(REPO, "media", "brand", "fonts", "Anton-Regular.ttf")
+ARABIC_FONT = os.path.join(REPO, "media", "brand", "fonts", "NotoNaskhArabic-Bold.ttf")
 GOLD = (255, 205, 40)
 UA = {"User-Agent": "ZalaRender/1.0 (https://www.zalavip.com)"}
 
@@ -151,18 +152,28 @@ def scrim(img, top):
     return Image.composite(dark, img, alpha)
 
 
-def words(draw, img, text, box, size):
+def words(draw, img, text, box, size, is_ar=False):
+    font_file = ARABIC_FONT if is_ar and os.path.exists(ARABIC_FONT) else FONT
     lines, cur = [], ""
-    for w in text.upper().split():
-        if cur and len(cur) + 1 + len(w) > 11:
+    raw_words = text.split() if is_ar else text.upper().split()
+    max_c = 16 if is_ar else 11
+    for w in raw_words:
+        if cur and len(cur) + 1 + len(w) > max_c:
             lines.append(cur)
             cur = w
         else:
             cur = f"{cur} {w}".strip()
     lines.append(cur)
+    if is_ar:
+        try:
+            import arabic_reshaper
+            from bidi.algorithm import get_display
+            lines = [get_display(arabic_reshaper.reshape(l)) for l in lines]
+        except Exception:
+            pass
     x0, y0, x1, y1 = box
-    while size > 40:
-        font = ImageFont.truetype(FONT, size)
+    while size > 30:
+        font = ImageFont.truetype(font_file, size)
         sizes = [draw.textbbox((0, 0), l, font=font, stroke_width=size // 12) for l in lines]
         tw = max(b[2] - b[0] for b in sizes)
         th = sum(b[3] - b[1] for b in sizes) + (len(lines) - 1) * size * 0.08
@@ -268,9 +279,20 @@ def main():
         w = [x for x in w if x.lower().strip("'s:") not in ("ancient", "egypt", "egyptian", "egypt's")]   # the label already says it
         return " ".join(w[-n:]) if len(w) > n else " ".join(w)
 
+    is_ar = script.get("lang") == "ar" or any('\u0600' <= c <= '\u06ff' for c in script.get("title", ""))
+
     def label(img, text, box, size):
         d = ImageDraw.Draw(img)
-        f = ImageFont.truetype(FONT, size)
+        f_file = ARABIC_FONT if is_ar and os.path.exists(ARABIC_FONT) else FONT
+        if is_ar:
+            text = "مصر القديمة"
+            try:
+                import arabic_reshaper
+                from bidi.algorithm import get_display
+                text = get_display(arabic_reshaper.reshape(text))
+            except Exception:
+                pass
+        f = ImageFont.truetype(f_file, size)
         b = d.textbbox((0, 0), text, font=f)
         x = box[0] + ((box[2] - box[0]) - (b[2] - b[0])) / 2
         pad = size // 4
@@ -286,7 +308,7 @@ def main():
         t = cover(img, 1280, 720)
         d = ImageDraw.Draw(t)
         label(t, "ANCIENT EGYPT", (40, 360, 1240, 400), 44)
-        words(d, t, text, (40, 420, 1240, 700), 160)   # big words across the lower part, the subject stays on top
+        words(d, t, text, (40, 420, 1240, 700), 160, is_ar=is_ar)   # big words across the lower part, the subject stays on top
         name = f"{ep}_thumbnail.jpg" if n == 0 else f"{ep}_thumbnail-{n + 1}.jpg"
         t.save(os.path.join(pub, name), "JPEG", quality=92)
         made.append(name)
@@ -296,7 +318,7 @@ def main():
         _, pid, img = ranked[0 if alone else (n + 1) % len(ranked)]
         c = cover(img, 1080, 1920, 0.4)
         label(c, "ANCIENT EGYPT", (60, 1110, 1020, 1160), 56)
-        words(ImageDraw.Draw(c), c, clean(said(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook")) or hook(r.get("title", ""), 4), main_text), (60, 1200, 1020, 1700), 190)
+        words(ImageDraw.Draw(c), c, clean(said(((script.get("reels") or [{}] * 3) + [{}] * 3)[n].get("hook") or script.get("hook")) or hook(r.get("title", ""), 4), main_text), (60, 1200, 1020, 1700), 190, is_ar=is_ar)
         r["cover"] = r["file"].replace(".mp4", "_cover.jpg")
         c.save(os.path.join(pub, r["cover"]), "JPEG", quality=92)
     pkg["thumbnail"], pkg["thumbnails"] = made[0], made

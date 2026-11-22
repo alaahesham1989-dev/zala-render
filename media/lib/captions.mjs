@@ -18,10 +18,11 @@ const ts = (t) => {
 };
 
 /** Reshapes a batch of Arabic lines in one Python call. Falls back to the raw text (never crashes a render over it). */
-function shapeArabic(texts) {
+export function shapeArabic(texts) {
   if (!texts.length) return texts;
   const script = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', 'tools', 'arabic_shape.py');
-  const r = spawnSync('python3', [script], { input: texts.join('\n'), encoding: 'utf8', timeout: 20000 });
+  const py = process.env.MANIM_PY || (process.platform === 'win32' ? 'python' : 'python3');
+  const r = spawnSync(py, [script], { input: texts.join('\n'), encoding: 'utf8', timeout: 20000 });
   if (r.status !== 0 || !r.stdout) return texts;
   const out = r.stdout.split('\n');
   return texts.map((t, i) => out[i] ?? t);

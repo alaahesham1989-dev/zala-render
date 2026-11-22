@@ -22,7 +22,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { FFMPEG, ff, durationOf, dimensionsOf, filterPath } from './lib/ff.mjs';
-import { buildAss as buildReelAss } from './lib/captions.mjs';
+import { buildAss as buildReelAss, shapeArabic } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
 import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
 import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
@@ -1353,27 +1353,44 @@ function reelScene(s, out) {
 
 function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   const base = buildReelAss(words, { W: VW, H: VH, mode: 'short' });
+  const isAr = Boolean(LANG_FONT) || /[\u0600-\u06FF]/.test(String(reel.hook || reel.title || ''));
+  const hookSize = isAr ? 96 : 176;
+  const hookLineH = isAr ? 120 : 216;
   const styles = [
-    style('Badge', 'Lato', 34, GOLD, { bold: -1, sp: 4, out: 3, sh: 1 }),
-    style('Hook', 'Anton', 176, '&H0000D7FF&', { sp: 1, out: 9, sh: 4 }),
-    style('HookSub', 'Lato', 52, WHITE, { bold: -1, out: 4, sh: 2 }),
-    style('End1', 'Anton', 84, GOLD, { sp: 1, out: 4, sh: 2, an: 8 }),
-    style('End2', 'Lato', 46, WHITE, { bold: -1, out: 3, sh: 1, an: 8 }),
+    style('Badge', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', 34, GOLD, { bold: -1, sp: isAr ? 0 : 4, out: 3, sh: 1 }),
+    style('Hook', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', hookSize, '&H0000D7FF&', { sp: isAr ? 0 : 1, out: isAr ? 6 : 9, sh: isAr ? 2 : 4 }),
+    style('HookSub', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 40 : 52, WHITE, { bold: -1, out: 4, sh: 2 }),
+    style('End1', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', isAr ? 68 : 84, GOLD, { sp: isAr ? 0 : 1, out: 4, sh: 2, an: 8 }),
+    style('End2', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 38 : 46, WHITE, { bold: -1, sp: isAr ? 1 : 4, out: 3, sh: 1, an: 8 }),
     style('Fx', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
   ].join('\n');
   const dl = (a, b, st, text) => `Dialogue: 3,${ass_t(a)},${ass_t(b)},${st},,0,0,0,,${text}`;
   const lines = [];
   const hookEnd = 3.4;
-  if (reel.badge) lines.push(dl(0.1, hookEnd, 'Badge', `{\\an7\\pos(64,210)\\fad(150,250)}${aesc(reel.badge)}`));
+  if (reel.badge) {
+    const badgeText = isAr ? (shapeArabic([reel.badge])[0] || reel.badge) : reel.badge;
+    lines.push(dl(0.1, hookEnd, 'Badge', `{\\an7\\pos(64,210)\\fad(150,250)}${aesc(badgeText)}`));
+  }
   // wrap the hook by hand: libass' balance is poor at this size
-  const words2 = String(reel.hook || reel.title).toUpperCase().split(/\s+/);
+  const rawWords = String(reel.hook || reel.title).split(/\s+/).filter(Boolean);
   const rows = [];
-  for (const w of words2) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 14) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
-  lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${aesc(rows.join('\n'))}`));
-  if (reel.sub) lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${290 + rows.length * 216})\\fad(200,250)}${aesc(reel.sub)}`));
+  const maxRowLen = isAr ? 20 : 14;
+  for (const w of rawWords) {
+    if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= maxRowLen) rows[rows.length - 1] += ` ${w}`;
+    else rows.push(w);
+  }
+  const shapedRows = isAr ? shapeArabic(rows) : rows.map((r) => r.toUpperCase());
+  const hookBody = shapedRows.map((r) => aesc(r)).join('\\N');
+  lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${hookBody}`));
+  if (reel.sub) {
+    const subText = isAr ? (shapeArabic([reel.sub])[0] || reel.sub) : reel.sub;
+    lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${290 + rows.length * hookLineH})\\fad(200,250)}${aesc(subText)}`));
+  }
   const e0 = total - outro + 0.2;
-  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}${LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE'}`));
-  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${LANG_FONT ? 'الحكاية كاملة على يوتيوب  ·  zalavip.com' : 'FULL STORY ON YOUTUBE  ·  zalavip.com'}`));
+  const end1Text = isAr ? (shapeArabic(['زالا VIP'])[0] || 'زالا VIP') : (LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE');
+  const end2Text = isAr ? (shapeArabic(['الحكاية كاملة على يوتيوب  ·  zalavip.com'])[0] || 'الحكاية كاملة على يوتيوب  ·  zalavip.com') : (LANG_FONT ? 'الحكاية كاملة على يوتيوب  ·  zalavip.com' : 'FULL STORY ON YOUTUBE  ·  zalavip.com');
+  lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}${end1Text}`));
+  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${end2Text}`));
   return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';
 }
 
@@ -1493,13 +1510,17 @@ function thumbnail(script, tl, data, dir, work) {
     const re = v.match ? new RegExp(v.match, 'i') : null;
     const pick = (re && beats.find((x) => !used.has(x.asset.file) && re.test(`${x.need} ${x.en}`))) || beats.find((x) => !used.has(x.asset.file)) || beats[0];
     used.add(pick.asset.file);
-    const words = String(v.text).toUpperCase().split(/\s+/);
+    const isAr = Boolean(LANG_FONT) || /[\u0600-\u06FF]/.test(String(v.text || ''));
+    const rawWords = String(v.text).split(/\s+/).filter(Boolean);
     const rows = [];
-    for (const w of words) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= 11) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
-    const size = rows.length > 3 ? 112 : 150;
+    const maxRowLen = isAr ? 16 : 11;
+    for (const w of rawWords) { if (rows.length && `${rows[rows.length - 1]} ${w}`.length <= maxRowLen) rows[rows.length - 1] += ` ${w}`; else rows.push(w); }
+    const size = rows.length > 3 ? (isAr ? 90 : 112) : (isAr ? 116 : 150);
+    const shapedRows = isAr ? shapeArabic(rows) : rows.map((r) => r.toUpperCase());
     const ass = path.join(work, `thumb-${i}.ass`);
-    const body = rows.map((r, n) => (n === rows.length - 1 ? `{\\c&H0000D7FF&}${aesc(r)}` : `{\\c&H00FFFFFF&}${aesc(r)}`)).join('\\N');
-    fs.writeFileSync(ass, `[Script Info]\nScriptType: v4.00+\nPlayResX: ${tW}\nPlayResY: ${tH}\nWrapStyle: 2\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n${style('T', 'Anton', size, WHITE, { sp: 1, out: 8, sh: 5, an: 4 })}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,T,,0,0,0,,{\\an4\\pos(44,${tH / 2})}${body}\n`, 'utf8');
+    const body = shapedRows.map((r, n) => (n === shapedRows.length - 1 ? `{\\c&H0000D7FF&}${aesc(r)}` : `{\\c&H00FFFFFF&}${aesc(r)}`)).join('\\N');
+    const thumbFont = isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton';
+    fs.writeFileSync(ass, `[Script Info]\nScriptType: v4.00+\nPlayResX: ${tW}\nPlayResY: ${tH}\nWrapStyle: 2\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\n${ASS_FORMAT}\n${style('T', thumbFont, size, WHITE, { sp: isAr ? 0 : 1, out: 8, sh: 5, an: 4 })}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,T,,0,0,0,,{\\an4\\pos(44,${tH / 2})}${body}\n`, 'utf8');
     const file = path.join(dir, i === 0 ? `${script.id}_thumbnail.jpg` : `${script.id}_thumbnail-${i + 1}.jpg`);
     ff(['-i', abs(pick.asset.file), '-f', 'lavfi', '-i', `color=c=black:s=${tW}x${tH}`, '-i', path.join(BRAND, 'mark.png'), '-filter_complex',
       `[0:v]scale=${tW}:${tH}:force_original_aspect_ratio=increase:flags=lanczos,crop=${tW}:${tH},eq=contrast=1.2:saturation=1.3:brightness=0.02,unsharp=5:5:0.8[pic];` +
