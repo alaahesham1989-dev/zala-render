@@ -961,11 +961,11 @@ function clipArgs(src, w, h, FR, out) {
     '-map', '[v]', '-frames:v', String(FR), '-an', ...X264, out];
 }
 
-function brandStill(out, { crestW, x, y, glow }) {
+function brandStill(out, { crestW, x, y, glow, W: canvasW = W, H: canvasH = H }) {
   if (fs.existsSync(out)) return out;
   const g = `exp(-((X-${glow.x})*(X-${glow.x})+(Y-${glow.y})*(Y-${glow.y}))/(2*${glow.r}*${glow.r}))`;
   const base = `${out}.glow.png`;
-  ff(['-f', 'lavfi', '-i', `color=c=black:s=${W}x${H}`, '-vf', `format=rgb24,geq=r='78*${g}':g='54*${g}':b='14*${g}'`, '-frames:v', '1', base]);
+  ff(['-f', 'lavfi', '-i', `color=c=black:s=${canvasW}x${canvasH}`, '-vf', `format=rgb24,geq=r='78*${g}':g='54*${g}':b='14*${g}'`, '-frames:v', '1', base]);
   ff(['-i', base, '-i', path.join(REPO, 'public', 'zala-crest-transparent.png'), '-filter_complex',
     `[1:v]scale=${crestW}:-1:flags=lanczos,format=rgba[c];[0:v][c]overlay=${x}:${y}:format=auto,format=yuv420p`, '-frames:v', '1', out]);
   fs.rmSync(base, { force: true });
@@ -1341,6 +1341,22 @@ function reelScene(s, out) {
   const { width, height } = dimensionsOf(src);
   const tall = 2880, cropW = Math.round((tall * VW) / VH);
   const fullW = Math.round((width / height) * tall);
+
+  if (s.isAr) {
+    if (width > height * 1.15) {
+      // Landscape photo in 9:16 frame: Blurred ambient luxury background + sharp centered full image
+      const bg = `scale=${VW}:${VH}:force_original_aspect_ratio=increase,crop=${VW}:${VH},gblur=sigma=45,eq=brightness=-0.22:saturation=0.85`;
+      const fg = `scale=${VW}:-2:force_original_aspect_ratio=decrease:flags=lanczos`;
+      return ['-loop', '1', '-framerate', String(FPS), '-i', src, '-frames:v', String(FR), '-filter_complex',
+        `[0:v]split[b][f];[b]${bg}[bg];[f]${fg}[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,format=yuv420p`,
+        '-frames:v', String(FR), '-an', ...X264, out];
+    }
+    // Portrait / vertical photo: fits naturally with gentle framing
+    return ['-loop', '1', '-framerate', String(FPS), '-i', src, '-frames:v', String(FR), '-vf',
+      `scale=${VW}:${VH}:force_original_aspect_ratio=increase:flags=lanczos,crop=${VW}:${VH},setsar=1,format=yuv420p`,
+      '-frames:v', String(FR), '-an', ...X264, out];
+  }
+
   if (fullW > cropW * 1.15) {
     // a wide photo travels across the frame so the whole picture is seen, nothing is lost to a centre crop
     const E = `((1-cos(PI*t/${s.dur.toFixed(3)}))/2)`;
@@ -1354,22 +1370,22 @@ function reelScene(s, out) {
 function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   const base = buildReelAss(words, { W: VW, H: VH, mode: 'short' });
   const isAr = Boolean(LANG_FONT) || /[\u0600-\u06FF]/.test(String(reel.hook || reel.title || ''));
-  const hookSize = isAr ? 96 : 176;
-  const hookLineH = isAr ? 120 : 216;
+  const hookSize = isAr ? 76 : 176;
+  const hookLineH = isAr ? 98 : 216;
   const styles = [
-    style('Badge', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', 34, GOLD, { bold: -1, sp: isAr ? 0 : 4, out: 3, sh: 1 }),
-    style('Hook', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', hookSize, '&H0000D7FF&', { sp: isAr ? 0 : 1, out: isAr ? 6 : 9, sh: isAr ? 2 : 4 }),
-    style('HookSub', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 40 : 52, WHITE, { bold: -1, out: 4, sh: 2 }),
+    style('Badge', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 32 : 34, GOLD, { bold: -1, sp: isAr ? 0 : 4, out: 3, sh: 1 }),
+    style('Hook', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', hookSize, '&H0000D7FF&', { sp: isAr ? 0 : 1, out: isAr ? 5 : 9, sh: isAr ? 2 : 4 }),
+    style('HookSub', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 36 : 52, WHITE, { bold: -1, out: 3, sh: 2 }),
     style('End1', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', isAr ? 68 : 84, GOLD, { sp: isAr ? 0 : 1, out: 4, sh: 2, an: 8 }),
     style('End2', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 38 : 46, WHITE, { bold: -1, sp: isAr ? 1 : 4, out: 3, sh: 1, an: 8 }),
     style('Fx', 'Lato', 20, WHITE, { out: 0, sh: 0 }),
   ].join('\n');
   const dl = (a, b, st, text) => `Dialogue: 3,${ass_t(a)},${ass_t(b)},${st},,0,0,0,,${text}`;
   const lines = [];
-  const hookEnd = 3.4;
+  const hookEnd = isAr ? 2.8 : 3.4;
   if (reel.badge) {
     const badgeText = isAr ? (shapeArabic([reel.badge])[0] || reel.badge) : reel.badge;
-    lines.push(dl(0.1, hookEnd, 'Badge', `{\\an7\\pos(64,210)\\fad(150,250)}${aesc(badgeText)}`));
+    lines.push(dl(0.1, hookEnd, 'Badge', `{\\an7\\pos(64,180)\\fad(150,200)}${aesc(badgeText)}`));
   }
   // wrap the hook by hand: libass' balance is poor at this size
   const rawWords = String(reel.hook || reel.title).split(/\s+/).filter(Boolean);
@@ -1381,10 +1397,11 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   }
   const shapedRows = isAr ? shapeArabic(rows) : rows.map((r) => r.toUpperCase());
   const hookBody = shapedRows.map((r) => aesc(r)).join('\\N');
-  lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,262)\\fad(120,250)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${hookBody}`));
+  const topY = isAr ? (reel.badge ? 230 : 180) : 262;
+  lines.push(dl(0.1, hookEnd, 'Hook', `{\\an7\\pos(60,${topY})\\fad(120,200)\\fscx90\\fscy90\\t(0,200,\\fscx100\\fscy100)}${hookBody}`));
   if (reel.sub) {
     const subText = isAr ? (shapeArabic([reel.sub])[0] || reel.sub) : reel.sub;
-    lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${290 + rows.length * hookLineH})\\fad(200,250)}${aesc(subText)}`));
+    lines.push(dl(0.3, hookEnd, 'HookSub', `{\\an7\\pos(64,${topY + rows.length * hookLineH + 15})\\fad(200,200)}${aesc(subText)}`));
   }
   const e0 = total - outro + 0.2;
   const end1Text = isAr ? (shapeArabic(['زالا VIP'])[0] || 'زالا VIP') : (LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE');
@@ -1455,9 +1472,11 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   const fade = 0.25;
   scenes.forEach((s, i) => { s.dur = s.span + (i < scenes.length - 1 ? fade : 0); });
 
+  const isAr = Boolean(LANG_FONT) || script.lang === 'ar' || /[\u0600-\u06FF]/.test(String(reel.hook || reel.title || ''));
   const clips = [];
   await pool(scenes.map((s, i) => ({ s, i })), 3, async ({ s }) => {
     s.out = path.join(rw, `${hash(`${s.asset.file}|${s.idx}|${s.dur.toFixed(3)}`)}.mp4`);
+    s.isAr = isAr;
     if (!okClip(s.out)) await encodeTo(s.out, (part) => reelScene(s, part));
   });
   clips.push(...scenes.map((s) => s.out));
@@ -1466,8 +1485,14 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   const endStill = brandStill(path.join(rw, 'end.png'), { crestW: 620, x: 650, y: 140, glow: { x: 960, y: 440, r: 460 } });
   const endClip = path.join(rw, `end-${outro.toFixed(2)}.mp4`);
   if (!okClip(endClip)) {
-    await encodeTo(endClip, (part) => ['-loop', '1', '-framerate', String(FPS), '-i', endStill, '-frames:v', String(Math.round(outro * FPS)), '-vf',
-      `crop=608:1080:656:0,scale=${VW}:${VH}:flags=lanczos,fade=t=in:st=0:d=0.3,setsar=1,format=yuv420p`, ...X264, part]);
+    if (isAr) {
+      const endStillV = brandStill(path.join(rw, 'end_v.png'), { W: VW, H: VH, crestW: 460, x: Math.round((VW - 460) / 2), y: 380, glow: { x: Math.round(VW / 2), y: 610, r: 350 } });
+      await encodeTo(endClip, (part) => ['-loop', '1', '-framerate', String(FPS), '-i', endStillV, '-frames:v', String(Math.round(outro * FPS)), '-vf',
+        `scale=${VW}:${VH}:flags=lanczos,fade=t=in:st=0:d=0.3,setsar=1,format=yuv420p`, ...X264, part]);
+    } else {
+      await encodeTo(endClip, (part) => ['-loop', '1', '-framerate', String(FPS), '-i', endStill, '-frames:v', String(Math.round(outro * FPS)), '-vf',
+        `crop=608:1080:656:0,scale=${VW}:${VH}:flags=lanczos,fade=t=in:st=0:d=0.3,setsar=1,format=yuv420p`, ...X264, part]);
+    }
   }
 
   // the picture: crossfades between scenes, then the end card

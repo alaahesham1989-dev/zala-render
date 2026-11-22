@@ -47,9 +47,10 @@ function chunk(words, maxWords, maxChars) {
  */
 export function buildAss(words, { W, H, mode }) {
   const short = mode === 'short';
-  const size = short ? Math.round(W * 0.12) : Math.round(H * 0.05);
-  const marginV = short ? Math.round(H * 0.27) : Math.round(H * 0.07);
-  const font = process.env.ZALA_CAPTION_FONT || (short ? 'Anton' : 'Lato');
+  const arabic = words.some((w) => /[؀-ۿ]/.test(w.w));
+  const size = arabic ? (short ? 54 : 42) : (short ? Math.round(W * 0.12) : Math.round(H * 0.05));
+  const marginV = arabic ? (short ? 380 : Math.round(H * 0.07)) : (short ? Math.round(H * 0.27) : Math.round(H * 0.07));
+  const font = arabic ? 'Noto Naskh Arabic' : (process.env.ZALA_CAPTION_FONT || (short ? 'Anton' : 'Lato'));
   const header = `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${W}
@@ -59,14 +60,13 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Cap,${font},${size},${WHITE},${WHITE},&H00000000&,&H80000000&,${short ? 0 : -1},0,0,0,100,100,${short ? 1 : 0},0,1,${short ? 8 : 3},${short ? 3 : 1},2,${Math.round(W * 0.08)},${Math.round(W * 0.08)},${marginV},1
+Style: Cap,${font},${size},${WHITE},${WHITE},&H00000000&,&H80000000&,${short ? 0 : -1},0,0,0,100,100,${short ? (arabic ? 0 : 1) : 0},0,1,${short ? (arabic ? 4 : 8) : 3},${short ? (arabic ? 2 : 3) : 1},2,${Math.round(W * 0.08)},${Math.round(W * 0.08)},${marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
   const lines = [];
   const groups = chunk(words, short ? 3 : 9, short ? 13 : 60);
-  const arabic = words.some((w) => /[؀-ۿ]/.test(w.w));
   const shaped = arabic ? shapeArabic(groups.map((g) => g.map((x) => x.w).join(' '))) : null;
   groups.forEach((g, gi) => {
     const end = g[g.length - 1].t1;   // never past the next group's start, or two captions print over each other
