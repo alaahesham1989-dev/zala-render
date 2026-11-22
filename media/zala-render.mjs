@@ -1405,7 +1405,7 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   }
   const e0 = total - outro + 0.2;
   const end1Text = isAr ? (shapeArabic(['زالا VIP'])[0] || 'زالا VIP') : (LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE');
-  const end2Text = isAr ? (shapeArabic(['الحكاية كاملة على يوتيوب  ·  zalavip.com'])[0] || 'الحكاية كاملة على يوتيوب  ·  zalavip.com') : (LANG_FONT ? 'الحكاية كاملة على يوتيوب  ·  zalavip.com' : 'FULL STORY ON YOUTUBE  ·  zalavip.com');
+  const end2Text = isAr ? (shapeArabic(['حكايات الفراعنة اللي مسمعتهاش'])[0] || 'حكايات الفراعنة اللي مسمعتهاش') : (LANG_FONT ? 'حكايات الفراعنة اللي مسمعتهاش' : 'FULL STORY ON YOUTUBE  ·  zalavip.com');
   lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}${end1Text}`));
   lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${end2Text}`));
   return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';

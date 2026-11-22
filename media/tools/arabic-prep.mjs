@@ -109,8 +109,8 @@ function loadPictures() {
 }
 
 // ── 3. write the Arabic short script ────────────────────────────────
-const TARGET_WORDS = 110;  // ~50 seconds at Egyptian speech pace (~2.2 words/sec)
-const TARGET_LINES = 7;    // 6-8 lines for a 50-second short
+const TARGET_WORDS = 124;  // ~56-58 seconds at Egyptian speech pace (~2.15 words/sec)
+const TARGET_LINES = 8;    // 8 lines for a full 57-59 second short
 
 async function writeScript(bank, pics) {
   const known = new Set(pics.map((p) => p.id));
@@ -121,14 +121,15 @@ ${DIRECTION}
 ${SHOT_RULES}
 
 قواعد الشورت:
-- المدة المطلوبة: ٥٠ ثانية بالظبط = تقريباً ١٠٠ إلى ١١٠ كلمة بالعامية المصرية.
-- عدد السطور: ٦ إلى ٨ سطور بالظبط (لا تزيد عن ٨ سطور أبداً).
-- كل سطر: جملة واحدة أو جملتين قصيرتين بالعامية، أقصاها ١٥ كلمة.
+- المدة المطلوبة: دقيقة كاملة (حوالي ٥٧ إلى ٥٨ ثانية) = تقريباً ١٢٠ إلى ١٢٨ كلمة بالعامية المصرية.
+- عدد السطور: ٨ سطور بالظبط.
+- أسلوب الحكي: نبرة حكواتي سينمائي ذكي، وقفات تشويقية، وجمل قصيرة إيقاعية تشد الودن.
+- كل سطر: جملة أو جملتين بالعامية، مع مراعاة التدفق الموسيقي والوقفات.
 - السطر الأول: الهوك الصادم اللي يشد من أول ثانية.
-- آخر سطر: الضربة اللي تفضل في الدماغ وسؤال تفاعلي للمشاهد.
+- السطر الأخير: سؤال ذكي وسلس ومثير للمشاهد يخليه يدخل يعلق في الكومنتات بعفوية ومن غير شحاتة لايكات أو اشتراك.
 
 للصور: اختار صورة من الكتالوج بتوافق كل سطر بدقة.
-السطر الأول صورة ذهبية قوية تشد العين وتوقف السكرول.
+السطر الأول صورة ذهبية أو أثر ملكي ملفت يوقف السكرول فوراً.
 
 Return JSON only:
 {
@@ -241,9 +242,10 @@ async function main() {
   }
   const allLines = (script.chapters || []).flatMap((c) => c.lines || []);
   if (allLines.length && poolPics.length) {
-    // Hook picture rule: MUST be a 3D golden ancient treasure (statue, mask, pectoral, shrine) — NEVER a flat papyrus scan or document
+    // Hook picture rule: MUST be a 3D golden ancient treasure (statue, mask, pectoral, shrine) — NEVER a flat papyrus scan, document, or dull grey stone
     const isDoc = (p) => /papyrus|scroll|document|text|manuscript|sheet/i.test(`${p.title || ''} ${p.seen?.what || ''} ${p.seen?.type || ''}`);
-    const hookPics = poolPics.filter((p) => !isDoc(p) && (p.shine || 0) > 0.6)
+    const isDull = (p) => /grey|gray|monochrome|dull|rubble|fragment|black and white/i.test(`${p.seen?.what || ''} ${p.title || ''}`);
+    const hookPics = poolPics.filter((p) => !isDoc(p) && !isDull(p) && ((p.shine || 0) > 0.55 || /gold|gilded|shrine|statue|mask|jackal|pectoral/i.test(`${p.title || ''} ${p.seen?.what || ''}`)))
       .sort((a, b) => (b.shine || 0) - (a.shine || 0));
     const opening = hookPics.length ? hookPics[0] : poolPics[0];
     if (opening) allLines[0].pictures = [opening.id];
@@ -253,9 +255,7 @@ async function main() {
     id,
     lang: 'ar',
     voice,
-    // no English word in this instruction at all: an English clause here ("Speak only in...") may be what nudged
-    // the model into reading some lines in English too, found after ZV-AR01 came back half Arabic half English
-    voiceStyle: 'اتكلم عربي بالعامية المصرية بس، من غير ولا كلمة إنجليزي أو فصحى. نفس نغمة حكواتي قهوة مصري شاطر بيحكي حكاية بتشد: صوت دافي، متحمس، حيّ.',
+    voiceStyle: 'اتكلم بالعامية المصرية الأصيلة زي حكواتي سينمائي ذكي ودلوع: نبرة صوت عميقة، دافية، فيها تشويق وغموض، مع وقفات محسوبة قبل المفاجآت، ولحن كلامي ساحر يشد الودن من أول ثانية لآخر ثانية، من غير ولا كلمة إنجليزي أو فصحى معقدة.',
     voiceTempo: 1,
     verticalOnly: true,
     packaged: true,
