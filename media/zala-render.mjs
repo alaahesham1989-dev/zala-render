@@ -1370,11 +1370,11 @@ function reelScene(s, out) {
 function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   const base = buildReelAss(words, { W: VW, H: VH, mode: 'short' });
   const isAr = Boolean(LANG_FONT) || /[\u0600-\u06FF]/.test(String(reel.hook || reel.title || ''));
-  const hookSize = isAr ? 76 : 176;
-  const hookLineH = isAr ? 98 : 216;
+  const hookSize = isAr ? 84 : 176;
+  const hookLineH = isAr ? 108 : 216;
   const styles = [
     style('Badge', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 32 : 34, GOLD, { bold: -1, sp: isAr ? 0 : 4, out: 3, sh: 1 }),
-    style('Hook', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', hookSize, '&H0000D7FF&', { sp: isAr ? 0 : 1, out: isAr ? 5 : 9, sh: isAr ? 2 : 4 }),
+    style('Hook', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', hookSize, '&H0000D7FF&', { bold: -1, sp: isAr ? 0 : 1, out: isAr ? 6 : 9, sh: isAr ? 3 : 4 }),
     style('HookSub', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 36 : 52, WHITE, { bold: -1, out: 3, sh: 2 }),
     style('End1', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Anton', isAr ? 68 : 84, GOLD, { sp: isAr ? 0 : 1, out: 4, sh: 2, an: 8 }),
     style('End2', isAr ? (LANG_FONT || 'Noto Naskh Arabic') : 'Lato', isAr ? 38 : 46, WHITE, { bold: -1, sp: isAr ? 1 : 4, out: 3, sh: 1, an: 8 }),
