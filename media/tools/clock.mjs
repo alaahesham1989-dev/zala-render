@@ -20,6 +20,7 @@ const gh = (...a) => execFileSync('gh', a, { encoding: 'utf8', stdio: ['ignore',
 const LANE = ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml'];
 const LANE_AR = ['arabic-prep.yml', 'arabic.yml'];   // the Arabic machine has its own lane: it never waits for, or blocks, the English one
 const ARABIC_LIVE = process.env.ARABIC_LIVE === '1';   // the owner's go-live word (repository variable ARABIC_LIVE)
+const ENGLISH_PAUSED = true;   // English production paused per owner directive; scheduled queue publishing remains active
 const SLOTS = [
   { wf: 'shorts.yml', at: '00:17' },
   { wf: 'prep.yml', at: '01:41' },
@@ -45,6 +46,7 @@ function slots(now) {
     const key = `${day} ${s.wf} ${s.at}`;
     if (settled.has(key) || (s.days && !s.days.includes(now.getUTCDay()))) continue;
     if (s.needs === 'ARABIC_LIVE' && !ARABIC_LIVE) continue;
+    if (ENGLISH_PAUSED && ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml', 'photo-prep.yml', 'photos.yml'].includes(s.wf)) continue;
     const due = Date.parse(`${day}T${s.at}:00Z`);
     if (now.getTime() < due) continue;
     // a slot nobody needs any more (a comments round three hours old) is dropped, not caught up
