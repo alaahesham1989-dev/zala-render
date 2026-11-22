@@ -1,29 +1,5 @@
 [
   {
-    "id": "ZV-T07-2026-11-15-1",
-    "topic": "ZV-T07",
-    "queuedAt": "2026-11-15T06:14:13.661Z",
-    "hook": "Did you know King Tutankhamun was buried with a dagger made from outer space?",
-    "article": [
-      "When excavators unwrapped King Tutankhamun's mummy, they found two daggers inside the wrappings, one made of gold and one of iron. In June 2016, a study using x-ray fluorescence spectrometer analysis confirmed the iron blade contained eleven percent nickel and point six percent cobalt, proving its meteoritic origin.",
-      "Iron production did not begin in Egypt until 1200 BC, meaning iron was rarer than gold around 1323 BC. Because of its extreme rarity, the iron dagger was valued on a level equal to that of its ceremonial gold counterpart.",
-      "Today, this ancient weapon is displayed at the Grand Egyptian Museum in Cairo. It stands as an astonishing bridge between our world and the cosmos."
-    ],
-    "words": "Meteoric Iron Dagger From Space",
-    "tags": [
-      "Tutankhamun",
-      "AncientEgypt",
-      "MeteoriteDagger",
-      "Archaeology"
-    ],
-    "engage": "What detail about this space-metal dagger surprises you the most?",
-    "cardUrl": "https://pub-20815a715a814497b24a479c98b1815e.r2.dev/prep/photo/ZV-T07-2026-11-15-1.jpg",
-    "isAI": false,
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ancient_Gold_Sword_from_Tutankhamon_Tomb,_Displayed_in_Cairo_Museum.jpg",
-    "author": "Gary Todd",
-    "license": "CC0"
-  },
-  {
     "id": "ZV-D01-2026-11-15-1",
     "topic": "ZV-D01",
     "queuedAt": "2026-11-15T06:15:09.186Z",
