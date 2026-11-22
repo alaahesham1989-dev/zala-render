@@ -1326,7 +1326,7 @@ function pickReels(script, flat) {
     for (const f of flat.filter((x) => x.ci === r.chapter - 1).slice(r.from || 0)) {
       const d = durationOf(voiceFileOf(script, f));
       const said = [r.say, script.reelCta].filter(Boolean).map((x) => extraVoice(script, x)).filter((x) => fs.existsSync(x)).reduce((a, x) => a + durationOf(x) + 0.25, 0);
-      if (lines.length && t + d + 0.25 > REEL_MAX - Math.max(REEL_OUTRO, said)) break;
+      if (!script.verticalOnly && lines.length && t + d + 0.25 > REEL_MAX - Math.max(REEL_OUTRO, said)) break;
       lines.push(f);
       t += d + 0.25;
     }

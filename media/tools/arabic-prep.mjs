@@ -109,8 +109,8 @@ function loadPictures() {
 }
 
 // ── 3. write the Arabic short script ────────────────────────────────
-const TARGET_WORDS = 180;  // ~60 seconds at Egyptian speech pace (~3 words/sec)
-const TARGET_LINES = 10;   // 8-12 lines for a 60-second short
+const TARGET_WORDS = 110;  // ~50 seconds at Egyptian speech pace (~2.2 words/sec)
+const TARGET_LINES = 7;    // 6-8 lines for a 50-second short
 
 async function writeScript(bank, pics) {
   const known = new Set(pics.map((p) => p.id));
@@ -121,14 +121,14 @@ ${DIRECTION}
 ${SHOT_RULES}
 
 قواعد الشورت:
-- المدة المطلوبة: ٦٠ ثانية بالظبط = تقريباً ${TARGET_WORDS} كلمة بالعامية المصرية.
-- عدد السطور: ${TARGET_LINES} سطر تقريباً (٨-١٢ سطر).
-- كل سطر: جملة واحدة أو جملتين قصيرتين بالعامية، أقصاها ٢٠ كلمة.
-- السطر الأول: الهوك اللي يشد من أول ثانية.
-- آخر سطر: الضربة اللي تفضل في الدماغ.
+- المدة المطلوبة: ٥٠ ثانية بالظبط = تقريباً ١٠٠ إلى ١١٠ كلمة بالعامية المصرية.
+- عدد السطور: ٦ إلى ٨ سطور بالظبط (لا تزيد عن ٨ سطور أبداً).
+- كل سطر: جملة واحدة أو جملتين قصيرتين بالعامية، أقصاها ١٥ كلمة.
+- السطر الأول: الهوك الصادم اللي يشد من أول ثانية.
+- آخر سطر: الضربة اللي تفضل في الدماغ وسؤال تفاعلي للمشاهد.
 
-للصور: لو في صورة من الكتالوج بتوافق السطر، حطها. لو مش في، اكتب "gen" بـ Flow prompt لتوليد الصورة.
-السطر الأول دايمًا gen (hook shot). استخدم gen في ٣-٤ سطور بالكتر.
+للصور: اختار صورة من الكتالوج بتوافق كل سطر بدقة.
+السطر الأول صورة ذهبية قوية تشد العين وتوقف السكرول.
 
 Return JSON only:
 {
@@ -136,11 +136,10 @@ Return JSON only:
   "hook": "من ٢ لـ ٤ كلمات عامية — الكلام الكبير على أول صورة",
   "description": "جملتين بالفصحى البسيطة",
   "chapters": [{"title": "اسم قصير", "lines": [
-    {"en": "السطر بالعامية المصرية", "pictures": ["id أو فاضي"], "gen": {"kind": "hook|reconstruction", "prompt": "Flow prompt بالإنجليزي"}}
+    {"en": "السطر بالعامية المصرية", "pictures": ["id"]}
   ]}],
   "reels": [{"chapter": 1, "title": "", "hook": "أقصاها ٥ كلمات", "sub": "جملة قصيرة عن الموضوع"}]
-}
-callout و sfx اختياريين. أول reel من chapter 1.`;
+}`;
 
   const countWords = (ls) => ls.reduce((n, l) => n + String(l.en || '').split(/\s+/).filter(Boolean).length, 0);
   const numbered = (ls) => ls.map((l, i) => `${i + 1}. ${l.en}`).join('\n');
@@ -242,8 +241,12 @@ async function main() {
   }
   const allLines = (script.chapters || []).flatMap((c) => c.lines || []);
   if (allLines.length && poolPics.length) {
-    const golden = [...poolPics].sort((a, b) => (b.shine || 0) - (a.shine || 0))[0];
-    if (golden) allLines[0].pictures = [golden.id];
+    // Hook picture rule: MUST be a 3D golden ancient treasure (statue, mask, pectoral, shrine) — NEVER a flat papyrus scan or document
+    const isDoc = (p) => /papyrus|scroll|document|text|manuscript|sheet/i.test(`${p.title || ''} ${p.seen?.what || ''} ${p.seen?.type || ''}`);
+    const hookPics = poolPics.filter((p) => !isDoc(p) && (p.shine || 0) > 0.6)
+      .sort((a, b) => (b.shine || 0) - (a.shine || 0));
+    const opening = hookPics.length ? hookPics[0] : poolPics[0];
+    if (opening) allLines[0].pictures = [opening.id];
   }
 
   const doc = Object.assign({}, script, {
