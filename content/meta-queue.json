@@ -525,7 +525,16 @@
       "fb"
     ],
     "at": "2026-11-23T16:00:00Z",
-    "done": false
+    "done": "2026-11-23T16:00:57.830Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "2370021763571918",
+        "url": "https://www.facebook.com/108172631323930/videos/2370021763571918"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-T02",
