@@ -1032,7 +1032,16 @@
       "fb"
     ],
     "at": "2026-11-23T20:00:00Z",
-    "done": false
+    "done": "2026-11-23T20:00:51.448Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "1718509356357443",
+        "url": "https://www.facebook.com/108172631323930/videos/1718509356357443"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-L11",
