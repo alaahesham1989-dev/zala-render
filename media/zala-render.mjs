@@ -1279,7 +1279,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   });
 
   // the short lines at the top wait for any chapter card or call-out to clear
-  if (!arabic && script.teasers?.length) {
+  if (!arabic && !LANG_FONT && script.teasers?.length) {   // an Arabic video (LANG_FONT set) never gets the English teaser lines
     const busy = [...cards.map(({ t0 }) => [t0, t0 + 4.2]), ...callouts.map((f) => [f.T0 + 0.25, f.T0 + 3.85])].sort((a, b) => a[0] - b[0]);
     ev.push(...teaserEvents(script.teasers.map((x) => ({ t: (tl.flat[x.line]?.T0 ?? 0) + 0.1, text: x.text })).filter((x) => x.t < tl.mainEnd - 6), { W, busy, size: 64 }));
   }

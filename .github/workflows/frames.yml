@@ -3,7 +3,6 @@ name: ZALA frames - look at a finished video (frames, loudness, silences)
 # Cloud-only check of a finished render on R2. Frames are grabbed over HTTP range requests (no full download),
 # plus one audio pass for loudness and long silences. The result is a small artifact for a person to look at.
 # Nothing is published and nothing is changed. It has no timer: start it by hand or from a person's order.
-# The push trigger is only for the branch that introduced it, so it can be tested before it reaches main.
 on:
   workflow_dispatch:
     inputs:
@@ -22,8 +21,6 @@ on:
         required: false
         default: "yes"
         type: string
-  push:
-    branches: [factory-lang-foundation]
 
 permissions:
   contents: read
