@@ -1,0 +1,96 @@
+name: ZALA world atlas - one country (facts, guide scripts, package, upload)
+
+# Cloud-only pipeline for one country of the world map, resumable and safe to run again:
+#   1 bring the saved work of the country from R2 (facts, finished scripts, scripts to redo)
+#   2 gather the missing Wikipedia facts
+#   3 write the missing guide scripts with the map's own Gemini key (GEMINI_API_KEY_ATLAS: never a render line's key),
+#     in rank order, no fixed daily number: it stops by itself when the API says the quota is gone
+#   4 package the publishable places (stage S5) and upload them to R2, where the site reads them
+#   5 save the work back to R2 (always, even after a failure)
+# The tools are those of the public repo alaahesham1989-dev/zala-vip (scripts/world_atlas); the country data is checked out from there.
+# No timer: start it by hand or from an order. One run at a time.
+on:
+  workflow_dispatch:
+    inputs:
+      cc:
+        description: "Country code, for example FR"
+        required: true
+        type: string
+      limit:
+        description: "Most guide scripts to write in this run"
+        required: false
+        default: "400"
+        type: string
+      retry_redo:
+        description: "yes = try again the scripts that failed the check"
+        required: false
+        default: "no"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zala-atlas-world
+  cancel-in-progress: false
+
+jobs:
+  country:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      CC: ${{ inputs.cc }}
+      LIMIT: ${{ inputs.limit }}
+      RETRY: ${{ inputs.retry_redo }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      GEMINI_API_KEY_ATLAS: ${{ secrets.GEMINI_API_KEY_ATLAS }}
+      GEMINI_TEXT_MODELS: ${{ vars.ATLAS_TEXT_MODELS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: alaahesham1989-dev/zala-vip
+          path: site
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the inputs
+        run: |
+          set -euo pipefail
+          [[ "$CC" =~ ^[A-Za-z]{2}$ ]] || { echo "bad country code"; exit 1; }
+          [[ "$LIMIT" =~ ^[0-9]{1,4}$ ]] || { echo "bad limit"; exit 1; }
+          CC=$(echo "$CC" | tr 'A-Z' 'a-z')
+          [ -f "site/content/world-atlas/$CC/places.json" ] || { echo "no places.json for $CC in the repo (gather it and commit it first)"; exit 1; }
+          echo "CCL=$CC" >> "$GITHUB_ENV"
+      - name: Bring the saved work of this country from R2
+        run: |
+          for d in facts scripts scripts-redo; do
+            aws s3 sync "s3://${R2_BUCKET}/atlas-work/${CCL}/${d}" "site/content/world-atlas/${CCL}/${d}" --endpoint-url "$E" --no-progress || true
+          done
+      - name: Facts (only the missing ones)
+        run: python site/scripts/world_atlas/gather_facts.py "$CCL"
+      - name: Guide scripts
+        run: |
+          flag=""; [ "$RETRY" = "yes" ] && flag="--retry-redo"
+          python site/scripts/world_atlas/write_scripts.py "$CCL" --run --limit "$LIMIT" $flag
+      - name: Stage report
+        run: python site/scripts/world_atlas/validate.py "$CCL"
+      - name: Package and upload the publishable places
+        run: |
+          set -euo pipefail
+          aws s3 cp "s3://${R2_BUCKET}/atlas/world/index.json" current-index.json --endpoint-url "$E" --no-progress || echo '{"countries":[]}' > current-index.json
+          python site/scripts/world_atlas/package_country.py "$CCL" --out out/atlas --index-in current-index.json
+          aws s3 sync "out/atlas/world/${CCL}" "s3://${R2_BUCKET}/atlas/world/${CCL}" --endpoint-url "$E" --no-progress --cache-control "public, max-age=3600"
+          aws s3 cp out/atlas/world/index.json "s3://${R2_BUCKET}/atlas/world/index.json" --endpoint-url "$E" --no-progress --cache-control "public, max-age=600" --content-type application/json
+      - name: Save the work to R2
+        if: always()
+        run: |
+          for d in facts scripts scripts-redo; do
+            [ -d "site/content/world-atlas/${CCL}/${d}" ] && aws s3 sync "site/content/world-atlas/${CCL}/${d}" "s3://${R2_BUCKET}/atlas-work/${CCL}/${d}" --endpoint-url "$E" --no-progress || true
+          done
