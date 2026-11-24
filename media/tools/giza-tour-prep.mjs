@@ -36,6 +36,7 @@ const script = {
       {
         mode: "drive",
         from: "Cairo International Airport",
+        fromAr: "مطار القاهرة الدولي",
         km: 40,
         minutes: 40,
         line: [
@@ -47,7 +48,8 @@ const script = {
     to: {
       lat: 29.97611111,
       lng: 31.13277778,
-      name: "Giza Pyramids"
+      name: "Giza Pyramids",
+      nameAr: "أهرامات الجيزة"
     }
   },
   prepared: {

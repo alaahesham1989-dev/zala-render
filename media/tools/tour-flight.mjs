@@ -101,15 +101,15 @@ for (let f = 0; f < total; f++) {
 }
 
 const legLayers = legs.map((l, k) => ({ id: `leg${k}`, mode: l.mode, coords: l.pts }));
-const markers = [...legs.map((l) => ({ at: l.pts[0], label: l.from })), ...legs.filter((l) => l.mode === 'fly').map((l) => ({ at: l.pts.at(-1), label: '' }))];
+const markers = [...legs.map((l) => ({ at: l.pts[0], label: (script.lang === 'ar' && l.fromAr) || l.from })), ...legs.filter((l) => l.mode === 'fly').map((l) => ({ at: l.pts.at(-1), label: '' }))];
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
 <style>html,body,#m{margin:0;width:${W}px;height:${H}px;background:#000}
 .pin{width:26px;height:26px;border-radius:50%;background:#D4AF37;border:4px solid #fff;box-shadow:0 0 0 10px rgba(212,175,55,.35),0 4px 14px rgba(0,0,0,.6)}
-.lab{font:700 ${vertical ? 40 : 34}px Inter,Arial,sans-serif;color:#fff;text-shadow:0 2px 10px #000,0 0 3px #000;white-space:nowrap;transform:translateY(-58px)}
+.lab{font:700 ${vertical ? 40 : 34}px Inter,'Noto Naskh Arabic',Arial,sans-serif;color:#fff;text-shadow:0 2px 10px #000,0 0 3px #000;white-space:nowrap;transform:translateY(-58px)}
 .air{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #D4AF37}
-.alab{font:600 ${vertical ? 28 : 24}px Inter,Arial,sans-serif;color:#fff;text-shadow:0 2px 8px #000;white-space:nowrap;transform:translateY(34px)}</style></head>
+.alab{font:600 ${vertical ? 28 : 24}px Inter,'Noto Naskh Arabic',Arial,sans-serif;color:#fff;text-shadow:0 2px 8px #000;white-space:nowrap;transform:translateY(34px)}</style></head>
 <body><div id="m"></div><script>
 mapboxgl.accessToken=${JSON.stringify(process.env.MAPBOX_TOKEN || '')};
 const LEGS=${JSON.stringify(legLayers)}, MARKERS=${JSON.stringify(markers)}, DEST=${JSON.stringify(dest)};
@@ -128,7 +128,7 @@ window.ready=new Promise((res)=>map.on('load',()=>{
   for(const m of MARKERS){const a=document.createElement('div');a.className='air';new mapboxgl.Marker({element:a}).setLngLat(m.at).addTo(map);
     if(m.label){const t=document.createElement('div');t.className='alab';t.textContent=m.label;new mapboxgl.Marker({element:t}).setLngLat(m.at).addTo(map);}}
   const p=document.createElement('div');p.className='pin';new mapboxgl.Marker({element:p}).setLngLat(DEST).addTo(map);
-  const l=document.createElement('div');l.className='lab';l.textContent=${JSON.stringify(r.to.name)};new mapboxgl.Marker({element:l}).setLngLat(DEST).addTo(map);
+  const l=document.createElement('div');l.className='lab';l.textContent=${JSON.stringify((script.lang === 'ar' && r.to.nameAr) || r.to.name)};new mapboxgl.Marker({element:l}).setLngLat(DEST).addTo(map);
   res();
 }));
 window.frame=(c)=>new Promise((res)=>{
