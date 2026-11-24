@@ -1,4 +1,4 @@
-name: ZALA frames (look at a finished video: frames, loudness, silences)
+name: ZALA frames - look at a finished video (frames, loudness, silences)
 
 # Cloud-only check of a finished render on R2. Frames are grabbed over HTTP range requests (no full download),
 # plus one audio pass for loudness and long silences. The result is a small artifact for a person to look at.
