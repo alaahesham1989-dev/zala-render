@@ -7,6 +7,7 @@
 // anything the old one missed and never starts the same slot twice.
 // Usage (clock.yml): node media/tools/clock.mjs
 import { execFileSync } from 'node:child_process';
+import { isProduction } from './lang/paths.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY;
 const LIFE_MS = Number(process.env.CLOCK_MINUTES || 320) * 60e3;
@@ -19,8 +20,8 @@ const gh = (...a) => execFileSync('gh', a, { encoding: 'utf8', stdio: ['ignore',
 // run per lane and drops an older waiting one), so a render is only started when nothing is waiting in that lane.
 const LANE = ['shorts.yml', 'prep.yml', 'tours.yml', 'factory.yml'];
 const LANE_AR = ['arabic-prep.yml', 'arabic.yml'];   // the Arabic machine has its own lane: it never waits for, or blocks, the English one
-const ARABIC_LIVE = process.env.ARABIC_LIVE === '1';   // the owner's go-live word (repository variable ARABIC_LIVE)
-const ENGLISH_PAUSED = true;   // English production paused per owner directive; scheduled queue publishing remains active
+const ARABIC_LIVE = process.env.ARABIC_LIVE === '1' && isProduction('ar');   // the owner's go-live word (repository variable ARABIC_LIVE)
+const ENGLISH_PAUSED = !isProduction('en');   // lang.config.json languages.en.production=false: English paused per owner directive (2026-11-23); scheduled queue publishing remains active
 const SLOTS = [
   { wf: 'shorts.yml', at: '00:17' },
   { wf: 'prep.yml', at: '01:41' },

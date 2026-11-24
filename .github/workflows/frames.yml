@@ -1,0 +1,74 @@
+name: ZALA frames (look at a finished video: frames, loudness, silences)
+
+# Cloud-only check of a finished render on R2. Frames are grabbed over HTTP range requests (no full download),
+# plus one audio pass for loudness and long silences. The result is a small artifact for a person to look at.
+# Nothing is published and nothing is changed. It has no timer: start it by hand or from a person's order.
+# The push trigger is only for the branch that introduced it, so it can be tested before it reaches main.
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Video id (renders/<id>/publish/<id>.mp4 on R2)"
+        required: true
+        default: "ZV-VAR01"
+        type: string
+      times:
+        description: "Seconds to grab, comma separated"
+        required: false
+        default: "3,14,30,120,300,600,900,1200,1400"
+        type: string
+      audio:
+        description: "yes = also measure loudness and silences (reads the whole file)"
+        required: false
+        default: "yes"
+        type: string
+  push:
+    branches: [factory-lang-foundation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zala-frames
+  cancel-in-progress: false
+
+jobs:
+  frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ID: ${{ inputs.id || 'ZV-VAR01' }}
+      TIMES: ${{ inputs.times || '3,14,30,120,300,600,900,1200,1400' }}
+      AUDIO: ${{ inputs.audio || 'yes' }}
+      BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+    steps:
+      - name: Install ffmpeg
+        run: sudo apt-get update -y && sudo apt-get install -y ffmpeg
+      - name: Look at the video
+        run: |
+          set -uo pipefail
+          URL="${BASE%/}/renders/${ID}/publish/${ID}.mp4"
+          mkdir -p out
+          echo "id=$ID" > out/info.txt
+          code=$(curl -s -o /dev/null -w '%{http_code}' -I "$URL")
+          echo "http=$code" >> out/info.txt
+          if [ "$code" != "200" ]; then cat out/info.txt; echo "video not reachable"; exit 1; fi
+          ffprobe -v error -show_entries format=duration,size,bit_rate:stream=codec_name,width,height,r_frame_rate,channels,sample_rate -of default=nw=1 "$URL" >> out/info.txt
+          DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$URL" | cut -d. -f1)
+          for t in $(echo "$TIMES" | tr ',' ' '); do
+            if [ "$t" -lt "$DUR" ]; then
+              ffmpeg -loglevel error -y -ss "$t" -i "$URL" -frames:v 1 -vf "scale=960:-2" -q:v 3 "out/f_$(printf '%05d' "$t").jpg" || echo "frame $t failed" >> out/info.txt
+            fi
+          done
+          if [ "$AUDIO" = "yes" ]; then
+            ffmpeg -hide_banner -nostats -i "$URL" -vn -af "ebur128=peak=true:framelog=quiet,silencedetect=n=-45dB:d=3" -f null - 2>&1 | grep -E "I:|LRA:|Peak:|silence_(start|end|duration)" > out/audio.txt || true
+          fi
+          ls out
+          cat out/info.txt
+          [ -f out/audio.txt ] && head -80 out/audio.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frames-${{ env.ID }}
+          path: out/
+          retention-days: 7

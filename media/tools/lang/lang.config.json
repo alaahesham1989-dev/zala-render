@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "note": "One source of truth for the per-language factory, written 2026-11-24 from the owner's directives. clock.mjs and the lane scripts read it through media/tools/lang/paths.mjs. 'wired' says what already uses it; everything else is the target layout and is switched on step by step.",
+  "wired": {
+    "production": true,
+    "schedule": false,
+    "r2Prefix": false,
+    "queues": false,
+    "keys": false
+  },
+  "pillars": ["mysteries", "mythbusters", "mapbox-flights", "royal-luxury", "legends"],
+  "kinds": {
+    "long": {
+      "formats": ["16:9"],
+      "perWeek": 2,
+      "days": [2, 6],
+      "platforms": ["youtube", "facebook"],
+      "sliceIntoShorts": false,
+      "ads": false
+    },
+    "short-story": {
+      "formats": ["9:16"],
+      "perDay": 2,
+      "minGapHours": 8,
+      "platforms": ["youtube", "facebook"],
+      "ads": false
+    },
+    "short-hybrid": {
+      "formats": ["9:16"],
+      "perDay": 4,
+      "platforms": ["tiktok", "instagram", "x"],
+      "ads": true
+    }
+  },
+  "rules": {
+    "noAdsOn": ["youtube", "facebook"],
+    "subscribeCueFile": "media/brand/cta/enabled.json",
+    "tone": "question or mystery first, then calm documented narration; never state a number without a source"
+  },
+  "languages": {
+    "en": {
+      "name": "English",
+      "production": false,
+      "publish": true,
+      "keys": ["GEMINI_API_KEY", "GEMINI_API_KEY_3", "GEMINI_API_KEYS"],
+      "state": {
+        "r2Prefix": "render-state/content",
+        "queue": "content/meta-queue.json",
+        "outbox": "content/outbox.json"
+      },
+      "storyAnchorsUtc": ["13:00", "01:00"],
+      "hybrid": { "startUtc": "14:00", "spanHours": 10 },
+      "longAnchorUtc": "17:00",
+      "channels": { "youtube": "@zalavip", "facebook": "ZALA VIP", "instagram": "@zalavip", "tiktok": "@zalavip9" },
+      "titlePrefix": "Ancient Egypt:"
+    },
+    "ar": {
+      "name": "Arabic",
+      "production": true,
+      "publish": false,
+      "keys": ["GEMINI_API_KEY_AR"],
+      "state": {
+        "r2Prefix": "render-state/content-ar",
+        "queue": "content/queues/ar/meta-queue.json",
+        "outbox": "content/queues/ar/outbox.json"
+      },
+      "storyAnchorsUtc": ["06:00", "18:00"],
+      "hybrid": { "startUtc": "09:00", "spanHours": 10 },
+      "longAnchorUtc": "17:00",
+      "channels": { "youtube": "@zalavip-AR", "facebook": "Zalavip-AR", "instagram": "@zalavip_ar" },
+      "titlePrefix": ""
+    },
+    "es": {
+      "name": "Spanish",
+      "production": false,
+      "publish": false,
+      "keys": ["GEMINI_API_KEY_ES"],
+      "state": {
+        "r2Prefix": "render-state/content-es",
+        "queue": "content/queues/es/meta-queue.json",
+        "outbox": "content/queues/es/outbox.json"
+      },
+      "storyAnchorsUtc": ["07:00", "19:00"],
+      "hybrid": { "startUtc": "10:00", "spanHours": 10 },
+      "longAnchorUtc": "18:00",
+      "channels": {},
+      "titlePrefix": "Antiguo Egipto:"
+    }
+  }
+}
