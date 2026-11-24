@@ -1,0 +1,58 @@
+name: ZALA atlas audio - one place, made when a visitor asks
+
+# Started by the site function /api/atlas-audio the first time a visitor asks for a guide voice that does not exist yet.
+# One run makes one voice (Gemini TTS, the map-audio project key), turns it into mp3 and saves it on R2; every later visitor gets that file.
+# The same place asked twice at once is serialised by the concurrency group, and the second run finds the file and stops.
+# No timer. The inputs are checked again inside the script, so a made-up value can never reach a shell.
+on:
+  workflow_dispatch:
+    inputs:
+      cc:
+        description: "Country code (eg = the Egypt atlas)"
+        required: true
+        type: string
+      slug:
+        description: "Place slug"
+        required: true
+        type: string
+      lang:
+        description: "ar or en"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zala-atlas-audio-${{ inputs.cc }}-${{ inputs.slug }}-${{ inputs.lang }}
+  cancel-in-progress: false
+
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CC: ${{ inputs.cc }}
+      SLUG: ${{ inputs.slug }}
+      LANG_CODE: ${{ inputs.lang }}
+      MEDIA_BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      GEMINI_API_KEY_ATLAS_AUDIO: ${{ secrets.GEMINI_API_KEY_ATLAS_AUDIO }}
+      ATLAS_TTS_MODEL: ${{ vars.ATLAS_TTS_MODEL }}
+      ATLAS_VOICE_AR: ${{ vars.ATLAS_VOICE_AR }}
+      ATLAS_VOICE_EN: ${{ vars.ATLAS_VOICE_EN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install ffmpeg
+        run: sudo apt-get update -y && sudo apt-get install -y ffmpeg
+      - name: Make the voice
+        run: node media/tools/atlas-audio.mjs "$CC" "$SLUG" "$LANG_CODE"
