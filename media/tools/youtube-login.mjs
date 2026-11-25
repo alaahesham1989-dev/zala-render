@@ -26,14 +26,19 @@ const code = await new Promise((resolve, reject) => {
   const server = http.createServer((req, res) => {
     const q = new URL(req.url, REDIRECT).searchParams;
     if (!q.get('code') && !q.get('error')) { res.writeHead(404); res.end(); return; }
-    const ok = q.get('state') === state && q.get('code');
+    if (q.get('state') !== state) { // an answer from an older link: say so and keep waiting for this one
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<h2 dir="rtl" style="font-family:sans-serif;text-align:center;margin-top:80px">ده لينك قديم. اقفل الصفحة ووافق من أحدث تبويب.</h2>');
+      return;
+    }
+    const ok = q.get('code');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(`<h2 dir="rtl" style="font-family:sans-serif;text-align:center;margin-top:80px">${ok ? 'تمام، الموافقة وصلت. تقدر تقفل الصفحة دي.' : 'الموافقة ما كملتش.'}</h2>`);
     server.close();
-    if (ok) resolve(q.get('code')); else reject(new Error(`consent failed: ${q.get('error') || 'state mismatch'}`));
+    if (ok) resolve(q.get('code')); else reject(new Error(`consent failed: ${q.get('error') || 'no code'}`));
   });
   server.listen(PORT, '127.0.0.1');
-  setTimeout(() => { server.close(); reject(new Error('no consent within 15 minutes')); }, 15 * 60 * 1000).unref();
+  setTimeout(() => { server.close(); reject(new Error('no consent within 30 minutes')); }, 30 * 60 * 1000).unref();
 });
 console.log('Consent received, asking the server for the token');
 
