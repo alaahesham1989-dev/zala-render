@@ -8,6 +8,7 @@
 // Usage (clock.yml): node media/tools/clock.mjs
 import { execFileSync } from 'node:child_process';
 import { isProduction } from './lang/paths.mjs';
+import { findTrouble, troubleText } from '../lib/watchdog.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY;
 const LIFE_MS = Number(process.env.CLOCK_MINUTES || 320) * 60e3;
@@ -73,13 +74,35 @@ function queue(now) {
   if (start('meta.yml', ['-f', 'episode=queue'])) lastMeta = now.getTime();
 }
 
+// the watchdog: every quarter hour, tell the owner once about runs that failed, hang or wait too long
+let looked = born - 15 * 60e3;
+const told = new Set();
+async function watch(now) {
+  if (now.getTime() - looked < 15 * 60e3) return;
+  let list;
+  try { list = JSON.parse(gh('run', 'list', '-R', REPO, '-L', '60', '--json', 'databaseId,workflowName,status,conclusion,createdAt,updatedAt')); } catch { return; }
+  const trouble = findTrouble(list, { now: now.getTime(), since: looked, told });
+  looked = now.getTime();
+  if (!trouble.length) return;
+  trouble.forEach((t) => told.add(t.id));
+  const text = troubleText(trouble, REPO);
+  log(text);
+  const token = process.env.TELEGRAM_BOT_TOKEN, chat = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return;
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(20e3),
+    body: JSON.stringify({ chat_id: chat, text, disable_web_page_preview: true }),
+  });
+  if (!res.ok) log(`watchdog message not sent: ${res.status}`);
+}
+
 // one clock at a time: an older clock that is still alive two minutes from now keeps the job, this one leaves
 const others = () => { try { return JSON.parse(gh('run', 'list', '-R', REPO, '-w', 'clock.yml', '-L', '10', '--json', 'status,databaseId')).filter((r) => r.status !== 'completed' && r.databaseId < Number(process.env.GITHUB_RUN_ID)); } catch { return []; } };
 if (others().length) { await sleep(120e3); if (others().length) { log('another clock is alive, leaving'); process.exit(0); } }
 log(`clock up for ${Math.round(LIFE_MS / 60e3)} minutes`);
 while (Date.now() - born < LIFE_MS) {
   const now = new Date();
-  try { slots(now); queue(now); } catch (e) { log(`tick: ${e.message}`); }
+  try { slots(now); queue(now); await watch(now); } catch (e) { log(`tick: ${e.name === 'TimeoutError' ? 'watchdog timeout' : e.message}`); }
   await sleep(60e3 - (Date.now() % 60e3) + 500);   // the top of the next minute
 }
 log('handing over to the next clock');
