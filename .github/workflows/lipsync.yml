@@ -1,0 +1,33 @@
+name: ZALA lip-sync test (private Kaggle GPU)
+
+# Inputs travel encrypted (media/tools/lipsync/box.mjs): nothing personal is stored readable here or as an artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "random job name given by box.mjs send"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  lipsync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    env:
+      JOB: ${{ inputs.job }}
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip -q install kaggle boto3 cryptography
+      - run: python media/tools/lipsync/cloud.py
