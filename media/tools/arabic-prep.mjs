@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { askJson } from './gemini-lite.mjs';
+import { proofArabic } from '../lib/arabic-proof.mjs';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const YT   = path.join(REPO, 'content', 'youtube');
@@ -250,6 +251,11 @@ async function main() {
     const opening = hookPics.length ? hookPics[0] : poolPics[0];
     if (opening) allLines[0].pictures = [opening.id];
   }
+
+  // strict Arabic proofreading before any voice is made: historical names unified, punctuation fixed, the rest listed
+  const proofed = proofArabic(allLines.map((l) => l.en));
+  allLines.forEach((l, i) => { l.en = proofed.fixed[i]; });
+  proofed.problems.forEach((p) => log(`PROOF: ${p}`));
 
   const doc = Object.assign({}, script, {
     id,
