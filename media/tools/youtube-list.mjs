@@ -11,9 +11,11 @@ const tok = await t.json();
 const token = tok.access_token;
 if (!token) throw new Error(`Google refused the token: ${tok.error || t.status}`);
 const get = async (u) => { const r = await fetch(`https://www.googleapis.com/youtube/v3/${u}`, { headers: { Authorization: `Bearer ${token}` } }); const j = await r.json(); if (!r.ok) throw new Error(JSON.stringify(j).slice(0, 300)); return j; };
-const ch = await get('channels?part=contentDetails,snippet&mine=true');
+const ch = await get('channels?part=contentDetails,snippet,brandingSettings&mine=true');
 const uploads = ch.items[0].contentDetails.relatedPlaylists.uploads;
 console.log(`channel: ${ch.items[0].snippet.title}`);
+const { snippet: sn, brandingSettings: b = {} } = ch.items[0];
+console.log(`IDENTITY youtube | handle=${sn.customUrl || 'NO'} description=${sn.description ? sn.description.length + ' chars' : 'NO'} banner=${b.image?.bannerExternalUrl ? 'yes' : 'NO'} keywords=${b.channel?.keywords ? 'yes' : 'NO'} country=${sn.country || 'NO'} avatar=${sn.thumbnails?.default?.url || 'NO'}`);
 const ids = [];
 let page = '';
 do {
