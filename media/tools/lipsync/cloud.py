@@ -25,10 +25,38 @@ def sh(*args, check=True):
     return out
 
 
+def deliver(got):
+    """Fetch what the kernel left and send the video back encrypted."""
+    sh('kaggle', 'kernels', 'output', f'{USER}/{SLUG}-run', '-p', str(got), check=False)
+    for log in got.glob('steps.txt'):
+        print(log.read_text()[-2500:])
+    result = got / 'result.mp4'
+    if not result.exists():
+        raise SystemExit('no video came back')
+    iv = os.urandom(12)
+    s3 = boto3.client('s3', endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+                      aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    s3.put_object(Bucket=os.environ['R2_BUCKET'], Key=f'handover/lipsync/{JOB}/result.mp4.box',
+                  Body=iv + AESGCM(KEY).encrypt(iv, result.read_bytes(), None))
+    print('result sent back encrypted,', result.stat().st_size, 'bytes')
+
+
+def status():
+    out = sh('kaggle', 'kernels', 'status', f'{USER}/{SLUG}-run', check=False).lower()
+    return next((s for s in ('complete', 'error', 'cancel') if s in out), '')
+
+
 def main():
     data, kern, got = WORK / 'data', WORK / 'kernel', WORK / 'out'
     for d in (data, kern, got):
         d.mkdir(parents=True, exist_ok=True)
+    if os.environ.get('FETCH_ONLY') == 'yes':                     # a kernel that waited in Kaggle's queue
+        state = status()
+        print('kernel state:', state or 'still queued or running')
+        if state:
+            deliver(got)
+        return
     for name in ('face.png', 'voice.wav'):
         req = urllib.request.Request(f'{BASE}/handover/lipsync/{JOB}/{name}.box', headers={'User-Agent': 'zala-render'})
         box = urllib.request.urlopen(req, timeout=120).read()
@@ -53,24 +81,11 @@ def main():
     state = ''
     for i in range(220):                                          # up to ~110 minutes
         time.sleep(30)
-        out = sh('kaggle', 'kernels', 'status', f'{USER}/{SLUG}-run', check=False).lower()
-        state = next((s for s in ('complete', 'error', 'cancel') if s in out), '')
+        state = status()
         if state:
             break
-    print('kernel state:', state or 'timeout')
-    sh('kaggle', 'kernels', 'output', f'{USER}/{SLUG}-run', '-p', str(got), check=False)
-    for log in got.glob('steps.txt'):
-        print(log.read_text()[-2500:])
-    result = got / 'result.mp4'
-    if not result.exists():
-        raise SystemExit('no video came back')
-    iv = os.urandom(12)
-    s3 = boto3.client('s3', endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                      aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],
-                      aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'], region_name='auto')
-    s3.put_object(Bucket=os.environ['R2_BUCKET'], Key=f'handover/lipsync/{JOB}/result.mp4.box',
-                  Body=iv + AESGCM(KEY).encrypt(iv, result.read_bytes(), None))
-    print('result sent back encrypted,', result.stat().st_size, 'bytes')
-
+    print('kernel state:', state or 'still queued or running: run again with fetch=yes')
+    if state:
+        deliver(got)
 
 main()
