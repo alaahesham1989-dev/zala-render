@@ -33,6 +33,12 @@ def find(name):
 
 
 face, voice = find('face.png'), find('voice.wav')
+# Say plainly what the machine gave us: Kaggle hands out GPU and internet only to phone-verified accounts.
+gpu = shutil.which('nvidia-smi') is not None
+net = subprocess.run('curl -sSfI --max-time 20 https://huggingface.co', shell=True, capture_output=True).returncode == 0
+note(f'PROBE gpu={gpu} internet={net}')
+if not (gpu and net):
+    raise SystemExit('no GPU or no internet on this Kaggle session')
 sh('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader >> /kaggle/working/steps.txt')
 
 # MuseTalk wants Python 3.10 and torch 2.0.1; the Kaggle image is newer, so it gets its own environment.
