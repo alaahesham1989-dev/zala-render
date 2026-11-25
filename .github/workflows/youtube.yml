@@ -41,7 +41,7 @@ on:
         required: false
         type: string
       lang:
-        description: "Channel: en (@zalavip) or ar (@zalavip-AR)"
+        description: "Channel: en (@zalavip), ar (@zalavip-AR) or es (@zalavip_es)"
         required: false
         default: en
         type: string
@@ -61,7 +61,7 @@ jobs:
     env:
       YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
       YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-      YOUTUBE_REFRESH_TOKEN: ${{ inputs.lang == 'ar' && secrets.YOUTUBE_REFRESH_TOKEN_AR || secrets.YOUTUBE_REFRESH_TOKEN }}
+      YOUTUBE_REFRESH_TOKEN: ${{ inputs.lang == 'es' && (secrets.YOUTUBE_REFRESH_TOKEN_ES || 'missing') || inputs.lang == 'ar' && secrets.YOUTUBE_REFRESH_TOKEN_AR || secrets.YOUTUBE_REFRESH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -93,7 +93,7 @@ jobs:
           WHICH: ${{ inputs.which }}
           PRIVACY: ${{ inputs.privacy }}
           PUBLISH_AT: ${{ inputs.publish_at }}
-          EXPECT_CHANNEL: ${{ inputs.lang == 'ar' && '@zalavip-AR' || '@zalavip' }}
+          EXPECT_CHANNEL: ${{ inputs.lang == 'es' && '@zalavip_es' || inputs.lang == 'ar' && '@zalavip-AR' || '@zalavip' }}
         run: |
           set -euo pipefail
           args=(publish "$EP" "$WHICH" --privacy "$PRIVACY")
