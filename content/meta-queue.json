@@ -1096,7 +1096,22 @@
       "ig"
     ],
     "at": "2026-11-25T20:00:00Z",
-    "done": false
+    "done": "2026-11-25T20:01:57.306Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "reel",
+        "id": "1586892143482083",
+        "url": "https://www.facebook.com/reel/1586892143482083"
+      },
+      {
+        "platform": "instagram",
+        "kind": "reel",
+        "id": "18116043866619059",
+        "url": "https://www.instagram.com/reel/DgLVu9MgS0K/"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-L11",
