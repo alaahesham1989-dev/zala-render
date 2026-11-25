@@ -1,7 +1,7 @@
 // node --test media/lib/watchdog-radar.test.mjs
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { findTrouble, troubleText } from './watchdog.mjs';
+import { byChat, findTrouble, troubleText } from './watchdog.mjs';
 import { blockedBy, radar } from './radar.mjs';
 
 const now = Date.parse('2026-11-25T12:00:00Z');
@@ -24,6 +24,9 @@ describe('watchdog', () => {
     assert.deepEqual(t.map((x) => [x.id, x.why]), [[1, 'failed'], [4, 'stuck'], [5, 'waiting']]);
     assert.equal(findTrouble(runs, { now, since: now - 900e3, told: new Set([1, 4, 5]) }).length, 0);
     assert.match(troubleText(t, 'o/r'), /actions\/runs\/4/);
+    const split = byChat([{ id: 1, name: 'ZALA Arabic prep', why: 'failed' }, { id: 2, name: 'ZALA Meta', why: 'failed' }], { admin: 'me', arabic: 'ar' });
+    assert.deepEqual(split.map(([c, l]) => [c, l.map((x) => x.id)]), [['ar', [1]], ['me', [2]]]);
+    assert.equal(findTrouble([{ databaseId: 9, workflowName: 'ZALA lip-sync test', status: 'completed', conclusion: 'failure', createdAt: at(1), updatedAt: at(0) }], { now, since: now - 900e3 }).length, 0);
   });
 });
 

@@ -21,6 +21,8 @@ jobs:
       ARABIC_LIVE: ${{ vars.ARABIC_LIVE }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_EN || secrets.TELEGRAM_CHAT_ID }}
+      ADMIN_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+      AR_CHAT: ${{ vars.TG_CHAT_AR }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

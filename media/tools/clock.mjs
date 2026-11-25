@@ -8,7 +8,7 @@
 // Usage (clock.yml): node media/tools/clock.mjs
 import { execFileSync } from 'node:child_process';
 import { isProduction } from './lang/paths.mjs';
-import { findTrouble, troubleText } from '../lib/watchdog.mjs';
+import { byChat, findTrouble, troubleText } from '../lib/watchdog.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY;
 const LIFE_MS = Number(process.env.CLOCK_MINUTES || 320) * 60e3;
@@ -85,15 +85,17 @@ async function watch(now) {
   looked = now.getTime();
   if (!trouble.length) return;
   trouble.forEach((t) => told.add(t.id));
-  const text = troubleText(trouble, REPO);
-  log(text);
-  const token = process.env.TELEGRAM_BOT_TOKEN, chat = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chat) return;
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(20e3),
-    body: JSON.stringify({ chat_id: chat, text, disable_web_page_preview: true }),
-  });
-  if (!res.ok) log(`watchdog message not sent: ${res.status}`);
+  log(troubleText(trouble, REPO));
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const chats = { admin: process.env.ADMIN_CHAT || process.env.TELEGRAM_CHAT_ID, arabic: process.env.AR_CHAT };
+  for (const [chat, items] of byChat(trouble, chats)) {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(20e3),
+      body: JSON.stringify({ chat_id: chat, text: troubleText(items, REPO), disable_web_page_preview: true }),
+    });
+    if (!res.ok) log(`watchdog message not sent: ${res.status}`);
+  }
 }
 
 // one clock at a time: an older clock that is still alive two minutes from now keeps the job, this one leaves
