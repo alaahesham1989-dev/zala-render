@@ -6,7 +6,7 @@ export const STUCK_MS = 5.5 * 3600e3;   // in progress for longer than this (Git
 export const QUEUED_MS = 3 * 3600e3;    // waiting for a runner or its lane longer than this
 
 // Hand-started tools and tests: whoever starts them sees the result, so they never raise the alarm.
-export const QUIET = ['ZALA clock', 'ZALA lip-sync', 'ZALA Meta check', 'ZALA keys check', 'ZALA frames'];
+export const QUIET = ['ZALA clock', 'ZALA lip-sync', 'ZALA Meta check', 'ZALA Telegram check', 'ZALA keys check', 'ZALA frames'];
 
 export function findTrouble(runs, { now, since, told = new Set(), ignore = QUIET }) {
   const out = [];

@@ -1,0 +1,24 @@
+name: "ZALA Telegram check (read only, what the bot can do in the groups)"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ADMIN_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TG_CHAT_EN: ${{ vars.TG_CHAT_EN }}
+      TG_CHAT_AR: ${{ vars.TG_CHAT_AR }}
+      TG_CHAT_ES: ${{ vars.TG_CHAT_ES }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node media/tools/telegram-check.mjs
