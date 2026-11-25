@@ -1,4 +1,4 @@
-// Gives the three public audience channels their description and photo (owner approved the texts, 2026-11-26).
+// Gives the three public audience channels their name, description and photo (owner approved the texts, 2026-11-26).
 // Safe to run again: only what is missing or different is changed. Nothing is posted and nothing is removed.
 import fs from 'node:fs';
 
@@ -6,9 +6,9 @@ const T = process.env.TELEGRAM_BOT_TOKEN;
 if (!T) throw new Error('no bot token');
 const PHOTO = 'media/brand/social-avatar.png';
 const CHANNELS = [
-  ['@zalavip_en', 'Stories of Ancient Egypt, and your private concierge: Cairo Airport VIP, limousine, private trips, hotels. zalavip.com'],
-  ['@zalavip_ar', 'حكايات من الحضارة المصرية، وكونسيرج خاص ليك في مصر: VIP مطار القاهرة، ليموزين، رحلات خاصة، فنادق. zalavip.com'],
-  ['@zalavip_es', 'Historias del Antiguo Egipto y su conserjería privada en Egipto: aeropuerto VIP, limusina, viajes y hoteles. zalavip.com'],
+  ['@zalavip_en', 'ZALA VIP | Luxury Egypt', 'Stories of Ancient Egypt, and your private concierge: Cairo Airport VIP, limousine, private trips, hotels. zalavip.com'],
+  ['@zalavip_ar', 'ZALA VIP بالعربي', 'حكايات من الحضارة المصرية، وكونسيرج خاص ليك في مصر: VIP مطار القاهرة، ليموزين، رحلات خاصة، فنادق. zalavip.com'],
+  ['@zalavip_es', 'ZALA VIP en Español', 'Historias del Antiguo Egipto y su conserjería privada en Egipto: aeropuerto VIP, limusina, viajes y hoteles. zalavip.com'],
 ];
 
 async function call(method, body) {
@@ -21,7 +21,7 @@ async function call(method, body) {
 }
 
 const me = (await call('getMe')).v;
-for (const [chat_id, description] of CHANNELS) {
+for (const [chat_id, title, description] of CHANNELS) {
   const c = await call('getChat', { chat_id });
   if (!c.ok) { console.log(`${chat_id}: not found (${c.v})`); continue; }
   const m = await call('getChatMember', { chat_id, user_id: me.id });
@@ -30,6 +30,10 @@ for (const [chat_id, description] of CHANNELS) {
   console.log(`${chat_id}: "${c.v.title}" type=${c.v.type} members=${n.ok ? n.v : '?'} bot=${m.ok ? m.v.status : 'not in it'}` +
     ` can-post=${!!(admin && m.v.can_post_messages)} can-change-info=${!!(admin && m.v.can_change_info)}`);
   if (c.v.type !== 'channel' || !admin || !m.v.can_change_info) { console.log(`${chat_id}: left as it is`); continue; }
+  if (c.v.title !== title) {
+    const t = await call('setChatTitle', { chat_id, title });
+    console.log(`${chat_id}: name ${t.ok ? 'set' : 'refused: ' + t.v}`);
+  }
   if (c.v.description === description) console.log(`${chat_id}: description already set`);
   else {
     const d = await call('setChatDescription', { chat_id, description });
