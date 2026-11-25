@@ -5,6 +5,8 @@ name: ZALA shorts (standalone, one topic each)
 # makes again), then the outbox on R2 (outbox.mjs) and the publishing file (publisher.mjs): YouTube, Facebook,
 # Instagram at 17:00, 19:00 and 22:00 UTC (noon, 2pm, 5pm US Eastern), the map place and a blog article.
 # Started by the clock (clock.yml) at 00:17 UTC; a short that did not pass yesterday is made again first.
+# Each short is rendered in its own job, side by side (owner, 2026-11-25): plan -> make (one per short) -> finish.
+# media/lib/delta.mjs carries what each job changed in content/ and merges it, so no job overwrites another.
 on:
   workflow_dispatch:
     inputs:
@@ -12,6 +14,10 @@ on:
         description: "How many shorts"
         required: false
         default: "auto"
+      test:
+        description: "yes = render and check only: nothing into the outbox, nothing published, nothing saved"
+        required: false
+        default: "no"
 
 permissions:
   contents: write
@@ -20,75 +26,55 @@ concurrency:
   group: zala-episode
   cancel-in-progress: false
 
+env:
+  R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+  R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  R2_BUCKET: ${{ secrets.R2_BUCKET }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: auto
+  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+  AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
+  GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+  GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+  MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+  PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+  VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+  META_COOKIES: ${{ secrets.META_COOKIES }}
+  YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+  YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+  YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_EN || secrets.TELEGRAM_CHAT_ID }}
+  FFMPEG_PATH: /usr/bin/ffmpeg
+  FFPROBE_PATH: /usr/bin/ffprobe
+  CHROME_PATH: /usr/bin/google-chrome
+  NO_ARABIC_COPY: "1"   # nobody reviews the Arabic copy any more: one full encode less per render
+  GH_TOKEN: ${{ github.token }}
+  MANIM_PY: /tmp/manim/bin/python
+  E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
 jobs:
-  run:
+  plan:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
-    env:
-      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-      R2_BUCKET: ${{ secrets.R2_BUCKET }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: auto
-      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
-      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
-      GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
-      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
-      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
-      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
-      META_COOKIES: ${{ secrets.META_COOKIES }}
-      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ vars.TG_CHAT_EN || secrets.TELEGRAM_CHAT_ID }}
-      FFMPEG_PATH: /usr/bin/ffmpeg
-      FFPROBE_PATH: /usr/bin/ffprobe
-      CHROME_PATH: /usr/bin/google-chrome
-      NO_ARABIC_COPY: "1"   # nobody reviews the Arabic copy any more: one full encode less per render
-      GH_TOKEN: ${{ github.token }}
-      MANIM_PY: /tmp/manim/bin/python
-      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    timeout-minutes: 60
+    outputs:
+      ids: ${{ steps.plan.outputs.ids }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Bring scripts, picture index and plans from R2
-        run: |
-          set -euo pipefail
-          aws s3 sync "s3://${R2_BUCKET}/render-state/content" content --endpoint-url "$E" --no-progress
-          git checkout -- content/meta-queue.json
-          git checkout -- content/outbox.json 2>/dev/null || true   # the outbox list lives in git like the queue
-          cp media/tools/treasures.json content/library/treasures.json
-          echo "EP=shorts" >> "$GITHUB_ENV"
-      - name: Install ffmpeg, fonts, drawing libraries and picture tools
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y ffmpeg fonts-noto-core libcairo2-dev libpango1.0-dev pkg-config python3-dev
-          cd media && npm ci && node tools/fetch-fonts.mjs && mkdir -p ~/.local/share/fonts && cp brand/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f && cd ..
-          python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
-          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
-          python3 -m venv /tmp/manim && /tmp/manim/bin/pip install --quiet "manim==0.18.1" "pillow==10.4.0"
-          python3 -m venv /tmp/lib && /tmp/lib/bin/pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          /tmp/lib/bin/pip install --quiet open_clip_torch transformers pillow
-          for d in voice meta music; do aws s3 sync "s3://${R2_BUCKET}/render-cache/$d" "media/cache/$d" --endpoint-url "$E" --no-progress; done
-          # carry on where the last run stopped: the scenes already rendered and the last review (only what it found is fixed)
-          aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$EP" "media/tmp/render/$EP" --endpoint-url "$E" --no-progress || true
-          aws s3 cp "s3://${R2_BUCKET}/renders/$EP/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
-          mkdir -p content/factbank && [ -f "media/tools/factbank-${EP}.json" ] && cp "media/tools/factbank-${EP}.json" "content/factbank/${EP,,}-facts.json" || true
+      - run: bash media/tools/line/ci-setup.sh content
+      - run: bash media/tools/line/ci-setup.sh tools
       - name: 1 — Prep (topic, facts from Wikipedia or the map, script, the editor, title and hook)
+        id: plan
         run: |
           set -uo pipefail
-          exec > >(tee -a run.log) 2>&1
+          node media/lib/delta.mjs snapshot content /tmp/before
           COUNT="${{ inputs.count }}"; COUNT="${COUNT:-auto}"
           # a short planned earlier that never reached the outbox is made again first (fix, never drop)
           pend=$(node media/tools/shorts.mjs pending | grep -o 'PENDING_IDS:.*' | cut -d: -f2 || true)
@@ -97,26 +83,98 @@ jobs:
           for i in 1 2 3; do out=$(node media/tools/shorts.mjs plan "$COUNT" "$(echo $pend | wc -w)") && break; echo "prep: Gemini busy, waiting 5 minutes"; sleep 300; done
           echo "$out"
           ids=$(echo "$out" | grep -o 'SHORT_IDS:.*' | cut -d: -f2 || true)
-          echo "IDS=$pend $ids" >> "$GITHUB_ENV"
+          json=$(node media/lib/ids.mjs $pend $ids)
+          echo "ids=$json" >> "$GITHUB_OUTPUT"
+          echo "to make: $json"
+          node media/lib/delta.mjs collect content /tmp/before /tmp/delta
+          mkdir -p /tmp/delta && date -u > /tmp/delta/stamp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: delta-plan
+          path: /tmp/delta
+          retention-days: 3
+
+  make:
+    needs: plan
+    if: needs.plan.outputs.ids != '' && needs.plan.outputs.ids != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        id: ${{ fromJSON(needs.plan.outputs.ids) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: bash media/tools/line/ci-setup.sh content
+      - uses: actions/download-artifact@v4
+        with:
+          name: delta-plan
+          path: /tmp/plan
+      - run: bash media/tools/line/ci-setup.sh render
       - name: 2 and 3 — Make (pictures, director, voice, render) and Quality (check and fix), into the outbox
+        env:
+          ID: ${{ matrix.id }}
+          NO_OUTBOX: ${{ inputs.test == 'yes' && '1' || '' }}
         run: |
           set -uo pipefail
-          exec > >(tee -a run.log) 2>&1
-          made=""
-          for id in ${IDS:-}; do
-            echo "=== $id"
-            node media/tools/shorts.mjs restore "$id" || true
-            bash media/tools/line/run.sh "$id" short && made="$made $id"
-          done
-          echo "MADE=$made" >> "$GITHUB_ENV"
+          node media/lib/delta.mjs apply /tmp/plan content
+          node media/lib/delta.mjs snapshot content /tmp/before
+          mkdir -p /tmp/delta
+          node media/tools/shorts.mjs restore "$ID" || true
+          if bash media/tools/line/run.sh "$ID" short; then echo "$ID" > /tmp/delta/made; fi
+          node media/lib/delta.mjs collect content /tmp/before /tmp/delta
+          date -u > /tmp/delta/stamp
+      - name: Keep the render and its review on R2
+        if: always()
+        env:
+          ID: ${{ matrix.id }}
+        run: |
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
+          [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
+          [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: delta-${{ matrix.id }}
+          path: /tmp/delta
+          retention-days: 3
+
+  finish:
+    needs: [plan, make]
+    if: always() && needs.plan.result == 'success' && inputs.test != 'yes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bash media/tools/line/ci-setup.sh content
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: delta-*
+          path: /tmp/deltas
+      - run: bash media/tools/line/ci-setup.sh tools
+      - name: Put every job's work together
+        run: |
+          set -uo pipefail
+          node media/lib/delta.mjs apply /tmp/deltas/delta-plan content
+          for d in /tmp/deltas/delta-*; do [ "$d" = /tmp/deltas/delta-plan ] || node media/lib/delta.mjs apply "$d" content; done
+          echo "MADE=$(cat /tmp/deltas/delta-*/made 2>/dev/null | xargs)" >> "$GITHUB_ENV"
       - name: 4 — Publishing (YouTube, Facebook, Instagram, the map and the blog)
         run: node media/tools/publisher.mjs || echo "publishing tried again next run"
       - name: Save work back to R2 and the queue to git
         if: always()
         run: |
           aws s3 sync content "s3://${R2_BUCKET}/render-state/content" --endpoint-url "$E" --no-progress
-          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
-          for id in ${IDS:-}; do [ -d "media/out/$id" ] && aws s3 sync "media/out/$id" "s3://${R2_BUCKET}/renders/$id" --endpoint-url "$E" --no-progress; [ -d "quality-$id" ] && aws s3 sync "quality-$id" "s3://${R2_BUCKET}/renders/$id/review" --endpoint-url "$E" --no-progress; done; true
           node media/tools/state-save.mjs "shorts: ${MADE:-none}" content/meta-queue.json content/shorts-state.json content/outbox.json || true
       - name: Telegram
         if: always()

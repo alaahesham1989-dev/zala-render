@@ -13,7 +13,8 @@ for attempt in 1 2 3; do
   if bash media/tools/line/quality.sh "$ID" "quality-$ID"; then pass=yes; break; fi
   echo "QUALITY: $ID fixing what the check found (round $attempt)"
 done
-if [ "$pass" = yes ]; then node media/tools/outbox.mjs put "$ID" "$KIND" "$tries" || pass=no; fi
+# NO_OUTBOX=1 is a test run: render and check only
+if [ "$pass" = yes ] && [ -z "${NO_OUTBOX:-}" ]; then node media/tools/outbox.mjs put "$ID" "$KIND" "$tries" || pass=no; fi
 echo "LINE: $ID $KIND pass=$pass after $tries round(s)"
 if [ -n "${GITHUB_ENV:-}" ]; then echo "PASS=$pass" >> "$GITHUB_ENV"; echo "TRIES=$tries" >> "$GITHUB_ENV"; fi
 [ "$pass" = yes ]
