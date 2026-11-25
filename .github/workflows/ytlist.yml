@@ -3,6 +3,11 @@ name: ZALA YouTube list (what is public, private, scheduled)
 on:
   workflow_dispatch:
     inputs:
+      lang:
+        description: "which channel: en | ar"
+        required: false
+        default: "en"
+        type: string
       brand:
         description: "add the channel identity (Ancient Egypt) to every title: dry | apply | no"
         required: false
@@ -19,12 +24,12 @@ jobs:
     env:
       YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
       YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      YOUTUBE_REFRESH_TOKEN: ${{ inputs.lang == 'ar' && secrets.YOUTUBE_REFRESH_TOKEN_AR || secrets.YOUTUBE_REFRESH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: node media/tools/youtube-list.mjs
-      - if: inputs.brand == 'dry' || inputs.brand == 'apply'
+      - if: inputs.lang != 'ar' && (inputs.brand == 'dry' || inputs.brand == 'apply')
         run: node media/tools/youtube-brand.mjs ${{ inputs.brand == 'dry' && '--dry' || '' }}

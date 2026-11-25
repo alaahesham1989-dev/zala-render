@@ -7,8 +7,9 @@ const t = await fetch('https://oauth2.googleapis.com/token', {
   method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refresh, grant_type: 'refresh_token' }),
 });
-const token = (await t.json()).access_token;
-if (!token) throw new Error('Google refused the token');
+const tok = await t.json();
+const token = tok.access_token;
+if (!token) throw new Error(`Google refused the token: ${tok.error || t.status}`);
 const get = async (u) => { const r = await fetch(`https://www.googleapis.com/youtube/v3/${u}`, { headers: { Authorization: `Bearer ${token}` } }); const j = await r.json(); if (!r.ok) throw new Error(JSON.stringify(j).slice(0, 300)); return j; };
 const ch = await get('channels?part=contentDetails,snippet&mine=true');
 const uploads = ch.items[0].contentDetails.relatedPlaylists.uploads;
