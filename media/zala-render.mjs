@@ -25,6 +25,7 @@ import { FFMPEG, ff, durationOf, dimensionsOf, filterPath } from './lib/ff.mjs';
 import { buildAss as buildReelAss, shapeArabic } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
 import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
+import { config as laneConfig } from './tools/lang/paths.mjs';
 import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
 import { numerals } from './lib/display-numbers.mjs';
 import { screenPictures, directEpisode } from './lib/director.mjs';
@@ -1315,6 +1316,8 @@ async function finalPass({ chain, mix, ass, out, tl, crf = 19 }) {
 // ── vertical reels ───────────────────────────────────────────────────────────
 function pickReels(script, flat) {
   if (script.noReels) return [];   // a long virtual tour: its short version is its own video
+  // owner 2026-11-25: a long video is never cut into shorts (broken zoom and captions); standalone vertical shorts still render here
+  if (!script.verticalOnly && laneConfig().kinds.long.sliceIntoShorts !== true) return [];
   const plan = script.reels?.length ? script.reels
     : script.verticalOnly ? [{ chapter: 1, title: script.title, hook: script.thumbnailText || script.title }]
     : [1, Math.ceil(script.chapters.length / 2) + 1, script.chapters.length - 1]

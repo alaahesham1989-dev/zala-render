@@ -152,13 +152,13 @@ function packageOf(id) {
   log(`package ${id}`);
 }
 
-// three daily slots for standalone shorts (owner's order 2026-11-13: the US audience's best afternoon window,
+// two daily slots for standalone shorts (owner 2026-11-25: never more) (owner's order 2026-11-13: the US audience's best afternoon window,
 // noon to 6pm US Eastern, not Cairo's evening): 17:00, 19:00, 22:00 UTC = noon, 2pm, 5pm US Eastern
 function schedule(id, at) {
   const queueFile = path.join(REPO, 'content', 'meta-queue.json');
   const queue = readJson(queueFile, []);
   if (queue.some((q) => q.episode === id)) { log(`${id} scheduled already`); return; }
-  const slots = ['17:00', '19:00', '22:00'];
+  const slots = ['14:00', '22:00'];   // owner 2026-11-25: at most two story shorts a day, 8 hours apart
   const taken = new Set(queue.map((q) => q.at));
   let when = at || null;
   for (let d = 1; d < 60 && !when; d++) {
@@ -205,12 +205,12 @@ function pending() {
   console.log(`PENDING_IDS:${[...new Set(ids)].slice(-3).join(' ')}`);
 }
 
-/** How many new shorts today: three go out a day, and a fourth is made until three days of shorts wait ahead,
+/** How many new shorts today: two go out a day, and a third is made until three days of shorts wait ahead,
  * so one bad day never leaves a day empty (the owner asked for a stock, 2026-11-14). */
 function howMany(pendingCount) {
   const queue = readJson(path.join(CONTENT, 'meta-queue.json'), []);
   const ahead = queue.filter((q) => !q.done && /^ZV-Sd/.test(q.episode)).length;
-  return Math.max(1, (ahead < 9 ? 4 : 3) - pendingCount);
+  return Math.max(1, (ahead < 6 ? 3 : 2) - pendingCount);
 }
 
 /** Puts back the short's own checked script when an older render replaced it with a long story. */

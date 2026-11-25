@@ -40,10 +40,10 @@ describe('day schedule', () => {
       assert.deepEqual(daySchedule('es', d), []);
     }
   });
-  it('Arabic day: 2 stories, 4 hybrids, no ads on YouTube or Facebook', () => {
+  it('Arabic day: 2 stories at most, 1 hybrid ad, no ads on YouTube or Facebook', () => {
     const day = daySchedule('ar', '2026-11-25');   // a Wednesday: no long video
     assert.equal(day.filter((s) => s.kind === 'short-story').length, 2);
-    assert.equal(day.filter((s) => s.kind === 'short-hybrid').length, 4);
+    assert.equal(day.filter((s) => s.kind === 'short-hybrid').length, 1);
     assert.equal(day.filter((s) => s.kind === 'long').length, 0);
     for (const s of day) {
       if (s.ads) assert.ok(!s.platforms.includes('youtube') && !s.platforms.includes('facebook'));
@@ -72,6 +72,21 @@ describe('day schedule', () => {
   });
   it('pillarFor is deterministic', () => {
     assert.equal(pillarFor('2026-11-24', 1, 2), pillarFor('2026-11-24', 1, 2));
+  });
+});
+
+describe('owner rules 2026-11-25', () => {
+  it('long videos: Arabic 15-20 minutes, English 8-10, twice a week, never sliced', () => {
+    assert.deepEqual(config().languages.ar.longMinutes, [15, 20]);
+    assert.deepEqual(config().languages.en.longMinutes, [8, 10]);
+    assert.equal(config().kinds.long.perWeek, 2);
+    assert.equal(config().kinds.long.sliceIntoShorts, false);
+  });
+  it('the hybrid short is a story that ends with the ad, only on TikTok, X and Instagram', () => {
+    const k = config().kinds['short-hybrid'];
+    assert.match(k.structure, /story.*ad/);
+    assert.deepEqual([...k.platforms].sort(), ['instagram', 'tiktok', 'x']);
+    assert.ok(config().kinds['short-story'].perDay <= 2);
   });
 });
 
