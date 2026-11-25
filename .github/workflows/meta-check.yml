@@ -1,4 +1,4 @@
-name: ZALA Meta check (read only: which pages and Instagram accounts the server can reach)
+name: "ZALA Meta check (read only, pages and Instagram the server can reach)"
 
 on:
   workflow_dispatch:
