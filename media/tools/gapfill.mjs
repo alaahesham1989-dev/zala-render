@@ -102,6 +102,8 @@ function score(line, p) {
 }
 
 const uses = new Map();
+// how many words of the line's English picture searches a picture's own description carries
+const asked = (l, p) => { const hay = textOf(p).toLowerCase(); return [...new Set(words((l.queries || []).join(' ')))].filter((w) => hay.includes(w)).length; };
 // what the review refused on any earlier render of this episode: picture ids and video pages, never chosen again
 const banned = new Set(script.banned || []);
 for (const l of lines) for (const p of l.pictures || []) uses.set(p, (uses.get(p) || 0) + 1);
@@ -388,13 +390,13 @@ for (const l of empty) {
     const c = n < 5 && await cropOf(p, n);
     if (c) { l.pictures = [c.id]; uses.set(p.id, n + 1); fromCrops++; continue; }
   }
-  const clip = script.kind === 'promo' ? await promoClip(l.en) : await pixabayClip(l.en);
+  const clip = script.kind === 'promo' ? await promoClip(l.en) : script.verticalOnly ? null : await pixabayClip(l.en);
   if (clip) { l.clip = clip; fromVideo++; continue; }
   // For Arabic shorts: NEVER produce an empty/black Manim title scene. Use authentic artifacts from the library!
   if (script.lang === 'ar' || script.verticalOnly) {
     const isBw = (p) => /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`);
     const available = clean.filter((p) => !banned.has(p.id) && !isBw(p) && (uses.get(p.id) || 0) < 3)
-      .sort((a, b) => (b.shine || 0) - (a.shine || 0));
+      .sort((a, b) => asked(l, b) - asked(l, a) || (uses.get(a.id) || 0) - (uses.get(b.id) || 0) || (b.shine || 0) - (a.shine || 0));
     if (available.length) {
       const pick = available[0];
       l.pictures = [pick.id];
