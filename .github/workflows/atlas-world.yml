@@ -7,7 +7,7 @@ name: ZALA world atlas - one country (facts, guide scripts, package, upload)
 #     in rank order, no fixed daily number: it stops by itself when the API says the quota is gone
 #   4 package the publishable places (stage S5) and upload them to R2, where the site reads them
 #   5 save the work back to R2 (always, even after a failure)
-# The tools are those of the public repo alaahesham1989-dev/zala-vip (scripts/world_atlas); the country data is checked out from there.
+# The site repo is private, so its tools (scripts/world_atlas) and country data are copied to R2 under atlas-work/_site and read from there.
 # No timer: start it by hand or from an order. One run at a time.
 on:
   workflow_dispatch:
@@ -53,13 +53,11 @@ jobs:
       GEMINI_TEXT_MODELS: ${{ vars.ATLAS_TEXT_MODELS }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: alaahesham1989-dev/zala-vip
-          path: site
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Bring the tools and country data from R2
+        run: aws s3 sync "s3://${R2_BUCKET}/atlas-work/_site" site --endpoint-url "$E" --no-progress
       - name: Check the inputs
         run: |
           set -euo pipefail
