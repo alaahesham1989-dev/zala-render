@@ -50,6 +50,7 @@ jobs:
       AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
       GEMINI_API_KEY_ATLAS: ${{ secrets.GEMINI_API_KEY_ATLAS }}
+      GEMINI_API_KEY_ATLAS_2: ${{ secrets.GEMINI_API_KEY_ATLAS_AUDIO }}
       GEMINI_TEXT_MODELS: ${{ vars.ATLAS_TEXT_MODELS }}
     steps:
       - uses: actions/checkout@v4
