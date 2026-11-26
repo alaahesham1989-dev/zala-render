@@ -9,6 +9,8 @@ import { FFMPEG, ff, durationOf } from '../lib/ff.mjs';
 import { keyFor, markSpent } from '../lib/gemini-keys.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
 import { CONTENT } from '../lib/paths.mjs';
+import { hearProblems, LIMITS } from '../lib/heard.mjs';
+import { hearVideo, loudness, loudnessProblems } from '../lib/listen.mjs';
 
 // Ancient Egypt and hieroglyph vocabulary is unusual for a TTS voice and for Whisper alike: a mismatch on one of
 // these words should never fail a line the way a real missing sentence does. content/youtube/hard-words.json grows
@@ -119,10 +121,16 @@ for (let i = 0; i < 5; i++) {
 sheet(outro, 5, 1, path.join(out, 'outro.jpg'));
 
 // what is really heard, in the finished mix
-// words.py runs an English-only model with language forced to "en": on Arabic audio it hears nothing real, and
-// words() keeps only a-z0-9 anyway, so comparing against it would fail or pass lines at random, never for a real reason
-if (script.lang === 'ar') {
-  console.log('Hearing every line: skipped (no Arabic speech-to-text wired in yet); picture, silence and black-frame checks still run');
+// English is compared word by word (below). Arabic and Spanish use a multilingual model and a letter-level
+// comparison (lib/heard.mjs): words() keeps only a-z0-9, so it cannot judge them
+const spoken = script.lang || 'en';
+let hearing = null;
+if (spoken !== 'en') {
+  console.log(`Hearing every line (${spoken})`);
+  hearing = hearVideo(video, srt, spoken, tmp);
+  for (const s of srt) { s.seconds = s.end - s.start; const x = hearing.scored.find((y) => y.n === s.n); if (x) { s.heard = x.heard; s.near = x.near; } }
+  report.hearing = hearing.totals;
+  console.log(`  ${Math.round(hearing.totals.near * 100)}% of the script heard in place`);
 } else {
   console.log('Hearing every line');
   const allAudio = path.join(tmp, 'all.mp3');
@@ -166,7 +174,8 @@ for (let i = 0; i < srt.length; i += 6) {
   await sleep(5000);
 }
 
-report.lines = srt.map(({ clip, ...s }, i) => ({ ...s, label: lines[i]?.label, pictures: lines[i]?.pictures, same: lines[i] ? words(lines[i].en).join(' ') === words(s.text).join(' ') : false }));
+const plain = (t) => (spoken === 'en' ? words(t).join(' ') : String(t || '').replace(/\s+/g, ' ').trim());
+report.lines = srt.map(({ clip, ...s }, i) => ({ ...s, label: lines[i]?.label, pictures: lines[i]?.pictures, same: lines[i] ? plain(lines[i].en) === plain(s.text) : false }));
 
 // the opening frame of a short decides if people stop scrolling (owner rule: it must look professional);
 // a weak one sends the first line back to make with its picture refused, so a stronger one is chosen
@@ -190,6 +199,8 @@ const silent = detect(['-af', 'silencedetect=noise=-45dB:d=1.2', '-vn']);
 report.audio.silence = [...silent.matchAll(/silence_end: ([\d.]+) \| silence_duration: ([\d.]+)/g)].map((m) => ({ end: Number(m[1]), seconds: Number(m[2]) }));
 const frozen = detect(['-vf', 'scale=320:-2,freezedetect=n=0.0005:d=8', '-an']);
 report.audio.frozen = [...frozen.matchAll(/freeze_start: ([\d.]+)[\s\S]*?freeze_duration: ([\d.]+)/g)].map((m) => ({ start: Number(m[1]), seconds: Number(m[2]) }));
+
+report.audio.loudness = loudness(video);
 
 // reels
 for (const name of fs.readdirSync(publish).filter((f) => /-R\d+\.mp4$/.test(f)).sort()) {
@@ -223,8 +234,8 @@ const pkg = fs.existsSync(pkgFile) ? JSON.parse(fs.readFileSync(pkgFile, 'utf8')
 const lastSpeech = srt[srt.length - 1].end;
 if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, the script ${lines.length}`);
 for (const l of report.lines) {
-  // the hearing check above never ran for Arabic: no l.heard to judge, so none of these three apply
-  if (script.lang !== 'ar') {
+  // Arabic and Spanish are judged by letters, further down
+  if (spoken === 'en') {
     if (l.heard === undefined) fail.push(`line ${l.n}: could not be heard`);
     else if ((l.missing || []).length > words(l.text).length * 0.6) fail.push(`line ${l.n}: most words were not heard: ${l.text.slice(0, 60)}`);
     else if ((l.missing || []).length >= 4 && (l.extra || []).length >= 4) fail.push(`line ${l.n}: the voice and the words do not match: ${l.heard.slice(0, 80)}`);
@@ -234,6 +245,13 @@ for (const l of report.lines) {
   const source = lines[l.n - 1] || {};
   if (l.fits === 'no' && !source.clip && !(source.card && !source.pictures?.length)) fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
 }
+if (hearing) {
+  const problems = hearProblems(hearing.scored, hearing.totals, srt, spoken);
+  // a language whose limits are not calibrated yet only reports
+  if (LIMITS[spoken]?.blocking) fail.push(...problems); else problems.forEach((x) => console.log(`Note (not blocking yet): ${x}`));
+}
+// a spoiled sound holds any video
+fail.push(...loudnessProblems(report.audio.loudness));
 if (report.opening && (!report.opening.pro || report.opening.score < 7) && !(lines[0] || {}).clip) fail.push(`the opening frame is not professional (${report.opening.score}/10): ${String(report.opening.problem || '').slice(0, 80)}`);
 const loose = report.lines.filter((l) => l.fits === 'loosely').length;
 if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.length} pictures only loosely fit`);
@@ -243,9 +261,14 @@ if (report.audio.silence.some((x) => x.end >= report.seconds - 0.2 && x.seconds 
 for (const x of report.reels) { if (x.nudity) fail.push(`${x.name}: nudity`); if (x.cutOffText) console.log(`Note: ${x.name}: ${String(x.note).slice(0, 100)}`); }
 for (const x of report.reels) if (x.problem && !/^(none|no)\b/i.test(x.problem)) fail.push(`${x.name}: ${String(x.problem).slice(0, 90)}`);
 // what keeps a viewer watching
-// a standalone short, an Arabic video, or a virtual tour has no English teaser package: teasers and english-only metrics are not checked
-const isRelaxed = script.verticalOnly || script.kind === 'tour' || script.lang === 'ar';
-const eng = isRelaxed ? { longestStill: 0, longestClip: 0, teasers: 999, minutes: 0, wordTimed: 999, lines: 1, licensedMusic: true, cards: 0 } : (pkg.engagement || {});
+// a standalone short or a virtual tour has no teaser package; an Arabic or Spanish long video has no teasers and no
+// word timing, but the rules about what is on screen and whose music plays hold for every long video
+const isRelaxed = script.verticalOnly || script.kind === 'tour' || spoken !== 'en';
+const none = { longestStill: 0, longestClip: 0, teasers: 999, minutes: 0, wordTimed: 999, lines: 1, licensedMusic: true, cards: 0 };
+const measured = pkg.engagement;
+const eng = !isRelaxed ? (measured || {})
+  : (spoken !== 'en' && !script.verticalOnly && measured) ? { ...none, longestStill: measured.longestStill, longestClip: measured.longestClip, licensedMusic: measured.licensedMusic, cards: measured.cards }
+  : none;
 if (eng.longestStill > 7) fail.push(`one picture stays ${eng.longestStill}s without a cut`);
 if (eng.longestClip > 14) fail.push(`one moving clip runs ${eng.longestClip}s`);
 if (!(eng.teasers >= eng.minutes * 1.5)) fail.push(`only ${eng.teasers} lines at the top for ${eng.minutes} minutes`);

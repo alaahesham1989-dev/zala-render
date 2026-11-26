@@ -248,7 +248,8 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   const learned = [...new Set([...known, ...candidates])];
   if (learned.length > known.length) { fs.mkdirSync(path.dirname(hardFile), { recursive: true }); fs.writeFileSync(hardFile, JSON.stringify({ words: learned.sort() }, null, 2) + '\n'); log(`learned ${learned.length - known.length} hard word(s) for every future episode: ${candidates.filter((w) => !known.includes(w)).join(', ')}`); }
   // the plain-English rewrite below is for English scripts only: on an Arabic script it turned the Arabic lines into English
-  if (bad.length && script.lang !== 'ar') {
+  // (a Spanish line would go the same way)
+  if (bad.length && (script.lang || 'en') === 'en') {
     const fix = await askJson(`A text-to-speech voice could not clearly match these spoken lines to their written words (hard names, foreign spellings, or awkward phrasing).
 Rewrite each line in plain, natural spoken American English a voice reads cleanly: same meaning and facts, same rough length, but avoid foreign
 transliterated spellings, hyphenated names and tongue-twisting phrasing; spell a hard name the simple common way or describe it instead if needed.
