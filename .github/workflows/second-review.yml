@@ -1,0 +1,18 @@
+name: ZALA second review (a second pair of ears and eyes, read only)
+
+# Gemini listens to and watches the finished test videos by their public link. Nothing is rendered,
+# published or saved; the only secret is the Gemini key. Runs when this scratch branch is pushed.
+on:
+  push:
+    branches: [review-videos]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PYTHONIOENCODING: utf-8
+        run: python3 media/tools/second-review.py /tmp/out/review.json
