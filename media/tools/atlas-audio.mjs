@@ -30,28 +30,34 @@ const details = await (await fetch(textUrl)).json().catch(() => null);
 const text = String((cc === 'eg' ? details?.script?.[lang] : details?.narration?.[lang]) || '').replace(/\s+/g, ' ').trim();
 if (!text || text.length > 2500) throw new Error(`no usable guide text for ${cc}/${slug}/${lang}`);
 
-const model = process.env.ATLAS_TTS_MODEL || 'gemini-3.8-flash-tts';
+// The free voice quota is per model and per day: when one is used up the next one speaks.
+const MODELS = [...new Set([process.env.ATLAS_TTS_MODEL || 'gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts'])];
+let model = MODELS[0];
 const voice = (lang === 'ar' ? process.env.ATLAS_VOICE_AR : process.env.ATLAS_VOICE_EN) || 'Orus';
 const STYLE = 'Read this as a calm, warm, clear audio guide at a museum:';
 
 async function tts() {
-  for (let i = 0; i < 4; i += 1) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `${STYLE} ${text}` }] }],
-        generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    const b64 = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (b64) return Buffer.from(b64, 'base64');
-    if (![429, 500, 503].includes(res.status)) throw new Error(`Gemini TTS failed (HTTP ${res.status}): ${JSON.stringify(data).slice(0, 200)}`);
-    log(`Gemini answered ${res.status}, waiting before try ${i + 2}`);
-    await sleep(20000 * (i + 1));
+  for (const candidate of MODELS) {
+    model = candidate;
+    for (let i = 0; i < 2; i += 1) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${STYLE} ${text}` }] }],
+          generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const b64 = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (b64) return Buffer.from(b64, 'base64');
+      if (![200, 404, 429, 500, 503].includes(res.status)) throw new Error(`Gemini TTS failed (HTTP ${res.status}): ${JSON.stringify(data).slice(0, 200)}`);
+      log(`${model} answered ${res.status}`);
+      if (res.status === 429 || res.status === 404) break; // used up or gone: waiting will not help
+      await sleep(10000);
+    }
   }
-  throw new Error('Gemini TTS kept failing');
+  throw new Error('every voice model is used up or failing');
 }
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas-audio-'));
