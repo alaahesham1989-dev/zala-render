@@ -1,0 +1,51 @@
+name: ZALA owner voice (speech in the owner's own voice)
+
+# Inputs and outputs travel encrypted (media/tools/voice/box.mjs): nothing personal is stored readable here.
+on:
+  push:
+    branches: [owner-voice]
+    paths: [media/tools/voice/job.txt]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "random job name given to box.mjs send"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  speak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: |
+          echo "JOB=${INPUT_JOB:-$(tr -d ' \r\n' < media/tools/voice/job.txt)}" >> "$GITHUB_ENV"
+          echo "WORK=$RUNNER_TEMP/voice" >> "$GITHUB_ENV"
+        env:
+          INPUT_JOB: ${{ inputs.job }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip -q install boto3 cryptography
+      - name: Open the encrypted bundle
+        run: python media/tools/voice/cloud.py fetch
+        env:
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      - name: Install the voice model code
+        run: |
+          pip -q install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip -q install "git+https://github.com/k2-fsa/OmniVoice.git@4d5ed0f0621507e8aebd4560bde316549e85c553" voicetut-tts==0.1.1 soundfile
+      - name: Speak
+        run: python media/tools/voice/speak.py
+      - name: Seal the results
+        run: python media/tools/voice/cloud.py seal
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
