@@ -383,17 +383,18 @@ if (script.verticalOnly && !dry) {
     return looks.get(p.id);
   };
   const shown = [];
+  const grey = async (p) => { const c = await colour(p); return !c || c.sat < 8; };
   const repeats = async (p) => { const h = await look(p); return shown.some((x) => x.id === p.id || nearCopy(x.look, h)); };
   let swapped = 0;
   for (const [n, l] of lines.entries()) {
     const p = byId.get((l.pictures || [])[0]);
     if (!p) continue;
-    const bad = n > 0 && DRAWN.test(kindOf(p));
+    const bad = n > 0 && (DRAWN.test(kindOf(p)) || await grey(p));
     if (!bad && !(await repeats(p))) { shown.push({ id: p.id, look: await look(p) }); continue; }
     let other = null;
     for (const c of clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x)) && !uses.get(x.id))
       .sort((a, b) => asked(l, b) - asked(l, a) || (b.shine || 0) - (a.shine || 0)).slice(0, 40)) {
-      if (!(await repeats(c))) { other = c; break; }
+      if (!(await grey(c)) && !(await repeats(c))) { other = c; break; }
     }
     if (!other) { shown.push({ id: p.id, look: await look(p) }); continue; }
     uses.set(p.id, Math.max(0, (uses.get(p.id) || 1) - 1));

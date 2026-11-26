@@ -199,7 +199,8 @@ if (script.verticalOnly && report.lines.length) {
   const f = path.join(tmp, 'opening.jpg');
   frameOf(video, Math.min(0.7, report.seconds - 0.08), 'scale=720:-2', f);
   const o = fs.existsSync(f) ? await ask([{ text: `This is the very first frame of a YouTube Short about "${script.title}" (ancient Egypt). It decides whether people stop scrolling.
-Judge it like a top creator: professional and eye-catching means sharp, rich colour and light, one clear strong subject that fits the topic, and the big hook text easy to read without covering the subject's face.
+Judge it like a top creator: professional and eye-catching means sharp, rich colour and light, one clear strong subject that fits the topic, and the big hook text (upper part of the frame) easy to read without covering the subject's face.
+The few words near the bottom are running captions that show the spoken sentence a few words at a time: that is intended, never call them cut off or incomplete.
 Not professional: an old pale scan, a drawing or engraving, black and white, blurry, dull, dark, cluttered, or a subject that is cut off.
 Return only JSON {"pro": true, "score": 1-10, "problem": ""}` }, { inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } }]) : null;
   report.opening = o;

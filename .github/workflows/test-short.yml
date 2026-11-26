@@ -16,7 +16,6 @@ jobs:
       matrix:
         include:
           - { id: ZV-ENT01, lang: en }
-          - { id: ZV-EST01, lang: es }
     env:
       ID: ${{ matrix.id }}
       LANG_CODE: ${{ matrix.lang }}
@@ -42,6 +41,7 @@ jobs:
       CHROME_PATH: /usr/bin/google-chrome
       NO_ARABIC_COPY: "1"
       NO_OUTBOX: "1"
+      ZALA_LIBRARY_TARGET: "90"
       MANIM_PY: /tmp/manim/bin/python
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:
