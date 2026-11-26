@@ -1,0 +1,51 @@
+name: ZALA atlas audio - what does each voice open with
+
+on:
+  workflow_dispatch:
+    inputs:
+      keys:
+        description: "space-separated audio keys on R2"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      KEYS: ${{ inputs.keys }}
+      GEMINI_API_KEY_ATLAS_AUDIO: ${{ secrets.GEMINI_API_KEY_ATLAS_AUDIO }}
+    steps:
+      - name: First words of every file
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, time, urllib.request
+          BASE = 'https://pub-20815a715a814497b24a479c98b1815e.r2.dev/'
+          KEY = os.environ['GEMINI_API_KEY_ATLAS_AUDIO']
+          ASK = 'Write exactly the first 12 words spoken in this recording, in the language spoken. Output only those words.'
+          MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.8-flash']
+          def say(audio):
+              body = json.dumps({'contents': [{'parts': [{'inline_data': {'mime_type': 'audio/mpeg', 'data': audio}}, {'text': ASK}]}],
+                                 'generationConfig': {'temperature': 0}}).encode()
+              last = ''
+              for attempt in range(3):
+                  for m in MODELS:
+                      try:
+                          req = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent', data=body,
+                                                       headers={'Content-Type': 'application/json', 'x-goog-api-key': KEY})
+                          with urllib.request.urlopen(req, timeout=120) as r:
+                              return json.load(r)['candidates'][0]['content']['parts'][0]['text'].strip().replace('\n', ' ')
+                      except Exception as e:
+                          last = str(e)
+                  time.sleep(30)
+              return 'ERROR ' + last
+          for k in os.environ['KEYS'].split():
+              if not k.startswith('atlas/') or not k.endswith('.mp3'):
+                  continue
+              data = urllib.request.urlopen(urllib.request.Request(BASE + k, headers={'User-Agent': 'Mozilla/5.0'}), timeout=60).read()
+              print(f'HEARD|{k}|{say(base64.b64encode(data).decode())[:140]}', flush=True)
+              time.sleep(4)
+          PY
