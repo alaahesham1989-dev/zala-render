@@ -26,7 +26,7 @@ export function groupLines(pending, flat, maxWords) {
   return groups;
 }
 
-export const tokens = (s) => String(s).toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+export const tokens = (s) => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
 
 /** Longest common sequence between the script's words and the heard words: script word index -> heard word index. */
 export function matchWords(script, heard) {
@@ -83,7 +83,7 @@ function heardWords(file) {
   const py = process.env.WHISPER_PY;
   if (!py) return null;
   const tool = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', 'tools', 'words.py');
-  const r = spawnSync(py, [tool, file], { encoding: 'utf8', maxBuffer: 1 << 28 });
+  const r = spawnSync(py, [tool, file, process.env.ZALA_SPOKEN || 'en'], { encoding: 'utf8', maxBuffer: 1 << 28 });
   if (r.status !== 0) { console.log(`  word timing failed: ${String(r.stderr).slice(-300)}`); return null; }
   fs.writeFileSync(cache, r.stdout);
   return JSON.parse(r.stdout);

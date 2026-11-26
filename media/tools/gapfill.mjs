@@ -300,6 +300,41 @@ log(`prepared Flow shots placed: ${fromPrep}`);
 const openingBoost = (l, p) => (!script.verticalOnly || l !== lines[0]) ? 0
   : (p.shine ? 3 : 0) + (p.recon ? 2 : 0) + (/photo/i.test(p.seen?.type || '') ? 2 : 0)
     - (/drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.what || ''} ${p.title || ''}`) ? 8 : 0);
+// ── the opening frame ────────────────────────────────────────────────
+// descriptions do not say reliably that a plate is grey or faded, so the picture itself is measured
+const DRAWN = /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i;
+const kindOf = (p) => `${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`;
+async function colour(p) {
+  try {
+    const dir = path.join(TMP, 'gapfill', id);
+    fs.mkdirSync(dir, { recursive: true });
+    const src = path.join(dir, `${hash(p.url)}.src`);
+    if (!fs.existsSync(src)) {
+      const res = await fetch(p.url, { headers: { 'User-Agent': 'ZalaRender/1.0 (https://www.zalavip.com)' }, signal: AbortSignal.timeout(60000) });
+      if (!res.ok) return null;
+      fs.writeFileSync(src, Buffer.from(await res.arrayBuffer()));
+    }
+    const r = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', ['-hide_banner', '-nostats', '-i', src, '-frames:v', '1', '-vf', 'scale=96:96,signalstats,metadata=print', '-f', 'null', '-'], { encoding: 'utf8' });
+    const num = (k) => Number((String(r.stderr).match(new RegExp(`signalstats\\.${k}=([\\d.]+)`)) || [])[1]);
+    return { sat: num('SATAVG'), light: num('YAVG') };
+  } catch { return null; }
+}
+const strong = (c) => c && c.sat >= 18 && c.light >= 55 && c.light <= 205;
+if (!dry && script.verticalOnly && lines[0] && !lines[0].map && !lines[0].clip) {
+  const now = byId.get((lines[0].pictures || [])[0]);
+  const nowColour = now && !DRAWN.test(kindOf(now)) ? await colour(now) : null;
+  if (!strong(nowColour)) {
+    let best = null;
+    for (const p of clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x))).sort((a, b) => (b.shine || 0) - (a.shine || 0)).slice(0, 40)) {
+      const c = await colour(p);
+      if (!strong(c)) continue;
+      const value = Math.min(c.sat, 60) + (p.shine || 0) * 30 + (p.recon ? 10 : 0);
+      if (!best || value > best.value) best = { p, value };
+    }
+    if (best) { lines[0].pictures = [best.p.id]; script.openingChosen = true; log(`opening frame: ${best.p.title}`); } else log('opening frame: no colourful photograph in the library');
+  } else script.openingChosen = true;
+}
+
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);
 log(`${id}: ${empty.length} of ${lines.length} lines have nothing to show`);
 const scenes = [];

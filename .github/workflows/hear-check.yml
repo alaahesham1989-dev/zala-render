@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{{"ids":"{0}","lang":"{1}","model":"{2}"}}]', inputs.ids, inputs.lang, inputs.model) || '[{"ids":"ZV-AR04 ZV-AR05 ZV-AR01 ZV-AR07","lang":"ar","model":"large-v3-turbo"},{"ids":"ZV-VAR01","lang":"ar","model":"large-v3-turbo"}]') }}
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{{"ids":"{0}","lang":"{1}","model":"{2}"}}]', inputs.ids, inputs.lang, inputs.model) || '[{"ids":"ZV-AR04 ZV-AR05","lang":"ar","model":"large-v3-turbo"}]') }}
     env:
       BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
       FFMPEG_PATH: /usr/bin/ffmpeg

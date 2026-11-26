@@ -27,6 +27,12 @@ export function transcribe(video, lang, work, from, to) {
   return words.map((w) => ({ ...w, start: w.start + shift, end: w.end + shift }));
 }
 
+/** Length of the sound track, which can be shorter than the picture. */
+export function soundSeconds(video) {
+  const r = spawnSync(process.env.FFPROBE_PATH || 'ffprobe', ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=duration', '-of', 'csv=p=0', video], { encoding: 'utf8' });
+  return Number(String(r.stdout).trim()) || null;
+}
+
 /** @param {{ n: number, start: number, end: number, text: string }[]} srt */
 export function hearVideo(video, srt, lang, work) {
   const heard = transcribe(video, lang, work);
@@ -34,7 +40,9 @@ export function hearVideo(video, srt, lang, work) {
   const limit = LIMITS[lang]?.line ?? 0.5;
   for (const x of scored.filter((y) => y.near < limit + 0.1).slice(0, 25)) {
     const s = srt.find((l) => l.n === x.n);
-    const again = transcribe(video, lang, work, s.start - 0.3, s.end + 0.3).map((w) => w.w).join(' ');
+    let again = '';
+    try { again = transcribe(video, lang, work, s.start - 0.3, s.end + 0.3).map((w) => w.w).join(' '); }
+    catch { console.log(`  line ${x.n}: there is no sound to hear again at ${s.start.toFixed(1)}s (video sound ${soundSeconds(video)}s)`); }
     const score = Number(matchScore(s.text, again, lang).toFixed(3));
     x.again = again;
     if (score > x.near) { x.near = score; x.wide = Math.max(x.wide, score); x.heard = again; }

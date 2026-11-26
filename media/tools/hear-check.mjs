@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { matchScore } from '../lib/heard.mjs';
-import { hearVideo, loudness, loudnessProblems } from '../lib/listen.mjs';
+import { hearVideo, loudness, loudnessProblems, soundSeconds } from '../lib/listen.mjs';
 
 const [video, linesFile, lang, outFile] = process.argv.slice(2);
 if (!outFile) throw new Error('usage: hear-check.mjs <video> <review.json|srt> <lang> <out.json>');
@@ -27,7 +27,7 @@ const loud = loudness(video);
 
 const result = {
   video: path.basename(video), lang, model: lang === 'en' ? 'base.en' : process.env.WHISPER_MODEL || 'large-v3-turbo', listenSeconds,
-  lines: srt.length, totals,
+  lines: srt.length, totals, soundSeconds: soundSeconds(video), lastCaption: srt[srt.length - 1].end,
   lineScores: { min: q(near, 0), p5: q(near, 0.05), p25: q(near, 0.25), median: q(near, 0.5) },
   wrongPairScores: { median: q(wrong, 0.5), p95: q(wrong, 0.95), max: q(wrong, 1) },
   loudness: loud,
