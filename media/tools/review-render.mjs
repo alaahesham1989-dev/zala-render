@@ -243,7 +243,8 @@ for (const l of report.lines) {
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
   const source = lines[l.n - 1] || {};
-  if (l.fits === 'no' && !source.clip && !(source.card && !source.pictures?.length)) fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
+  const exempt = source.clip && (source.clip.mapFlight || source.clip.what === 'title scene');
+  if (l.fits === 'no' && !exempt && !(source.card && !source.pictures?.length)) fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
 }
 if (hearing) {
   const problems = hearProblems(hearing.scored, hearing.totals, srt, spoken);
