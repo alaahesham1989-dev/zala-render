@@ -1,20 +1,26 @@
 {
-  "note": "Owner's order 2026-11-26 (answered in chat): publish these three now, public, credits at the end of the description; YouTube for all three, Facebook and Instagram for Arabic and English.",
+  "note": "Owner's order 2026-11-26 (answered in chat): publish these three now, public, credits at the end of the description; YouTube for all three, Facebook and Instagram for Arabic and English. Telegram channels added after the owner said the bot is admin there.",
   "ZV-ART01": {
     "lang": "ar",
     "channel": "@zalavip-AR",
-    "meta": { "page": "1427095477152118" },
+    "meta": {
+      "page": "1427095477152118"
+    },
     "title": "معجزة أبو سمبل التي تتحدى الزمن",
     "text": "بناه من غير آلة واحدة، ومرتين في السنة الشمس بتلمس وشه.\nقصة معبد أبو سمبل ومعجزة تعامد الشمس.\n\n#مصر_القديمة #أبو_سمبل #الفراعنة #تاريخ #مصر\n\nبتخطط لرحلة فاخرة في مصر؟ ← https://zalavip.com",
-    "creditsHead": "الحقوق:"
+    "creditsHead": "الحقوق:",
+    "telegram": "@zalavip_ar"
   },
   "ZV-ENT01": {
     "lang": "en",
     "channel": "@zalavip",
-    "meta": { "page": "108172631323930" },
+    "meta": {
+      "page": "108172631323930"
+    },
     "title": "Ancient Egypt: The Queen Pharaohs Tried to Erase",
     "text": "Why did later pharaohs try to erase Queen Hatshepsut from history?\nShe ruled as pharaoh and built a terraced temple into the cliffs at Deir el-Bahari.\n\n#AncientEgypt #Hatshepsut #Egypt #History #Archaeology\n\nPlanning a luxury trip to Egypt? → https://zalavip.com",
-    "creditsHead": "Credits:"
+    "creditsHead": "Credits:",
+    "telegram": "@zalavip_en"
   },
   "ZV-EST01": {
     "lang": "es",
@@ -22,6 +28,7 @@
     "title": "Antiguo Egipto: El puñal de meteorito de Tutankamón",
     "text": "¿Un puñal que no venía de este planeta?\nLa historia de la daga de hierro de meteorito de Tutankamón.\n\n#AntiguoEgipto #Tutankamón #Egipto #Arqueología #Historia\n\n¿Planeas un viaje de lujo a Egipto? → https://zalavip.com",
     "creditsHead": "Créditos:",
-    "noCover": true
+    "noCover": true,
+    "telegram": "@zalavip_es"
   }
 }

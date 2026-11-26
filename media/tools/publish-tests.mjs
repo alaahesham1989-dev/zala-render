@@ -76,4 +76,18 @@ if (spec.meta) {
   }
   for (const p of ['fb', 'ig']) { if (done[p]) console.log(`PUBLISHED ${id} ${p} ${done[p].url || done[p].id}`); else if (p === 'fb' || ig) failed = true; }
 }
+// the audience channel of the language gets the YouTube link (the credits are on the video it points to)
+if (spec.telegram && done.youtube && !done.tg) {
+  const call = async (method, body) => (await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}), signal: AbortSignal.timeout(30000) })).json();
+  const me = (await call('getMe')).result;
+  const member = await call('getChatMember', { chat_id: spec.telegram, user_id: me?.id });
+  const can = member.ok && member.result.status === 'administrator' && member.result.can_post_messages;
+  if (!can) { console.log(`PUBLISHED ${id} telegram NOT POSTED: the bot cannot post in ${spec.telegram} (${member.ok ? member.result.status : member.description})`); failed = true; }
+  else {
+    const sent = await call('sendMessage', { chat_id: spec.telegram, text: `${spec.text.split('\n')[0]}\n\n${done.youtube.url}` });
+    if (sent.ok) { done.tg = { channel: spec.telegram, id: sent.result.message_id, url: `https://t.me/${spec.telegram.slice(1)}/${sent.result.message_id}` }; save(); }
+    else { console.log(`PUBLISHED ${id} telegram FAILED ${sent.description}`); failed = true; }
+  }
+}
+if (done.tg) console.log(`PUBLISHED ${id} telegram ${done.tg.url}`);
 if (failed) process.exitCode = 1;

@@ -31,6 +31,7 @@ jobs:
       YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
       YOUTUBE_REFRESH_TOKEN: ${{ matrix.lang == 'es' && (secrets.YOUTUBE_REFRESH_TOKEN_ES || 'missing') || matrix.lang == 'ar' && secrets.YOUTUBE_REFRESH_TOKEN_AR || secrets.YOUTUBE_REFRESH_TOKEN }}
       META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:
       - uses: actions/checkout@v4
