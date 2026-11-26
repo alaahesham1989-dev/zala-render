@@ -41,13 +41,13 @@ fs.writeFileSync(itemsFile, [...rows, ...own.map((o) => JSON.stringify(o))].join
 const UA = { 'User-Agent': 'ZALA-VIP-ads/1.0 (https://www.zalavip.com)' };
 const taken = new Set();
 async function commons(query) {
-  const u = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=25&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=1920`;
+  const u = `https://commons.wikimedia.org/w/api.php?action=query&format=json&${query.startsWith('File:') ? `titles=${encodeURIComponent(query)}` : `generator=search&gsrnamespace=6&gsrlimit=25&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}`}&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=1920`;
   const r = await (await fetch(u, { headers: UA, signal: AbortSignal.timeout(30000) })).json();
   const pages = Object.values(r.query?.pages || {}).sort((a, b) => a.index - b.index);
   for (const p of pages) {
     const i = p.imageinfo?.[0];
     const licence = String(i?.extmetadata?.LicenseShortName?.value || '');
-    if (!i || i.mime !== 'image/jpeg' || i.width < 1400 || !/^(CC0|Public domain|CC BY( |-SA )[0-9.]+)/i.test(licence) || taken.has(p.title)) continue;
+    if (!i || i.mime !== 'image/jpeg' || (i.width < 1400 && !query.startsWith('File:')) || !/^(CC0|Public domain|CC BY( |-SA )[0-9.]+)/i.test(licence) || taken.has(p.title)) continue;
     taken.add(p.title);
     return { url: i.thumburl || i.url, page: i.descriptionurl, title: p.title.replace(/^File:|\.[a-z]+$/gi, ''), licence, author: String(i.extmetadata?.Artist?.value || 'Wikimedia Commons').replace(/<[^>]*>/g, '').trim().slice(0, 70) };
   }
@@ -75,7 +75,7 @@ const out = path.join(REPO, 'content', 'youtube', `${id}.json`);
 {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify({
-    id, series: 'ZALA VIP partners', kind: 'promo', lang: 'ar', verticalOnly: true, directed: 8, packaged: true,
+    id, aiDisclosure: spec.aiDisclosure === true, series: 'ZALA VIP partners', kind: 'promo', lang: 'ar', verticalOnly: true, directed: 8, packaged: true,
     voice: 'Orus', voiceStyle: 'اتكلم بالعامية المصرية بنبرة واثقة ودودة وسريعة شوية، زي صاحب شغل بيعرض فرصة بهدوء من غير مبالغة.', voiceTempo: 1,
     title: spec.title, description: spec.title, tags: [],
     endLine: 'كن شريكنا · اللينك في البايو · تابعنا', noEarlyMark: true,

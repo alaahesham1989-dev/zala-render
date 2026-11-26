@@ -23,8 +23,7 @@
           "airport road car"
         ],
         "commons": [
-          "Cairo International Airport terminal 2",
-          "Cairo International Airport"
+          "File:Cairo Airport Terminal 3.jpg"
         ]
       },
       {
@@ -39,7 +38,8 @@
         "en": "كن شريكنا. اللينك في البايو.",
         "use": "owner"
       }
-    ]
+    ],
+    "aiDisclosure": true
   },
   "ZV-AD02": {
     "title": "كن شريكنا: موردين فنادق B2B",
@@ -64,8 +64,7 @@
           "hotel room key"
         ],
         "commons": [
-          "hotel reception desk lobby",
-          "hotel lobby Egypt"
+          "File:Lobby Kempinski .JPG"
         ]
       },
       {
@@ -75,8 +74,7 @@
           "hotel lobby"
         ],
         "commons": [
-          "hotel lobby Cairo",
-          "luxury hotel lobby"
+          "File:Cherry Maryski Hotel lobby.jpg"
         ]
       },
       {
@@ -87,7 +85,8 @@
         "en": "كن شريكنا. اللينك في البايو.",
         "use": "owner"
       }
-    ]
+    ],
+    "aiDisclosure": true
   },
   "ZV-AD03": {
     "title": "كن شريكنا: رحلات في كل المحافظات",
@@ -136,6 +135,8 @@
         "en": "كن شريكنا. اللينك في البايو.",
         "use": "owner"
       }
-    ]
-  }
+    ],
+    "aiDisclosure": true
+  },
+  "aiDisclosure": "REQUIRED at upload on TikTok and Instagram: turn on the AI-generated content label (the presenter picture is generated). Our server publisher does not set it, so it is done by hand."
 }

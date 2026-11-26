@@ -71,6 +71,7 @@ jobs:
         run: |
           [ -f "content/youtube/$ID.json" ] && aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress || true
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress --quiet; done
+          node -e 'const fs=require("fs"), id=process.env.ID, s=require("./media/tools/ads-partners.json"); fs.writeFileSync("upload-notes.txt", `${id}\n${s.aiDisclosure}\n`)' && aws s3 cp upload-notes.txt "s3://${R2_BUCKET}/renders/$ID/publish/UPLOAD-NOTES.txt" --endpoint-url "$E" --no-progress || true
           [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID/publish" "s3://${R2_BUCKET}/renders/$ID/publish" --endpoint-url "$E" --no-progress
           [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
           true
