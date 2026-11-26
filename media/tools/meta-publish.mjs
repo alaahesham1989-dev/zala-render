@@ -35,8 +35,8 @@ function texts(pkg, id, which) {
   const reel = isMain ? null : pkg.reels.find((r) => r.id === `${id}-${which}`);
   if (!isMain && !reel) throw new Error(`No reel ${which} in the package`);
   // Owner's order: short words about the episode's subject only; credits go in the first comment.
-  const text = postText(pkg, which);
-  return { isMain, file: isMain ? pkg.file : reel.file, title: isMain ? pkg.title : reel.title, text, ig: text.slice(0, 2200) };
+  const text = pkg.uploadDescription || postText(pkg, which);
+  return { isMain, file: isMain ? pkg.file : reel.file, title: pkg.uploadTitle || (isMain ? pkg.title : reel.title), text, ig: text.slice(0, 2200) };
 }
 
 /** Owner's standing order (repeated 2026-11-13): never a comment, never any mention of the source, on anything we
