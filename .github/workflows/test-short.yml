@@ -67,13 +67,21 @@ jobs:
             const spec = tests[id].from ? ar[tests[id].from] : tests[id];
             const lib=read("content/library/treasures.json"); lib[id]=spec; fs.writeFileSync("content/library/treasures.json", JSON.stringify(lib));
             if (tests[id].from) { ar[id]=spec; fs.writeFileSync("media/tools/arabic-treasures.json", JSON.stringify(ar)); }'
+      - name: Passed already?
+        run: |
+          done=no
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass?0:1)' && done=yes
+          echo "DONE=$done" >> "$GITHUB_ENV"
+          echo "RESULT $ID passed earlier: $done"
       - name: Tools
+        if: env.DONE != 'yes'
         run: |
           bash media/tools/line/ci-setup.sh render
           sudo apt-get install -y fonts-noto-naskh-arabic >/dev/null 2>&1 || true
           pip install --quiet pillow arabic-reshaper python-bidi
           node --test media/lib/heard.test.mjs
       - name: Prepare the script (once)
+        if: env.DONE != 'yes'
         run: |
           set -uo pipefail
           if [ -f "content/youtube/$ID.json" ]; then echo "script kept from the earlier run"; exit 0; fi
@@ -84,12 +92,13 @@ jobs:
           done
           exit 1
       - name: Make and check (listen and look), fixing up to three times
+        if: env.DONE != 'yes'
         run: |
           set -uo pipefail
           last=""; [ -f review-last.json ] && last=review-last.json
           bash media/tools/line/run.sh "$ID" short "$last" 2>&1 | tee run.log || true
       - name: Keep on R2
-        if: always()
+        if: always() && env.DONE != 'yes'
         run: |
           [ -f "content/youtube/$ID.json" ] && aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress || true
           if [ -f content/library/items.jsonl ]; then node -e 'const fs=require("fs"); fs.writeFileSync("own-items.jsonl", fs.readFileSync("content/library/items.jsonl","utf8").split("\n").filter((l)=>l && (JSON.parse(l).topics||[]).includes(process.env.ID)).join("\n")+"\n")'; aws s3 cp own-items.jsonl "s3://${R2_BUCKET}/renders/$ID/items.jsonl" --endpoint-url "$E" --no-progress || true; fi

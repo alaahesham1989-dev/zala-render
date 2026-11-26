@@ -34,7 +34,7 @@ if (text.length < 1500) throw new Error('not enough facts');
 
 const count = (lines) => lines.reduce((n, l) => n + String(l.en).split(/\s+/).filter(Boolean).length, 0);
 let script = null, feedback = '';
-for (let attempt = 1; attempt <= 4 && !script; attempt++) {
+for (let attempt = 1; attempt <= 8 && !script; attempt++) {
   const s = await askJson(`Write ONE standalone vertical video about ancient Egypt in ${L.name}. Topic: ${spec.topic}.
 Spoken length 65 to 80 seconds: 10 or 11 lines, 170 to 190 words in total. Each line one or two short sentences.
 Line 1 is the hook: a question or a mystery, no greeting, no introduction. Then calm documented storytelling that builds up. The last line pays off and ends with a question to the viewer. No "subscribe", no links, no hype.
@@ -48,14 +48,27 @@ ${text.slice(0, 30000)}`, { temperature: 0.7 });
   if (!s?.lines?.length) continue;
   const words = count(s.lines);
   console.log(`attempt ${attempt}: ${s.lines.length} lines, ${words} words`);
-  if (words < 160 || words > 205) { feedback = `Your last answer had ${words} words. It must be 170 to 190 words.`; continue; }
+  if (words < 150 || words > 215) {
+    // a small model writes short: it is asked to grow its own draft, not to start again
+    feedback = `Your last draft had ${s.lines.length} lines and ${words} words; it must be 10 or 11 lines and 170 to 190 words. ${words < 150 ? 'Keep every line of the draft and ADD more lines with more facts from the TEXT, making each line two sentences.' : 'Shorten it.'}
+DRAFT: ${JSON.stringify(s.lines)}`;
+    await new Promise((r) => setTimeout(r, 20000));
+    continue;
+  }
   const check = await askJson(`Check this script against the text. A line is bad when it says something the text does not support (an invented or wrong name, date or number).
 Return JSON {"bad": [{"n": 1, "why": ""}]} with an empty list when every line is supported.
 SCRIPT: ${JSON.stringify(s.lines.map((l, i) => ({ n: i + 1, line: l.en })))}
 TEXT:
 ${text.slice(0, 30000)}`, { temperature: 0.1 });
   if (!check) continue;
-  if (check.bad?.length) { feedback = `These lines of your last answer are not supported by the text, fix them: ${JSON.stringify(check.bad)}`; console.log(feedback.slice(0, 400)); continue; }
+  if (check.bad?.length) {
+    console.log(`editor: ${JSON.stringify(check.bad).slice(0, 400)}`);
+    // unsupported lines (never the hook) are dropped when what stays is still long enough
+    const keep = s.lines.filter((_, i) => i === 0 || !check.bad.some((b) => b.n === i + 1));
+    if (!check.bad.some((b) => b.n === 1) && count(keep) >= 150) { s.lines = keep; }
+    else { feedback = `These lines of your last draft are not supported by the TEXT, rewrite only them: ${JSON.stringify(check.bad)}
+DRAFT: ${JSON.stringify(s.lines)}`; continue; }
+  }
   script = s;
 }
 if (!script) throw new Error('no script passed the editor');
