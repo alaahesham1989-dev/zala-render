@@ -1192,7 +1192,16 @@
       "fb"
     ],
     "at": "2026-11-26T20:00:00Z",
-    "done": false
+    "done": "2026-11-26T20:00:49.693Z",
+    "results": [
+      {
+        "platform": "facebook",
+        "kind": "video",
+        "id": "1257543566836543",
+        "url": "https://www.facebook.com/108172631323930/videos/1257543566836543"
+      }
+    ],
+    "tries": 1
   },
   {
     "episode": "ZV-D01",
