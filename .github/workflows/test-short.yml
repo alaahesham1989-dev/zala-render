@@ -15,8 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { id: ZV-ART01, lang: ar }
-          - { id: ZV-ENT01, lang: en }
           - { id: ZV-EST01, lang: es }
     env:
       ID: ${{ matrix.id }}

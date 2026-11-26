@@ -229,7 +229,8 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   const rev = JSON.parse(fs.readFileSync(reviewAt, 'utf8'));
   for (const r of rev.lines || []) {
     const l = lines[r.n - 1];
-    if (!l || (r.fits !== 'no' && !r.pictureProblem && !r.watermark)) continue;
+    const tooLoose = (rev.lines || []).filter((x) => x.fits === 'loosely').length > (rev.lines || []).length * 0.25;
+    if (!l || (r.fits !== 'no' && !r.pictureProblem && !r.watermark && !(tooLoose && r.fits === 'loosely' && r.n > 1))) continue;
     for (const p of l.pictures || []) banned.add(p);
     if (l.clip?.page) banned.add(l.clip.page);
     if (l.clip?.prep) banned.add(l.clip.url);
