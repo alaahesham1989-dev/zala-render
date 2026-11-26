@@ -102,6 +102,7 @@ function score(line, p) {
   return strong.length * 4 + nm.length + w.length;
 }
 
+for (const l of lines) if (l.pictures?.length) l.pictures = l.pictures.filter((p) => byId.has(p));
 const uses = new Map();
 // how many words of the line's English picture searches a picture's own description carries
 const asked = (l, p) => { const hay = textOf(p).toLowerCase(); return [...new Set(words((l.queries || []).join(' ')))].filter((w) => hay.includes(w)).length; };

@@ -15,7 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { id: ZV-ART01, lang: ar }
           - { id: ZV-ENT01, lang: en }
           - { id: ZV-EST01, lang: es }
     env:
@@ -101,7 +100,7 @@ jobs:
         if: always() && env.DONE != 'yes'
         run: |
           [ -f "content/youtube/$ID.json" ] && aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress || true
-          if [ -f content/library/items.jsonl ]; then node -e 'const fs=require("fs"); fs.writeFileSync("own-items.jsonl", fs.readFileSync("content/library/items.jsonl","utf8").split("\n").filter((l)=>l && (JSON.parse(l).topics||[]).includes(process.env.ID)).join("\n")+"\n")'; aws s3 cp own-items.jsonl "s3://${R2_BUCKET}/renders/$ID/items.jsonl" --endpoint-url "$E" --no-progress || true; fi
+          if [ -f content/library/items.jsonl ]; then node -e 'const fs=require("fs"); let used=new Set(); try { used=new Set(JSON.parse(fs.readFileSync("content/youtube/"+process.env.ID+".json")).chapters.flatMap((c)=>c.lines).flatMap((l)=>l.pictures||[])); } catch {} fs.writeFileSync("own-items.jsonl", fs.readFileSync("content/library/items.jsonl","utf8").split("\n").filter((l)=>l && ((JSON.parse(l).topics||[]).includes(process.env.ID) || used.has(JSON.parse(l).id))).join("\n")+"\n")'; aws s3 cp own-items.jsonl "s3://${R2_BUCKET}/renders/$ID/items.jsonl" --endpoint-url "$E" --no-progress || true; fi
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
           [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress

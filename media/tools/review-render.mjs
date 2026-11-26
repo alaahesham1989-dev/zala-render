@@ -179,6 +179,20 @@ for (let i = 0; i < srt.length; i += 6) {
 const plain = (t) => (spoken === 'en' ? words(t).join(' ') : String(t || '').replace(/\s+/g, ' ').trim());
 report.lines = srt.map(({ clip, ...s }, i) => ({ ...s, label: lines[i]?.label, pictures: lines[i]?.pictures, same: lines[i] ? plain(lines[i].en) === plain(s.text) : false }));
 
+const library = (() => { try { return new Map(fs.readFileSync(path.join('content', 'library', 'items.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).map((i) => [i.id, i])); } catch { return new Map(); } })();
+for (const l of report.lines.filter((x) => x.watermark)) {
+  const item = library.get((l.pictures || [])[0]);
+  if (!item?.url) continue;
+  try {
+    const f = path.join(tmp, `source${l.n}.jpg`);
+    fs.writeFileSync(f, Buffer.from(await (await fetch(item.url, { headers: { 'User-Agent': 'ZALA-VIP-media/1.0 (https://www.zalavip.com)' }, signal: AbortSignal.timeout(60000) })).arrayBuffer()));
+    const small = path.join(tmp, `source${l.n}-s.jpg`);
+    ff(['-i', f, '-frames:v', '1', '-vf', "scale='min(1280,iw)':-2", '-q:v', '4', small]);
+    const a = await ask([{ text: 'Is a photographer name, a signature, a © sign, a stock-agency mark or a logo printed ON TOP of this photograph (not writing that is part of the object photographed, not a museum label)? Return only JSON {"mark": false, "text": "the exact words of the mark"}.' }, { inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(small).toString('base64') } }]);
+    if (a) { l.watermark = Boolean(a.mark && a.text); l.watermarkText = a.text || ''; console.log(`  mark on line ${l.n}: ${l.watermark ? a.text : 'none on the source picture'}`); }
+  } catch (e) { console.log(`  mark check ${l.n}: ${e.name}`); }
+}
+
 // the opening frame of a short decides if people stop scrolling (owner rule: it must look professional);
 // a weak one sends the first line back to make with its picture refused, so a stronger one is chosen
 if (script.verticalOnly && report.lines.length) {
