@@ -1,12 +1,12 @@
 {
-  "at": "2026-11-18T09:47:30.801Z",
+  "at": "2026-11-26T09:47:39.955Z",
   "impressionsAvailable": false,
   "bestTitles": [
-    "Ancient Egypt | The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
-    "Ancient Egypt | The Stolen Pharaoh: The Lost Tomb of Alexander the Great",
-    "Ancient Egypt: Why Nobody Can Find Cleopatra's Tomb",
-    "Ancient Egypt | The Pharaohs' Midnight Escape: The Secret Royal Cache of TT320 (4K)",
-    "Ancient Egypt: What Was Hidden in the Pyramid’s Secret Niche?"
+    "Ancient Egypt: The Night 40 Pharaohs Disappeared",
+    "Ancient Egypt: Imhotep Built the First Pyramid — Then Vanished",
+    "Ancient Egypt: Alexander the Great Has No Tomb",
+    "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold",
+    "Ancient Egypt: Why Was an Egyptian Queen Buried With War Medals?"
   ],
   "bestShorts": [
     "Ancient Egypt: Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
@@ -17,90 +17,375 @@
   ],
   "videos": [
     {
+      "id": "yiEbxmJ7L1c",
+      "title": "Ancient Egypt: Ramesses II Walked Straight Into This Military Ambush #shorts",
+      "published": "2026-11-25T20:00:00Z",
+      "short": true,
+      "views": 33,
+      "sources": {}
+    },
+    {
+      "id": "53g1DQcf4w0",
+      "title": "Only One Ancient Egyptian Pharaoh Was Ever Buried in Silver #shorts",
+      "published": "2026-11-25T16:00:21Z",
+      "short": true,
+      "views": 59,
+      "sources": {}
+    },
+    {
+      "id": "WbYOrjr0jqw",
+      "title": "Ancient Egypt: They Found His Mummy With 3 Weapons Still In It #shorts",
+      "published": "2026-11-24T20:00:11Z",
+      "short": true,
+      "views": 562,
+      "sources": {}
+    },
+    {
+      "id": "C9idHAReMEA",
+      "title": "Ancient Egypt: A Pharaoh's Tomb Was Found in 1940 — Then Forgotten for Decades #shorts",
+      "published": "2026-11-24T16:00:18Z",
+      "short": true,
+      "views": 298,
+      "sources": {}
+    },
+    {
+      "id": "wlj3F_WVjNY",
+      "title": "Ancient Egypt: The Lie That Almost Got Ramesses II Killed at Kadesh",
+      "published": "2026-11-23T20:00:22Z",
+      "short": false,
+      "views": 1,
+      "video": "wlj3F_WVjNY",
+      "averageViewDuration": 31,
+      "averageViewPercentage": 7.449999999999999,
+      "subscribersGained": 0,
+      "sources": {
+        "RELATED_VIDEO": 1
+      }
+    },
+    {
+      "id": "9nrQP7Dq58Q",
+      "title": "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold",
+      "published": "2026-11-23T16:00:34Z",
+      "short": false,
+      "views": 8,
+      "video": "9nrQP7Dq58Q",
+      "averageViewDuration": 136,
+      "averageViewPercentage": 28.850000000000005,
+      "subscribersGained": 0,
+      "sources": {
+        "RELATED_VIDEO": 5,
+        "NO_LINK_OTHER": 3
+      }
+    },
+    {
+      "id": "IZWC9atW2y4",
+      "title": "Ancient Egypt: His Skull Was Split in Battle — and He Became a Hero #shorts",
+      "published": "2026-11-22T20:00:19Z",
+      "short": true,
+      "views": 112,
+      "video": "IZWC9atW2y4",
+      "averageViewDuration": 20,
+      "averageViewPercentage": 56.18,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 101,
+        "YT_SEARCH": 8,
+        "NO_LINK_OTHER": 1,
+        "YT_CHANNEL": 1,
+        "YT_OTHER_PAGE": 1
+      }
+    },
+    {
+      "id": "hZsbBXflNgE",
+      "title": "Ancient Egypt: An Egyptian Queen Was Buried With an Army's War Medals #shorts",
+      "published": "2026-11-21T20:00:22Z",
+      "short": true,
+      "views": 45,
+      "video": "hZsbBXflNgE",
+      "averageViewDuration": 22,
+      "averageViewPercentage": 45.37,
+      "subscribersGained": 1,
+      "sources": {
+        "SHORTS": 32,
+        "YT_SEARCH": 10,
+        "YT_CHANNEL": 3,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
+      "id": "inow4PwRnFo",
+      "title": "Ancient Egypt: The World's Oldest Makeup Was Found in This Egyptian Tomb #shorts",
+      "published": "2026-11-20T20:00:13Z",
+      "short": true,
+      "views": 206,
+      "video": "inow4PwRnFo",
+      "averageViewDuration": 32,
+      "averageViewPercentage": 60.94,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 191,
+        "YT_SEARCH": 14,
+        "YT_CHANNEL": 1,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
+      "id": "2kEcO8sRQ2M",
+      "title": "Ancient Egypt: This Is What Carter Found Inside Tutankhamun's Final Coffin #shorts",
+      "published": "2026-11-20T16:00:19Z",
+      "short": true,
+      "views": 101,
+      "video": "2kEcO8sRQ2M",
+      "averageViewDuration": 46,
+      "averageViewPercentage": 81.72,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 90,
+        "YT_SEARCH": 10,
+        "YT_OTHER_PAGE": 1,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
+      "id": "a8BjtLe1qLI",
+      "title": "Ancient Egypt: Why Was an Egyptian Queen Buried With War Medals?",
+      "published": "2026-11-19T20:00:13Z",
+      "short": false,
+      "views": 4,
+      "video": "a8BjtLe1qLI",
+      "averageViewDuration": 38,
+      "averageViewPercentage": 10.71,
+      "subscribersGained": 1,
+      "sources": {
+        "YT_CHANNEL": 2,
+        "YT_SEARCH": 1,
+        "EXT_URL": 1,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
+      "id": "_voTKGMPhGo",
+      "title": "Ancient Egypt's Liquid Currency That Built Pyramids #shorts",
+      "published": "2026-11-19T19:00:05Z",
+      "short": true,
+      "views": 36,
+      "video": "_voTKGMPhGo",
+      "averageViewDuration": 26,
+      "averageViewPercentage": 75.06,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 34,
+        "EXT_URL": 2
+      }
+    },
+    {
+      "id": "KW9kox1keO8",
+      "title": "Ancient Egypt Labyrinth: Did a Secret Maze Rival Pyramids? #shorts",
+      "published": "2026-11-19T17:00:01Z",
+      "short": true,
+      "views": 98,
+      "video": "KW9kox1keO8",
+      "averageViewDuration": 21,
+      "averageViewPercentage": 69.66,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 91,
+        "YT_SEARCH": 4,
+        "SUBSCRIBER": 2,
+        "YT_OTHER_PAGE": 1,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
+      "id": "rFV4inoYbcQ",
+      "title": "Ancient Egypt: She Hid 3,500-Year-Old Jewelry in a Secret Niche #shorts",
+      "published": "2026-11-18T20:00:29Z",
+      "short": true,
+      "views": 20,
+      "video": "rFV4inoYbcQ",
+      "averageViewDuration": 27,
+      "averageViewPercentage": 52.790000000000006,
+      "subscribersGained": 0,
+      "sources": {
+        "YT_SEARCH": 17,
+        "SHORTS": 2,
+        "YT_CHANNEL": 1,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
+      "id": "LxOjSC_pg6o",
+      "title": "Ancient Egypt: He Became Pharaoh at Age 9 — Here's What He Did #shorts",
+      "published": "2026-11-18T16:00:22Z",
+      "short": true,
+      "views": 130,
+      "video": "LxOjSC_pg6o",
+      "averageViewDuration": 42,
+      "averageViewPercentage": 73.52,
+      "subscribersGained": 1,
+      "sources": {
+        "SHORTS": 118,
+        "YT_SEARCH": 10,
+        "YT_CHANNEL": 2,
+        "NO_LINK_OTHER": 0
+      }
+    },
+    {
       "id": "iqt0y4Yd314",
       "title": "Ancient Egypt: Nobody Was Supposed to Find This Hidden Chamber #shorts",
       "published": "2026-11-17T20:00:04Z",
       "short": true,
-      "views": 164,
-      "sources": {}
+      "views": 199,
+      "video": "iqt0y4Yd314",
+      "averageViewDuration": 33,
+      "averageViewPercentage": 57.35,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 184,
+        "YT_SEARCH": 13,
+        "SUBSCRIBER": 2,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "wdwfLIrdCTI",
       "title": "Ancient Egypt: Was King Tut Buried with Space Metal? #shorts",
       "published": "2026-11-17T19:00:13Z",
       "short": true,
-      "views": 423,
-      "sources": {}
+      "views": 462,
+      "video": "wdwfLIrdCTI",
+      "averageViewDuration": 31,
+      "averageViewPercentage": 62.529999999999994,
+      "subscribersGained": 1,
+      "sources": {
+        "SHORTS": 437,
+        "YT_SEARCH": 22,
+        "YT_OTHER_PAGE": 2,
+        "YT_CHANNEL": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "VwGlWNTJYyQ",
       "title": "The Ancient Egyptian Temple Built Entirely of Granite #shorts",
       "published": "2026-11-17T17:00:21Z",
       "short": true,
-      "views": 1012,
-      "sources": {}
+      "views": 1038,
+      "video": "VwGlWNTJYyQ",
+      "averageViewDuration": 28,
+      "averageViewPercentage": 50.44,
+      "subscribersGained": 1,
+      "sources": {
+        "SHORTS": 981,
+        "YT_SEARCH": 41,
+        "YT_OTHER_PAGE": 12,
+        "YT_CHANNEL": 2,
+        "SOUND_PAGE": 2,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "A9gEF8DD7Ak",
       "title": "Ancient Egypt: Finding Tomb KV62 #shorts",
       "published": "2026-11-17T16:00:36Z",
       "short": true,
-      "views": 3,
+      "views": 227,
       "video": "A9gEF8DD7Ak",
-      "averageViewDuration": 37,
-      "averageViewPercentage": 72.94,
+      "averageViewDuration": 25,
+      "averageViewPercentage": 50.51,
       "subscribersGained": 0,
       "sources": {
-        "YT_CHANNEL": 2,
+        "SHORTS": 213,
+        "YT_SEARCH": 7,
+        "YT_CHANNEL": 4,
+        "YT_OTHER_PAGE": 2,
         "NO_LINK_OTHER": 1
       }
     },
     {
       "id": "ZbEqSqtyyOA",
-      "title": "Ancient Egypt: What Was Hidden in the Pyramid’s Secret Niche?",
+      "title": "Ancient Egypt: The Princess Who Fooled Every Tomb Robber",
       "published": "2026-11-16T20:00:21Z",
       "short": false,
-      "views": 2,
-      "sources": {}
+      "views": 3,
+      "video": "ZbEqSqtyyOA",
+      "averageViewDuration": 38,
+      "averageViewPercentage": 8.32,
+      "subscribersGained": 0,
+      "sources": {
+        "YT_CHANNEL": 1,
+        "YT_SEARCH": 1,
+        "RELATED_VIDEO": 1
+      }
     },
     {
       "id": "qFbMDjmve7g",
       "title": "Ancient Egypt's Brutal Dental Secrets #shorts",
       "published": "2026-11-16T19:00:15Z",
       "short": true,
-      "views": 54,
-      "sources": {}
+      "views": 60,
+      "video": "qFbMDjmve7g",
+      "averageViewDuration": 16,
+      "averageViewPercentage": 58.14,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 56,
+        "YT_SEARCH": 2,
+        "YT_CHANNEL": 1,
+        "YT_OTHER_PAGE": 1
+      }
     },
     {
       "id": "6eR6aoVrqFU",
       "title": "Ancient Egypt: Secrets of the Giza Pyramids | Quick Tour #shorts",
       "published": "2026-11-16T17:00:24Z",
       "short": true,
-      "views": 320,
-      "sources": {}
+      "views": 337,
+      "video": "6eR6aoVrqFU",
+      "averageViewDuration": 24,
+      "averageViewPercentage": 56.230000000000004,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 307,
+        "YT_SEARCH": 22,
+        "YT_OTHER_PAGE": 4,
+        "YT_CHANNEL": 3,
+        "EXT_URL": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "jecxYugNqGM",
-      "title": "Ancient Egypt | Tutankhamun's Gold: Inside the Richest Tomb Ever Found",
+      "title": "Ancient Egypt: Tutankhamun's Gold — 3,000 Years Untouched",
       "published": "2026-11-16T16:00:36Z",
       "short": false,
-      "views": 2,
-      "sources": {}
+      "views": 4,
+      "video": "jecxYugNqGM",
+      "averageViewDuration": 14,
+      "averageViewPercentage": 3.17,
+      "subscribersGained": 0,
+      "sources": {
+        "YT_SEARCH": 3,
+        "RELATED_VIDEO": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "jSSISRoW9PI",
       "title": "Experience Egypt in Pure Luxury with ZALA VIP #shorts",
       "published": "2026-11-15T22:00:00Z",
       "short": true,
-      "views": 28,
+      "views": 30,
       "video": "jSSISRoW9PI",
-      "averageViewDuration": 39,
-      "averageViewPercentage": 87.42,
+      "averageViewDuration": 37,
+      "averageViewPercentage": 82.88,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 26,
+        "SHORTS": 27,
         "SUBSCRIBER": 2,
-        "NO_LINK_OTHER": 0
+        "YT_SEARCH": 1,
+        "NO_LINK_OTHER": 0,
+        "YT_OTHER_PAGE": 0
       }
     },
     {
@@ -108,15 +393,15 @@
       "title": "Did Ancient Egyptians Write First Pregnancy Manuals? #shorts",
       "published": "2026-11-15T19:00:20Z",
       "short": true,
-      "views": 19,
+      "views": 27,
       "video": "TgtDhuxUwvk",
-      "averageViewDuration": 20,
-      "averageViewPercentage": 40.22,
+      "averageViewDuration": 18,
+      "averageViewPercentage": 36.02,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 16,
-        "YT_SEARCH": 2,
-        "YT_CHANNEL": 1
+        "SHORTS": 18,
+        "YT_SEARCH": 7,
+        "YT_CHANNEL": 2
       }
     },
     {
@@ -124,14 +409,14 @@
       "title": "Ancient Egypt: Why Were 60-Ton Boxes Hidden Underground? #shorts",
       "published": "2026-11-15T17:00:04Z",
       "short": true,
-      "views": 290,
+      "views": 300,
       "video": "_gjePzsWSJ0",
       "averageViewDuration": 20,
-      "averageViewPercentage": 51.71,
+      "averageViewPercentage": 52.239999999999995,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 280,
-        "YT_SEARCH": 7,
+        "SHORTS": 286,
+        "YT_SEARCH": 11,
         "YT_CHANNEL": 3,
         "NO_LINK_OTHER": 0
       }
@@ -141,16 +426,17 @@
       "title": "Ancient Egypt: The Sun Inside the Mountain #shorts",
       "published": "2026-11-15T16:00:01Z",
       "short": true,
-      "views": 1051,
+      "views": 1072,
       "video": "vnNvhQBqKC8",
       "averageViewDuration": 34,
-      "averageViewPercentage": 63.43,
+      "averageViewPercentage": 63.33,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 1008,
-        "YT_OTHER_PAGE": 19,
-        "YT_SEARCH": 16,
-        "YT_CHANNEL": 8,
+        "SHORTS": 1010,
+        "YT_SEARCH": 19,
+        "YT_CHANNEL": 18,
+        "YT_OTHER_PAGE": 18,
+        "SUBSCRIBER": 7,
         "NO_LINK_OTHER": 0
       }
     },
@@ -159,16 +445,16 @@
       "title": "Ancient Egypt's Lost Pyramid You've Never Heard Of #shorts",
       "published": "2026-11-13T19:00:28Z",
       "short": true,
-      "views": 882,
+      "views": 881,
       "video": "swHB_37Tyug",
       "averageViewDuration": 30,
-      "averageViewPercentage": 68.08,
+      "averageViewPercentage": 67.64,
       "subscribersGained": 2,
       "sources": {
-        "SHORTS": 840,
-        "YT_SEARCH": 31,
-        "YT_OTHER_PAGE": 7,
-        "YT_CHANNEL": 3,
+        "SHORTS": 836,
+        "YT_SEARCH": 33,
+        "YT_OTHER_PAGE": 6,
+        "YT_CHANNEL": 5,
         "EXT_URL": 1,
         "NO_LINK_OTHER": 0
       }
@@ -178,14 +464,14 @@
       "title": "Ancient Egypt: Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
       "published": "2026-11-13T13:00:37Z",
       "short": true,
-      "views": 133,
+      "views": 140,
       "video": "6tsbs20flsk",
       "averageViewDuration": 46,
-      "averageViewPercentage": 102.45,
+      "averageViewPercentage": 102.46,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 104,
-        "YT_SEARCH": 27,
+        "YT_SEARCH": 34,
         "YT_CHANNEL": 1,
         "YT_OTHER_PAGE": 1,
         "NO_LINK_OTHER": 0,
@@ -194,24 +480,31 @@
     },
     {
       "id": "24VKUQfhR_M",
-      "title": "Ancient Egypt | Abu Simbel: The Temple That Moved a Mountain",
+      "title": "Ancient Egypt: Abu Simbel — They Cut the Mountain in Half",
       "published": "2026-11-12T16:00:11Z",
       "short": false,
-      "views": 0,
-      "sources": {}
+      "views": 4,
+      "video": "24VKUQfhR_M",
+      "averageViewDuration": 22,
+      "averageViewPercentage": 4.78,
+      "subscribersGained": 0,
+      "sources": {
+        "YT_SEARCH": 2,
+        "RELATED_VIDEO": 2
+      }
     },
     {
       "id": "w7Bq6MmvbZU",
       "title": "Ancient Egypt: The Tunnel Under the Temple #shorts",
       "published": "2026-11-08T16:00:20Z",
       "short": true,
-      "views": 180,
+      "views": 179,
       "video": "w7Bq6MmvbZU",
       "averageViewDuration": 31,
       "averageViewPercentage": 54.61,
       "subscribersGained": 2,
       "sources": {
-        "SHORTS": 175,
+        "SHORTS": 174,
         "YT_SEARCH": 3,
         "SUBSCRIBER": 1,
         "YT_CHANNEL": 1,
@@ -223,13 +516,13 @@
       "title": "Ancient Egypt: The Lie That Killed Mark Antony #shorts",
       "published": "2026-11-07T16:00:33Z",
       "short": true,
-      "views": 133,
+      "views": 132,
       "video": "Qon6eQ_-iws",
       "averageViewDuration": 40,
       "averageViewPercentage": 68.36,
       "subscribersGained": 1,
       "sources": {
-        "SHORTS": 122,
+        "SHORTS": 121,
         "YT_CHANNEL": 8,
         "YT_SEARCH": 2,
         "YT_OTHER_PAGE": 1,
@@ -254,19 +547,19 @@
       }
     },
     {
-      "id": "EjAguOHeldM",
-      "title": "Ancient Egypt: Why Nobody Can Find Cleopatra's Tomb",
-      "published": "2026-11-05T18:10:31Z",
-      "short": false,
-      "views": 10,
-      "video": "EjAguOHeldM",
-      "averageViewDuration": 102,
-      "averageViewPercentage": 27.11,
+      "id": "4lL1nWz8SIc",
+      "title": "Ancient Egypt: Nobody Can Find Cleopatra #shorts",
+      "published": "2026-11-06T16:00:28Z",
+      "short": true,
+      "views": 22,
+      "video": "4lL1nWz8SIc",
+      "averageViewDuration": 35,
+      "averageViewPercentage": 60.88,
       "subscribersGained": 0,
       "sources": {
-        "SUBSCRIBER": 5,
-        "RELATED_VIDEO": 3,
-        "YT_CHANNEL": 2,
+        "SHORTS": 15,
+        "YT_CHANNEL": 6,
+        "YT_SEARCH": 1,
         "NO_LINK_OTHER": 0
       }
     },
@@ -275,14 +568,14 @@
       "title": "Ancient Egypt | The Real Father of Surgery: 2,000 Years Before Hippocrates #shorts",
       "published": "2026-10-30T20:00:01Z",
       "short": true,
-      "views": 45,
+      "views": 46,
       "video": "rHuCgkat5q4",
       "averageViewDuration": 8,
       "averageViewPercentage": 20.34,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 42,
-        "YT_SEARCH": 3,
+        "YT_SEARCH": 4,
         "NO_LINK_OTHER": 0
       }
     },
@@ -291,32 +584,14 @@
       "title": "Ancient Egypt: The Lost Goat That Found 40 Golden Pharaohs #shorts",
       "published": "2026-10-30T13:00:33Z",
       "short": true,
-      "views": 89,
+      "views": 90,
       "video": "w-2Vjgwd0uQ",
       "averageViewDuration": 26,
       "averageViewPercentage": 50.580000000000005,
       "subscribersGained": 0,
       "sources": {
         "SHORTS": 82,
-        "YT_SEARCH": 4,
-        "YT_OTHER_PAGE": 2,
-        "SUBSCRIBER": 1,
-        "NO_LINK_OTHER": 0
-      }
-    },
-    {
-      "id": "w-2Vjgwd0uQ",
-      "title": "Ancient Egypt: The Lost Goat That Found 40 Golden Pharaohs #shorts",
-      "published": "2026-10-30T13:00:33Z",
-      "short": true,
-      "views": 89,
-      "video": "w-2Vjgwd0uQ",
-      "averageViewDuration": 26,
-      "averageViewPercentage": 50.580000000000005,
-      "subscribersGained": 0,
-      "sources": {
-        "SHORTS": 82,
-        "YT_SEARCH": 4,
+        "YT_SEARCH": 5,
         "YT_OTHER_PAGE": 2,
         "SUBSCRIBER": 1,
         "NO_LINK_OTHER": 0
@@ -327,29 +602,30 @@
       "title": "Ancient Egypt: The Secret 5.7 KM Underground Labyrinth Beneath Saqqara #shorts",
       "published": "2026-10-29T19:00:31Z",
       "short": true,
-      "views": 221,
+      "views": 222,
       "video": "ovL-0R0530U",
       "averageViewDuration": 8,
       "averageViewPercentage": 18.61,
       "subscribersGained": 0,
       "sources": {
         "SHORTS": 208,
-        "YT_SEARCH": 12,
+        "YT_SEARCH": 13,
         "YT_CHANNEL": 1
       }
     },
     {
       "id": "7t34nj5bt_c",
-      "title": "Ancient Egypt | The Pharaohs' Midnight Escape: The Secret Royal Cache of TT320 (4K)",
+      "title": "Ancient Egypt: The Night 40 Pharaohs Disappeared",
       "published": "2026-10-29T16:00:05Z",
       "short": false,
-      "views": 7,
+      "views": 12,
       "video": "7t34nj5bt_c",
-      "averageViewDuration": 52,
-      "averageViewPercentage": 16.84,
+      "averageViewDuration": 108,
+      "averageViewPercentage": 34.75,
       "subscribersGained": 0,
       "sources": {
-        "YT_SEARCH": 6,
+        "YT_SEARCH": 10,
+        "NO_LINK_OTHER": 1,
         "YT_CHANNEL": 1
       }
     },
@@ -373,18 +649,18 @@
     },
     {
       "id": "hGcQqtKDOeo",
-      "title": "Ancient Egypt | The Search for Imhotep: The Architect Who Became a God | Saqqara Secrets (4K)",
+      "title": "Ancient Egypt: Imhotep Built the First Pyramid — Then Vanished",
       "published": "2026-10-27T15:00:09Z",
       "short": false,
-      "views": 14,
+      "views": 16,
       "video": "hGcQqtKDOeo",
-      "averageViewDuration": 83,
-      "averageViewPercentage": 35.5,
+      "averageViewDuration": 74,
+      "averageViewPercentage": 31.75,
       "subscribersGained": 0,
       "sources": {
-        "YT_SEARCH": 9,
+        "YT_SEARCH": 10,
         "SUBSCRIBER": 3,
-        "YT_CHANNEL": 2,
+        "YT_CHANNEL": 3,
         "NO_LINK_OTHER": 0
       }
     },
@@ -393,22 +669,22 @@
       "title": "Ancient Egypt: Where Did the Great Pyramid's Golden Top Actually Go? #shorts",
       "published": "2026-10-26T01:41:08Z",
       "short": true,
-      "views": 251,
+      "views": 261,
       "video": "EGuGMlpBC4Y",
       "averageViewDuration": 44,
-      "averageViewPercentage": 70.16,
+      "averageViewPercentage": 68.89,
       "subscribersGained": 3,
       "sources": {
         "SHORTS": 204,
-        "YT_SEARCH": 33,
-        "YT_OTHER_PAGE": 8,
+        "YT_SEARCH": 42,
+        "YT_OTHER_PAGE": 9,
         "YT_CHANNEL": 6,
         "NO_LINK_OTHER": 0
       }
     },
     {
       "id": "8GPfKbyIAzE",
-      "title": "Ancient Egypt | The Stolen Pharaoh: The Lost Tomb of Alexander the Great",
+      "title": "Ancient Egypt: Alexander the Great Has No Tomb",
       "published": "2026-10-20T05:01:35Z",
       "short": false,
       "views": 41,
@@ -426,7 +702,7 @@
     },
     {
       "id": "fXXeuzGOrZU",
-      "title": "Ancient Egypt: King Menes united Egypt in 3200 BCE. This is how it started! 🇪🇬 #ancienteg #shorts",
+      "title": "Ancient Egypt: King Menes — How One Man United Egypt",
       "published": "2025-07-07T00:21:35Z",
       "short": true,
       "views": 60,
@@ -448,16 +724,16 @@
       "title": "The Rise of King Menes – Founder of Ancient Egypt’s First Dynasty | Echoes of Egypt Shorts",
       "published": "2025-07-02T23:51:11Z",
       "short": true,
-      "views": 476,
+      "views": 477,
       "video": "VhKgIm8BGxk",
       "averageViewDuration": 22,
-      "averageViewPercentage": 78.05,
+      "averageViewPercentage": 77.8,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 389,
         "YT_SEARCH": 53,
         "EXT_URL": 17,
-        "YT_CHANNEL": 10,
+        "YT_CHANNEL": 11,
         "YT_OTHER_PAGE": 6,
         "SUBSCRIBER": 1,
         "NO_LINK_OTHER": 0
