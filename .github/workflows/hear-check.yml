@@ -1,0 +1,68 @@
+name: ZALA hear check (listen to finished videos, render nothing)
+# Calibrates the hearing limits (media/lib/heard.mjs) and rechecks a finished video. Reads only the public
+# preview files of R2 and writes nothing back; the numbers are in the log and in the run's artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "Video ids, space separated"
+        required: true
+        default: "ZV-AR05 ZV-AR04"
+      lang:
+        description: "ar, es or en"
+        required: true
+        default: "ar"
+      model:
+        description: "faster-whisper model for ar/es"
+        required: true
+        default: "small"
+  push:
+    branches: [hear-test]
+jobs:
+  listen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{{"ids":"{0}","lang":"{1}","model":"{2}"}}]', inputs.ids, inputs.lang, inputs.model) || '[{"ids":"ZV-AR05 ZV-AR04 ZV-AR01","lang":"ar","model":"small"},{"ids":"ZV-AR05 ZV-AR04 ZV-AR01","lang":"ar","model":"medium"},{"ids":"ZV-AR05 ZV-AR04 ZV-AR01","lang":"ar","model":"large-v3-turbo"},{"ids":"ZV-AR02 ZV-AR03 ZV-AR06 ZV-AR07 ZV-AR08","lang":"ar","model":"small"},{"ids":"ZV-S202611231 ZV-S202611232 ZV-D03","lang":"en","model":"base.en"}]') }}
+    env:
+      BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      WHISPER_MODEL: ${{ matrix.model }}
+      IDS: ${{ matrix.ids }}
+      LANG_CODE: ${{ matrix.lang }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ffmpeg and the listening model
+        run: |
+          sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
+          python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
+          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+      - name: Unit tests of the comparison
+        run: node --test media/lib/heard.test.mjs
+      - name: Listen
+        run: |
+          set -uo pipefail
+          mkdir -p heard
+          for id in $IDS; do
+            [[ "$id" =~ ^[A-Za-z0-9-]+$ ]] || { echo "bad id"; continue; }
+            curl -sf -o "$id.mp4" "${BASE%/}/renders/$id/publish/$id.mp4" || { echo "$id: no video"; continue; }
+            curl -sf -o "$id.srt" "${BASE%/}/renders/$id/publish/$id.en.srt" || { echo "$id: no captions"; continue; }
+            echo "== $id"
+            node media/tools/hear-check.mjs "$id.mp4" "$id.srt" "$LANG_CODE" "heard/$id.json" || echo "$id: hearing failed"
+            rm -f "$id.mp4"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: heard-${{ matrix.lang }}-${{ matrix.model }}-${{ strategy.job-index }}
+          path: heard/
+          retention-days: 14
