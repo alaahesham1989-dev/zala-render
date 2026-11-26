@@ -1,0 +1,84 @@
+name: ZALA partner ads (production only)
+# Makes and checks the three partner ads and keeps them on R2. No publishing token is given to the job.
+on:
+  push:
+    branches: [ads-partners]
+concurrency:
+  group: zala-ads
+  cancel-in-progress: false
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        id: [ZV-AD01, ZV-AD02, ZV-AD03]
+    env:
+      ID: ${{ matrix.id }}
+      ZALA_LINE: ar
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEYS: ${{ format('{0},{1}', secrets.GEMINI_API_KEY_AR, secrets.GEMINI_API_KEY_3) }}
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+      NO_ARABIC_COPY: "1"
+      NO_OUTBOX: "1"
+      MANIM_PY: /tmp/manim/bin/python
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tools and library
+        run: |
+          bash media/tools/line/ci-setup.sh content
+          mkdir -p content/youtube content/library
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/script.json" "content/youtube/$ID.json" --endpoint-url "$E" --no-progress || true
+          bash media/tools/line/ci-setup.sh render
+          sudo apt-get install -y fonts-noto-naskh-arabic >/dev/null 2>&1 || true
+          pip install --quiet pillow arabic-reshaper python-bidi cryptography
+      - name: Presenter picture, sign-up page, map, script
+        run: |
+          set -euo pipefail
+          python3 media/tools/ads-label.py "$(cat media/tools/ads-job.txt)"
+          (cd ads-local && nohup python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 2
+          node media/tools/ads-prep.mjs "$ID"
+      - name: Make and check (listen and look)
+        run: |
+          set -uo pipefail
+          (curl -sf -o /dev/null http://127.0.0.1:8765/owner.jpg) || (cd ads-local && nohup python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 2
+          bash media/tools/line/run.sh "$ID" short 2>&1 | tee run.log || true
+      - name: Keep on R2
+        if: always()
+        run: |
+          [ -f "content/youtube/$ID.json" ] && aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress || true
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress --quiet; done
+          [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID/publish" "s3://${R2_BUCKET}/renders/$ID/publish" --endpoint-url "$E" --no-progress
+          [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          true
+      - name: Result
+        if: always()
+        run: |
+          v="media/out/$ID/publish/$ID.mp4"
+          [ -f "$v" ] && echo "RESULT $ID seconds=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$v")"
+          [ -f "quality-$ID/verdict.json" ] && node -e 'const v=require("./quality-"+process.env.ID+"/verdict.json"); console.log("RESULT", v.id, "pass="+v.pass); v.reasons.slice(0,8).forEach((r)=>console.log("RESULT  - "+r.slice(0,200)))'
+          true

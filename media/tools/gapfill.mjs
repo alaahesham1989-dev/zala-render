@@ -232,7 +232,7 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   for (const r of rev.lines || []) {
     const l = lines[r.n - 1];
     const tooLoose = (rev.lines || []).filter((x) => x.fits === 'loosely').length > (rev.lines || []).length * 0.25;
-    if (!l || (r.fits !== 'no' && !r.pictureProblem && !r.watermark && !(tooLoose && r.fits === 'loosely' && r.n > 1))) continue;
+    if (!l || l.keep || (r.fits !== 'no' && !r.pictureProblem && !r.watermark && !(tooLoose && r.fits === 'loosely' && r.n > 1))) continue;
     for (const p of l.pictures || []) banned.add(p);
     if (l.clip?.page) banned.add(l.clip.page);
     if (l.clip?.prep) banned.add(l.clip.url);
@@ -360,7 +360,7 @@ Return only JSON {"best": 0, "score": 1}, best = the number of the picture, scor
 // chosen once, and again only when the review refused it (a refused picture has just been taken off the line)
 const first = lines[0];
 const nowFirst = first && byId.get((first.pictures || [])[0]);
-if (!dry && script.verticalOnly && first && !first.map && !first.clip && !(reviewAt && nowFirst)) {
+if (!dry && script.verticalOnly && first && !first.keep && !first.map && !first.clip && !(reviewAt && nowFirst)) {
   const ranked = [];
   const pool = [...(nowFirst ? [nowFirst] : []), ...clean.filter((x) => x !== nowFirst).sort((a, b) => (b.shine || 0) - (a.shine || 0))];
   for (const p of pool.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x))).slice(0, 60)) {
@@ -388,7 +388,7 @@ if (script.verticalOnly && !dry) {
   let swapped = 0;
   for (const [n, l] of lines.entries()) {
     const p = byId.get((l.pictures || [])[0]);
-    if (!p) continue;
+    if (!p || l.keep) continue;
     const bad = n > 0 && (DRAWN.test(kindOf(p)) || await grey(p));
     if (!bad && !(await repeats(p))) { shown.push({ id: p.id, look: await look(p) }); continue; }
     let other = null;

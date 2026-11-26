@@ -1,0 +1,42 @@
+{
+  "note": "Three 'be our partner' ads (owner's order 2026-11-26, texts: zala-vip/docs/design/ADS_PARTNERS_3.md). Production only, never published from here. TikTok and Instagram only.",
+  "ZV-AD01": {
+    "title": "كن شريكنا: ليموزين ومطار",
+    "hook": "عندك عربية؟",
+    "page": "https://www.zalavip.com/partners/airport-limousine",
+    "queries": ["black sedan car", "chauffeur car door", "Cairo International Airport terminal", "airport road Cairo", "Cairo airport arrivals hall"],
+    "lines": [
+      { "en": "عندك عربية نضيفة وبتيجي في ميعادك؟", "use": "owner" },
+      { "en": "في ZALA VIP، كونسيرج فاخر في مصر، بنسجّل شركاء ليموزين ومطار.", "queries": ["Cairo airport terminal", "airport road car"] },
+      { "en": "القاهرة، إسكندرية، الغردقة، أو أي مدينة إنت فيها.", "use": "map" },
+      { "en": "اكتب مدينتك وعربيتك والورق اللي معاك، وفريقنا هيكلمك على واتساب.", "use": "form" },
+      { "en": "كن شريكنا. اللينك في البايو.", "use": "owner" }
+    ]
+  },
+  "ZV-AD02": {
+    "title": "كن شريكنا: موردين فنادق B2B",
+    "hook": "مورّد فنادق؟",
+    "page": "https://www.zalavip.com/partners",
+    "queries": ["luxury hotel lobby Cairo", "hotel reception desk", "hotel room key", "hotel room Nile view", "laptop office desk work"],
+    "lines": [
+      { "en": "مكتبك بيورّد فنادق B2B؟ يبقى بندوّر عليك.", "use": "owner" },
+      { "en": "ZALA VIP كونسيرج فاخر، وعايزين موردين فنادق لضيوفنا.", "queries": ["hotel reception desk", "hotel room key"] },
+      { "en": "أسعار صافية واضحة، وشروط إلغاء مفهومة.", "queries": ["laptop office desk", "hotel lobby"] },
+      { "en": "سجّل اسم مكتبك ومدينتك والمناطق اللي بتغطيها.", "use": "form" },
+      { "en": "كن شريكنا. اللينك في البايو.", "use": "owner" }
+    ]
+  },
+  "ZV-AD03": {
+    "title": "كن شريكنا: رحلات في كل المحافظات",
+    "hook": "بتنظّم رحلات؟",
+    "page": "https://www.zalavip.com/partners",
+    "queries": ["Aswan Nile felucca", "Luxor temple sunrise", "Sinai mountains Egypt", "Red Sea coast Egypt", "Siwa oasis", "Alexandria corniche"],
+    "lines": [
+      { "en": "بتنظّم رحلات في محافظتك وعارفها شبر شبر؟", "use": "owner" },
+      { "en": "ZALA VIP بيسجّل شركاء رحلات في الجمهورية كلها.", "queries": ["Aswan Nile felucca"] },
+      { "en": "الأقصر وأسوان، سينا والبحر الأحمر، إسكندرية والواحات.", "queries": ["Siwa oasis", "Red Sea coast", "Sinai mountains"] },
+      { "en": "اكتب مدينتك والرحلات اللي بتقدمها والورق اللي معاك.", "use": "form" },
+      { "en": "كن شريكنا. اللينك في البايو.", "use": "owner" }
+    ]
+  }
+}
