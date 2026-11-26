@@ -20,7 +20,7 @@ if lang == "en":
     model = WhisperModel("base.en", device="cpu", compute_type="int8")
     segments, _ = model.transcribe(audio, word_timestamps=True, beam_size=1, vad_filter=False, language="en")
 else:
-    model = WhisperModel(os.environ.get("WHISPER_MODEL") or "small", device="cpu", compute_type="int8")
+    model = WhisperModel(os.environ.get("WHISPER_MODEL") or "large-v3-turbo", device="cpu", compute_type="int8")
     # no text from the script is ever given to the model: it must hear on its own, or the check proves nothing
     segments, _ = model.transcribe(audio, word_timestamps=True, beam_size=1, vad_filter=False, language=lang, condition_on_previous_text=False)
 out = [{"w": w.word.strip(), "start": round(w.start, 3), "end": round(w.end, 3)} for s in segments for w in (s.words or [])]

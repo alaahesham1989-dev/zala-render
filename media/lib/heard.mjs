@@ -39,7 +39,9 @@ export function matchScore(expected, heard, lang) {
   return Math.max(0, 1 - Math.min(...prev) / a.length);
 }
 
-const between = (words, from, to) => words.filter((w) => { const m = (w.start + w.end) / 2; return m >= from && m <= to; }).map((w) => w.w).join(' ');
+// Whisper invents subtitle credits over silence or music: they are not speech
+const INVENTED = /(ترجمة نانسي قنقر|نانسي قنقر|subtitulos realizados por la comunidad de amara\.org|subtítulos por la comunidad de amara\.org|amara\.org)/gi;
+const between = (words, from, to) => words.filter((w) => { const m = (w.start + w.end) / 2; return m >= from && m <= to; }).map((w) => w.w).join(' ').replace(INVENTED, ' ').trim();
 
 /** Scores every caption line against the words heard around it.
  *  `near` = inside the line's own time (1 s of slack), `wide` = within 8 s of it, which tells a wrong voice from late captions. */
@@ -68,8 +70,8 @@ export function hearTotals(scored, srt, heardWords, lang) {
 // Limits per language. A line fails under `line`; the video fails under `video` or over `extra` (spoken / written).
 // `blocking: false` only reports. Calibrate with hear-check.yml on approved videos before changing a number.
 export const LIMITS = {
-  ar: { line: 0.5, video: 0.7, extra: 1.25, blocking: false },
-  es: { line: 0.6, video: 0.8, extra: 1.2, blocking: false },
+  ar: { line: 0.55, video: 0.75, extra: 1.25, blocking: true },
+  es: { line: 0.55, video: 0.75, extra: 1.25, blocking: false },
 };
 
 /** Reasons to hold the video, empty when the voice matches. */
