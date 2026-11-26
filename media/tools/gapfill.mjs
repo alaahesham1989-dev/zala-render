@@ -229,7 +229,7 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   const rev = JSON.parse(fs.readFileSync(reviewAt, 'utf8'));
   for (const r of rev.lines || []) {
     const l = lines[r.n - 1];
-    if (!l || (r.fits !== 'no' && !r.pictureProblem)) continue;
+    if (!l || (r.fits !== 'no' && !r.pictureProblem && !r.watermark)) continue;
     for (const p of l.pictures || []) banned.add(p);
     if (l.clip?.page) banned.add(l.clip.page);
     if (l.clip?.prep) banned.add(l.clip.url);
@@ -367,6 +367,26 @@ if (!dry && script.verticalOnly && first && !first.map && !first.clip && !(revie
   const best = ranked.length ? await judge(ranked.sort((a, b) => b.value - a.value).slice(0, 10).map((x) => x.p)) : null;
   if (best) { first.pictures = [best.p.id]; script.openingChosen = true; log(`opening frame (${best.score ?? '?'}/10): ${best.p.title}`); }
   else log('opening frame: no colourful photograph in the library');
+}
+
+if (script.verticalOnly) {
+  const apart = (a, b) => !a || !b || [...a].filter((c, i) => c !== b[i]).length > 10;   // average-hash distance
+  const shown = [];
+  let swapped = 0;
+  for (const l of lines) {
+    const p = byId.get((l.pictures || [])[0]);
+    if (!p) continue;
+    if (shown.every((x) => x.id !== p.id && apart(x.ahash, p.ahash))) { shown.push(p); continue; }
+    const other = clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x)) && !uses.get(x.id) && shown.every((y) => apart(y.ahash, x.ahash)))
+      .sort((a, b) => asked(l, b) - asked(l, a) || (b.shine || 0) - (a.shine || 0))[0];
+    if (!other) { shown.push(p); continue; }
+    uses.set(p.id, Math.max(0, (uses.get(p.id) || 1) - 1));
+    uses.set(other.id, 1);
+    l.pictures = [other.id];
+    shown.push(other);
+    swapped++;
+  }
+  log(`variety: ${swapped} repeated pictures replaced`);
 }
 
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);

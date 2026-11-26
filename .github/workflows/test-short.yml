@@ -70,7 +70,7 @@ jobs:
       - name: Passed already?
         run: |
           done=no
-          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" done-review.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass && !require("./done-review.json").lines.some((l)=>l.fits==="no") ? 0 : 1)' && done=yes
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" done-review.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass && !require("./done-review.json").lines.some((l,i,all)=>l.fits==="no" || l.watermark===undefined || l.watermark || all.filter((x)=>String((x.pictures||[])[0])===String((l.pictures||[])[0])).length>1) ? 0 : 1)' && done=yes
           echo "DONE=$done" >> "$GITHUB_ENV"
           echo "RESULT $ID passed earlier: $done"
       - name: Tools

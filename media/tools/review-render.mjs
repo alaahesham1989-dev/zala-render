@@ -158,7 +158,7 @@ if (spoken !== 'en') {
 console.log('Pictures against words');
 for (let i = 0; i < srt.length; i += 6) {
   const group = srt.slice(i, i + 6);
-  const parts = [{ text: `These frames come from a true-history video: "${script.title}". For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Set nudity true if bare breasts, genitals or a naked body are visible, even in art. Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","nudity":false,"shows":"what is really visible, short","problem":""}]}.` }];
+  const parts = [{ text: `These frames come from a true-history video: "${script.title}". For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Set nudity true if bare breasts, genitals or a naked body are visible, even in art. Set watermark true if the picture itself carries a photographer name, a © sign, a stock mark or another channel logo, however small, usually in a corner (the small ZALA mark at the top right is ours, and the captions are ours). Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","nudity":false,"watermark":false,"shows":"what is really visible, short","problem":""}]}.` }];
   const present = [];
   group.forEach((s, k) => {
     const f = path.join(tmp, `check${s.n}.jpg`);
@@ -169,7 +169,7 @@ for (let i = 0; i < srt.length; i += 6) {
     parts.push({ inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(f).toString('base64') } });
   });
   const a = present.length ? ((await ask(parts)) || (await ask(parts))) : null;
-  (a?.items || []).forEach((r) => { const s = group[present[r.n]]; if (s) Object.assign(s, { fits: r.fits, nudity: !!r.nudity, shows: r.shows, pictureProblem: r.problem || '' }); });
+  (a?.items || []).forEach((r) => { const s = group[present[r.n]]; if (s) Object.assign(s, { fits: r.fits, nudity: !!r.nudity, watermark: !!r.watermark, shows: r.shows, pictureProblem: r.problem || '' }); });
   console.log(`  ${Math.min(i + 6, srt.length)}/${srt.length}`);
   await sleep(5000);
 }
@@ -242,6 +242,7 @@ for (const l of report.lines) {
   }
   if (l.fits === undefined) fail.push(`line ${l.n}: picture not checked`);
   if (l.nudity || /nud|naked/i.test(l.pictureProblem || '')) fail.push(`line ${l.n}: nudity`);
+  if (l.watermark) fail.push(`line ${l.n}: somebody else's mark on the picture`);
   const source = lines[l.n - 1] || {};
   const exempt = source.clip && (source.clip.mapFlight || source.clip.what === 'title scene');
   if (l.fits === 'no' && !exempt && !(source.card && !source.pictures?.length)) fail.push(`line ${l.n}: wrong picture: ${String(l.shows).slice(0, 80)}`);
@@ -254,6 +255,12 @@ if (hearing) {
 // a spoiled sound holds any video
 fail.push(...loudnessProblems(report.audio.loudness));
 if (report.opening && (!report.opening.pro || report.opening.score < 7) && !(lines[0] || {}).clip) fail.push(`the opening frame is not professional (${report.opening.score}/10): ${String(report.opening.problem || '').slice(0, 80)}`);
+// a short that keeps coming back to the same picture is dull
+if (script.verticalOnly) {
+  const seen = new Map();
+  for (const l of report.lines) for (const p of (l.pictures || []).slice(0, 1)) seen.set(p, [...(seen.get(p) || []), l.n]);
+  for (const at of seen.values()) if (at.length > 2) fail.push(`the same picture on lines ${at.join(', ')}`);
+}
 const loose = report.lines.filter((l) => l.fits === 'loosely').length;
 if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.length} pictures only loosely fit`);
 for (const [a, b] of report.audio.black) if (b < lastSpeech) fail.push(`black screen at ${a.toFixed(1)}s`);
