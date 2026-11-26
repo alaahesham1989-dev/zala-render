@@ -46,6 +46,7 @@ jobs:
           sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
           python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
           echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+          (cd media && npm ci --ignore-scripts)
       - name: Unit tests of the comparison
         run: node --test media/lib/heard.test.mjs
       - name: Listen
