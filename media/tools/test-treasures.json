@@ -1,7 +1,14 @@
 {
   "ZV-ART01": {
     "lang": "ar",
-    "from": "ZV-AR10"
+    "from": "ZV-AR10",
+    "rev": 2,
+    "fixes": [
+      [
+        "تخلّص هندسي",
+        "حل هندسي ذكي"
+      ]
+    ]
   },
   "ZV-ENT01": {
     "lang": "en",
@@ -11,8 +18,25 @@
     "seconds": 75,
     "match": "Hatshepsut|Deir el-Bahari|Deir el Bahari|Thutmose III|Senenmut|obelisk",
     "archive": "Hatshepsut temple Deir el-Bahari statue sphinx",
-    "wiki": ["Hatshepsut", "Mortuary Temple of Hatshepsut"],
-    "queries": ["Hatshepsut statue Metropolitan Museum", "sphinx of Hatshepsut", "Hatshepsut kneeling statue", "Hatshepsut seated statue limestone", "Deir el-Bahari painted relief colour", "Hatshepsut statue", "Temple of Hatshepsut Deir el-Bahari", "Hatshepsut sphinx granite", "Hatshepsut relief painted Deir el-Bahari", "Thutmose III statue", "Hatshepsut obelisk Karnak", "Osiride statues Hatshepsut temple"]
+    "wiki": [
+      "Hatshepsut",
+      "Mortuary Temple of Hatshepsut"
+    ],
+    "queries": [
+      "Hatshepsut statue Metropolitan Museum",
+      "sphinx of Hatshepsut",
+      "Hatshepsut kneeling statue",
+      "Hatshepsut seated statue limestone",
+      "Deir el-Bahari painted relief colour",
+      "Hatshepsut statue",
+      "Temple of Hatshepsut Deir el-Bahari",
+      "Hatshepsut sphinx granite",
+      "Hatshepsut relief painted Deir el-Bahari",
+      "Thutmose III statue",
+      "Hatshepsut obelisk Karnak",
+      "Osiride statues Hatshepsut temple"
+    ],
+    "rev": 2
   },
   "ZV-EST01": {
     "lang": "es",
@@ -22,7 +46,21 @@
     "seconds": 75,
     "match": "Tutankhamun|Tutankhamen|dagger|meteoric|Howard Carter|golden mask|KV62",
     "archive": "Tutankhamun treasure golden mask tomb dagger",
-    "wiki": ["Tutankhamun's meteoric iron dagger", "Tomb of Tutankhamun", "Discovery of the tomb of Tutankhamun", "Tutankhamun"],
-    "queries": ["Tutankhamun golden mask", "Tutankhamun dagger", "Tutankhamun treasure gold", "Tutankhamun golden coffin", "Howard Carter Tutankhamun tomb", "Tutankhamun throne", "Tomb of Tutankhamun wall painting KV62", "Valley of the Kings"]
+    "wiki": [
+      "Tutankhamun's meteoric iron dagger",
+      "Tomb of Tutankhamun",
+      "Discovery of the tomb of Tutankhamun",
+      "Tutankhamun"
+    ],
+    "queries": [
+      "Tutankhamun golden mask",
+      "Tutankhamun dagger",
+      "Tutankhamun treasure gold",
+      "Tutankhamun golden coffin",
+      "Howard Carter Tutankhamun tomb",
+      "Tutankhamun throne",
+      "Tomb of Tutankhamun wall painting KV62",
+      "Valley of the Kings"
+    ]
   }
 }

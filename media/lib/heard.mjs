@@ -68,10 +68,10 @@ export function hearTotals(scored, srt, heardWords, lang) {
 }
 
 // Limits per language. A line fails under `line`; the video fails under `video` or over `extra` (spoken / written).
-// `blocking: false` only reports. Calibrate with hear-check.yml on approved videos before changing a number.
+// `blocking: false` only reports. Spanish is calibrated on one video so far (ZV-EST01, 97%). Calibrate with hear-check.yml on approved videos before changing a number.
 export const LIMITS = {
   ar: { line: 0.55, video: 0.75, extra: 1.25, blocking: true },
-  es: { line: 0.55, video: 0.75, extra: 1.25, blocking: false },
+  es: { line: 0.55, video: 0.75, extra: 1.25, blocking: true },
 };
 
 /** Reasons to hold the video, empty when the voice matches. */

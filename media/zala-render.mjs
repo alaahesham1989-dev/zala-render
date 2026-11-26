@@ -112,6 +112,7 @@ const outDir = (id) => path.join(OUT, id, 'publish');
 const reviewDir = (id) => path.join(OUT, id, 'DO-NOT-PUBLISH-internal');
 // an Arabic copy (script.lang 'ar') draws every text in an Arabic font
 let LANG_FONT = '';
+let HAS_LONG = false;   // is there a long video of this story (an episode's reel, or script.longVideo)
 let SCRIPT_LANG = 'en';   // a Latin-script language other than English (Spanish)
 const ROYAL = /statue|bust|mask|gold|pharaoh|king|queen|crown|treasure|sarcophag|colossus|throne|jewel|coffin/i;
 const shotsFile = (id) => path.join(CONTENT, 'youtube', `${id}.shots.json`);
@@ -1410,7 +1411,7 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   }
   const e0 = total - outro + 0.2;
   const end1Text = isAr ? (shapeArabic(['زالا VIP'])[0] || 'زالا VIP') : (LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE');
-  const end2Text = isAr ? (shapeArabic(['حكايات الفراعنة اللي مسمعتهاش'])[0] || 'حكايات الفراعنة اللي مسمعتهاش') : (LANG_FONT ? 'حكايات الفراعنة اللي مسمعتهاش' : SCRIPT_LANG === 'es' ? 'PLANEA TU VIAJE A EGIPTO  ·  zalavip.com' : 'FULL STORY ON YOUTUBE  ·  zalavip.com');
+  const end2Text = isAr ? (shapeArabic(['حكايات الفراعنة اللي مسمعتهاش'])[0] || 'حكايات الفراعنة اللي مسمعتهاش') : (LANG_FONT ? 'حكايات الفراعنة اللي مسمعتهاش' : SCRIPT_LANG === 'es' ? 'PLANEA TU VIAJE A EGIPTO  ·  zalavip.com' : HAS_LONG ? 'FULL STORY ON YOUTUBE  ·  zalavip.com' : 'PLAN YOUR EGYPT TRIP  ·  zalavip.com');
   lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}${end1Text}`));
   lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${end2Text}`));
   return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';
@@ -1760,6 +1761,7 @@ async function main() {
   // "Noto Kufi Arabic" is never on that machine, so libass fell back to a font with no Arabic glyphs — boxes on screen
   if (script.lang === 'ar') { LANG_FONT = 'Noto Naskh Arabic'; process.env.ZALA_CAPTION_FONT = LANG_FONT; }
   else if (script.lang && script.lang !== 'en') { SCRIPT_LANG = script.lang; process.env.ZALA_SPOKEN = script.lang; }
+  HAS_LONG = !script.verticalOnly || Boolean(script.longVideo);
   const flat = flatten(script, limit);
 
   if (cmd === 'check') { process.exit(stageCheck(script, flat, { voiceFrom }) ? 0 : 1); }

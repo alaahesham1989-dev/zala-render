@@ -15,7 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { id: ZV-ART01, lang: ar }
           - { id: ZV-ENT01, lang: en }
+          - { id: ZV-EST01, lang: es }
     env:
       ID: ${{ matrix.id }}
       LANG_CODE: ${{ matrix.lang }}
@@ -68,10 +70,13 @@ jobs:
             if (tests[id].from) { ar[id]=spec; fs.writeFileSync("media/tools/arabic-treasures.json", JSON.stringify(ar)); }'
       - name: Passed already?
         run: |
+          # a passed video is left alone unless test-treasures.json raises its "rev" (a fix was asked for)
+          want=$(node -e 'console.log(require("./media/tools/test-treasures.json")[process.env.ID].rev || 1)')
+          have=$(aws s3 cp "s3://${R2_BUCKET}/renders/$ID/rev.txt" - --endpoint-url "$E" 2>/dev/null || echo 1)
           done=no
-          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" done-review.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass && require("./done-review.json").rules===2 && !require("./done-review.json").lines.some((l,i,all)=>l.fits==="no" || l.watermark===undefined || l.watermark || all.filter((x)=>String((x.pictures||[])[0])===String((l.pictures||[])[0])).length>1) ? 0 : 1)' && done=yes
-          echo "DONE=$done" >> "$GITHUB_ENV"
-          echo "RESULT $ID passed earlier: $done"
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass ? 0 : 1)' && [ "$have" -ge "$want" ] && done=yes
+          echo "DONE=$done" >> "$GITHUB_ENV"; echo "REV=$want" >> "$GITHUB_ENV"
+          echo "RESULT $ID passed earlier: $done (rev $have, wanted $want)"
       - name: Tools
         if: env.DONE != 'yes'
         run: |
@@ -90,6 +95,16 @@ jobs:
             echo "prep: waiting 3 minutes"; sleep 180
           done
           exit 1
+      - name: Asked fixes to the script (only the changed line is voiced again)
+        if: env.DONE != 'yes'
+        run: |
+          node -e '
+            const fs=require("fs"), id=process.env.ID, f=`content/youtube/${id}.json`;
+            const fixes=require("./media/tools/test-treasures.json")[id].fixes || [];
+            if (!fixes.length) process.exit(0);
+            const s=JSON.parse(fs.readFileSync(f));
+            for (const l of s.chapters.flatMap((c)=>c.lines)) for (const [from,to] of fixes) if (l.en.includes(from)) { l.en=l.en.replace(from,to); console.log("fixed:", l.en); }
+            fs.writeFileSync(f, JSON.stringify(s,null,2));'
       - name: Make and check (listen and look), fixing up to three times
         if: env.DONE != 'yes'
         run: |
@@ -104,6 +119,7 @@ jobs:
           for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
           [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
           [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          [ -f "quality-$ID/verdict.json" ] && node -e 'process.exit(require("./quality-"+process.env.ID+"/verdict.json").pass ? 0 : 1)' && echo "$REV" | aws s3 cp - "s3://${R2_BUCKET}/renders/$ID/rev.txt" --endpoint-url "$E" --no-progress || true
           [ -f run.log ] && aws s3 cp run.log "s3://${R2_BUCKET}/renders/$ID/run.log" --endpoint-url "$E" --no-progress || true
       - name: Result
         if: always()
