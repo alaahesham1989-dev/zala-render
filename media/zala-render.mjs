@@ -1346,7 +1346,8 @@ function reelScene(s, out) {
   const tall = 2880, cropW = Math.round((tall * VW) / VH);
   const fullW = Math.round((width / height) * tall);
 
-  if (s.isAr) {
+  // the chosen opening picture fills the whole frame (no blurred borders, no pan that starts at an edge)
+  if (s.isAr && !s.opening) {
     if (width > height * 1.15) {
       // Landscape photo in 9:16 frame: Blurred ambient luxury background + sharp centered full image
       const bg = `scale=${VW}:${VH}:force_original_aspect_ratio=increase,crop=${VW}:${VH},gblur=sigma=45,eq=brightness=-0.22:saturation=0.85`;
@@ -1361,7 +1362,7 @@ function reelScene(s, out) {
       '-frames:v', String(FR), '-an', ...X264, out];
   }
 
-  if (fullW > cropW * 1.15) {
+  if (fullW > cropW * 1.15 && !s.opening) {
     // a wide photo travels across the frame so the whole picture is seen, nothing is lost to a centre crop
     const E = `((1-cos(PI*t/${s.dur.toFixed(3)}))/2)`;
     const x = s.idx % 2 ? `(iw-ow)*${E}` : `(iw-ow)*(1-${E})`;
@@ -1454,7 +1455,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     words.push(...timedWords(f.cap, heardOf(voiceFileOf(script, f)), d).map((w) => ({ w: w.w, t0: w.t0 + t, t1: w.t1 + t })));
     assets.forEach((asset, b) => {
       lastAsset = asset;
-      scenes.push({ asset, start: start + (b * lineSpan) / assets.length, idx: scenes.length, sfx: f.sfx });
+      scenes.push({ asset, start: start + (b * lineSpan) / assets.length, idx: scenes.length, sfx: f.sfx, opening: !scenes.length && Boolean(script.openingChosen) });
     });
     if (f.sfx === 'impact') events.push({ name: 'impact', t: t + 0.3, g: 0.7 });
     if (f.sfx === 'hit') events.push({ name: 'hit', t, g: 0.8 });
@@ -1479,7 +1480,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   const isAr = Boolean(LANG_FONT) || script.lang === 'ar' || /[\u0600-\u06FF]/.test(String(reel.hook || reel.title || ''));
   const clips = [];
   await pool(scenes.map((s, i) => ({ s, i })), 3, async ({ s }) => {
-    s.out = path.join(rw, `${hash(`${s.asset.file}|${s.idx}|${s.dur.toFixed(3)}`)}.mp4`);
+    s.out = path.join(rw, `${hash(`${s.asset.file}|${s.idx}|${s.dur.toFixed(3)}${s.opening ? '|opening' : ''}`)}.mp4`);
     s.isAr = isAr;
     if (!okClip(s.out)) await encodeTo(s.out, (part) => reelScene(s, part));
   });

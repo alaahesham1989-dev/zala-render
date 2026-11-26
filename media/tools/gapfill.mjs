@@ -16,6 +16,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { CONTENT, ROOT, TMP } from '../lib/paths.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
 import { askJson } from './gemini-lite.mjs';
+import { keyFor } from '../lib/gemini-keys.mjs';
 
 const id = process.argv[2];
 const dry = process.argv.includes('--dry');
@@ -320,19 +321,50 @@ async function colour(p) {
   } catch { return null; }
 }
 const strong = (c) => c && c.sat >= 18 && c.light >= 55 && c.light <= 205;
-if (!dry && script.verticalOnly && lines[0] && !lines[0].map && !lines[0].clip) {
-  const now = byId.get((lines[0].pictures || [])[0]);
-  const nowColour = now && !DRAWN.test(kindOf(now)) ? await colour(now) : null;
-  if (!strong(nowColour)) {
-    let best = null;
-    for (const p of clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x))).sort((a, b) => (b.shine || 0) - (a.shine || 0)).slice(0, 40)) {
-      const c = await colour(p);
-      if (!strong(c)) continue;
-      const value = Math.min(c.sat, 60) + (p.shine || 0) * 30 + (p.recon ? 10 : 0);
-      if (!best || value > best.value) best = { p, value };
-    }
-    if (best) { lines[0].pictures = [best.p.id]; script.openingChosen = true; log(`opening frame: ${best.p.title}`); } else log('opening frame: no colourful photograph in the library');
-  } else script.openingChosen = true;
+
+/** The eye that judges the finished short looks at the candidates first, cropped as the first frame will be. */
+async function judge(list) {
+  const parts = [{ text: `Pick the first frame of a vertical short titled "${script.title}". It decides whether people stop scrolling.
+Best: sharp, rich colour and light, one clear strong subject that fills the frame, really showing the subject of the title (a picture of another place or monument is wrong), no text or watermark.
+Return only JSON {"best": 0, "score": 1}, best = the number of the picture, score = 1 to 10.` }];
+  const shown = [];
+  for (const p of list) {
+    const src = path.join(TMP, 'gapfill', id, `${hash(p.url)}.src`);
+    const out = `${src}.first.jpg`;
+    const r = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-frames:v', '1', '-vf', "crop='min(iw,ih*9/16)':'min(ih,iw*16/9)',scale=360:640", '-q:v', '5', out]);
+    if (r.status !== 0 || !fs.existsSync(out)) continue;
+    parts.push({ text: `Picture ${shown.length}: ${String(p.title).slice(0, 90)}` }, { inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(out).toString('base64') } });
+    shown.push(p);
+  }
+  for (const model of ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']) {
+    const key = keyFor(model);
+    if (!key) continue;
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } }), signal: AbortSignal.timeout(120000),
+      });
+      const data = await res.json();
+      const answer = JSON.parse(data?.candidates?.[0]?.content?.parts?.find((x) => x.text)?.text || 'null');
+      if (answer && shown[answer.best]) return { p: shown[answer.best], score: answer.score };
+    } catch (e) { log(`opening frame judge: ${e.name}`); }
+  }
+  return shown[0] ? { p: shown[0], score: null } : null;
+}
+
+// chosen once, and again only when the review refused it (a refused picture has just been taken off the line)
+const first = lines[0];
+const nowFirst = first && byId.get((first.pictures || [])[0]);
+if (!dry && script.verticalOnly && first && !first.map && !first.clip && !(reviewAt && nowFirst)) {
+  const ranked = [];
+  const pool = [...(nowFirst ? [nowFirst] : []), ...clean.filter((x) => x !== nowFirst).sort((a, b) => (b.shine || 0) - (a.shine || 0))];
+  for (const p of pool.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x))).slice(0, 60)) {
+    const c = await colour(p);
+    if (strong(c)) ranked.push({ p, value: Math.min(c.sat, 60) + (p.shine || 0) * 30 + (p.recon ? 10 : 0) + (p === nowFirst ? 15 : 0) });
+  }
+  const best = ranked.length ? await judge(ranked.sort((a, b) => b.value - a.value).slice(0, 10).map((x) => x.p)) : null;
+  if (best) { first.pictures = [best.p.id]; script.openingChosen = true; log(`opening frame (${best.score ?? '?'}/10): ${best.p.title}`); }
+  else log('opening frame: no colourful photograph in the library');
 }
 
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);
