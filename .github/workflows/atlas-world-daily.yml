@@ -1,0 +1,41 @@
+name: ZALA world atlas - daily, until the free quota ends
+
+on:
+  schedule:
+    - cron: '40 8 * * *'   # just after Gemini's free quota renews
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: zala-atlas-world-daily
+  cancel-in-progress: false
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Country after country
+        run: |
+          ORDER="sa ae jo om qa kw bh lb tn ma dz iq mr tr fr it es gb gr de pt nl at ch us jp th mx my id vn in kr sg br ar pe cl co ca za ke tz et gh"
+          for retry in no yes; do
+            for cc in $ORDER; do
+              before=$(gh run list -w atlas-world.yml -L 1 --json databaseId --jq '.[0].databaseId // 0')
+              gh workflow run atlas-world.yml -f cc="$cc" -f retry_redo="$retry" >/dev/null
+              id=$before
+              for i in $(seq 1 30); do sleep 6; id=$(gh run list -w atlas-world.yml -L 1 --json databaseId --jq '.[0].databaseId // 0'); [ "$id" != "$before" ] && break; done
+              [ "$id" = "$before" ] && { echo "$cc: could not start"; exit 1; }
+              while [ "$(gh run view "$id" --json status --jq .status)" != "completed" ]; do sleep 60; done
+              gh run view "$id" --log > log.txt || true
+              line=$(grep -oE "\[scripts\] written [0-9]+, sent to redo [0-9]+" log.txt | tail -n 1 || true)
+              echo "$cc retry=$retry: $(gh run view "$id" --json conclusion --jq .conclusion) $line" | tee -a "$GITHUB_STEP_SUMMARY"
+              if grep -q "the quota is probably gone" log.txt; then echo "Quota used up for today." | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+            done
+          done
+          echo "Every country was walked twice today." | tee -a "$GITHUB_STEP_SUMMARY"
