@@ -17,6 +17,7 @@ import { CONTENT, ROOT, TMP } from '../lib/paths.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
 import { askJson } from './gemini-lite.mjs';
 import { keyFor } from '../lib/gemini-keys.mjs';
+import { ahashOf, nearCopy } from '../lib/ahash.mjs';
 
 const id = process.argv[2];
 const dry = process.argv.includes('--dry');
@@ -306,7 +307,7 @@ const openingBoost = (l, p) => (!script.verticalOnly || l !== lines[0]) ? 0
     - (/drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.what || ''} ${p.title || ''}`) ? 8 : 0);
 // ── the opening frame ────────────────────────────────────────────────
 // descriptions do not say reliably that a plate is grey or faded, so the picture itself is measured
-const DRAWN = /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i;
+const DRAWN = /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map|document|typescript|manuscript page|letter|report|catalogue|PHOTO0{3}/i;
 const kindOf = (p) => `${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`;
 async function colour(p) {
   try {
@@ -370,24 +371,37 @@ if (!dry && script.verticalOnly && first && !first.map && !first.clip && !(revie
   else log('opening frame: no colourful photograph in the library');
 }
 
-if (script.verticalOnly) {
-  const apart = (a, b) => !a || !b || [...a].filter((c, i) => c !== b[i]).length > 10;   // average-hash distance
+if (script.verticalOnly && !dry) {
+  // older library pictures carry no hash, so every candidate's look is measured from the picture itself
+  const looks = new Map();
+  const look = async (p) => {
+    if (!looks.has(p.id)) {
+      await colour(p);   // downloads it
+      looks.set(p.id, ahashOf(path.join(TMP, 'gapfill', id, `${hash(p.url)}.src`)));
+    }
+    return looks.get(p.id);
+  };
   const shown = [];
+  const repeats = async (p) => { const h = await look(p); return shown.some((x) => x.id === p.id || nearCopy(x.look, h)); };
   let swapped = 0;
-  for (const l of lines) {
+  for (const [n, l] of lines.entries()) {
     const p = byId.get((l.pictures || [])[0]);
     if (!p) continue;
-    if (shown.every((x) => x.id !== p.id && apart(x.ahash, p.ahash))) { shown.push(p); continue; }
-    const other = clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x)) && !uses.get(x.id) && shown.every((y) => apart(y.ahash, x.ahash)))
-      .sort((a, b) => asked(l, b) - asked(l, a) || (b.shine || 0) - (a.shine || 0))[0];
-    if (!other) { shown.push(p); continue; }
+    const bad = n > 0 && DRAWN.test(kindOf(p));
+    if (!bad && !(await repeats(p))) { shown.push({ id: p.id, look: await look(p) }); continue; }
+    let other = null;
+    for (const c of clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x)) && !uses.get(x.id))
+      .sort((a, b) => asked(l, b) - asked(l, a) || (b.shine || 0) - (a.shine || 0)).slice(0, 40)) {
+      if (!(await repeats(c))) { other = c; break; }
+    }
+    if (!other) { shown.push({ id: p.id, look: await look(p) }); continue; }
     uses.set(p.id, Math.max(0, (uses.get(p.id) || 1) - 1));
     uses.set(other.id, 1);
     l.pictures = [other.id];
-    shown.push(other);
+    shown.push({ id: other.id, look: await look(other) });
     swapped++;
   }
-  log(`variety: ${swapped} repeated pictures replaced`);
+  log(`variety: ${swapped} repeated or unfit pictures replaced`);
 }
 
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);

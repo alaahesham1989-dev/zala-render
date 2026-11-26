@@ -9,6 +9,7 @@ import { FFMPEG, ff, durationOf } from '../lib/ff.mjs';
 import { keyFor, markSpent } from '../lib/gemini-keys.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
 import { CONTENT } from '../lib/paths.mjs';
+import { ahashOf, nearCopy } from '../lib/ahash.mjs';
 import { hearProblems, LIMITS } from '../lib/heard.mjs';
 import { hearVideo, loudness, loudnessProblems } from '../lib/listen.mjs';
 
@@ -96,7 +97,8 @@ const srt = readSrt(path.join(publish, `${id}.en.srt`));
 // lines the render dropped because they were never recorded are not expected in the subtitles
 const dropped = (() => { try { return new Set(JSON.parse(fs.readFileSync(path.join(CONTENT, "youtube", `${script.id}.dropped.json`), "utf8"))); } catch { return new Set(); } })();
 const lines = script.chapters.flatMap((c, ci) => c.lines.map((l, li) => ({ label: `c${ci + 1}.${li + 1}`, ...l }))).filter((l) => !dropped.has(l.say || l.en));
-const report = { id, seconds: durationOf(video), srtLines: srt.length, scriptLines: lines.length, lines: [], audio: {}, reels: [] };
+// raised when a rule is added: a video checked under older rules is checked again
+const report = { id, rules: 2, seconds: durationOf(video), srtLines: srt.length, scriptLines: lines.length, lines: [], audio: {}, reels: [] };
 
 // picture sheets: two moments of every line
 console.log('Sheets: main video');
@@ -158,7 +160,7 @@ if (spoken !== 'en') {
 console.log('Pictures against words');
 for (let i = 0; i < srt.length; i += 6) {
   const group = srt.slice(i, i + 6);
-  const parts = [{ text: `These frames come from a true-history video: "${script.title}". For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Set nudity true if bare breasts, genitals or a naked body are visible, even in art. Set watermark true if the picture itself carries a photographer name, a © sign, a stock mark or another channel logo, however small, usually in a corner (the small ZALA mark at the top right is ours, and the captions are ours). Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","nudity":false,"watermark":false,"shows":"what is really visible, short","problem":""}]}.` }];
+  const parts = [{ text: `These frames come from a true-history video: "${script.title}". For each numbered frame you get the sentence spoken over it. Judge: does the picture fit the sentence (exact event, person, place or period)? Note anything out of place: a wrong era, a page of printed or typed text, a document or catalogue card (always fits "no"), a cross, church or mosque, a modern object, a watermark, a stock logo, text on screen that is cut off or misspelled, a badly cropped subject. Set nudity true if bare breasts, genitals or a naked body are visible, even in art. Set watermark true if the picture itself carries a photographer name, a © sign, a stock mark or another channel logo, however small, usually in a corner (the small ZALA mark at the top right is ours, and the captions are ours). Return only JSON {"items":[{"n":0,"fits":"yes|loosely|no","nudity":false,"watermark":false,"shows":"what is really visible, short","problem":""}]}.` }];
   const present = [];
   group.forEach((s, k) => {
     const f = path.join(tmp, `check${s.n}.jpg`);
@@ -190,6 +192,8 @@ Return only JSON {"pro": true, "score": 1-10, "problem": ""}` }, { inlineData: {
   console.log(`Opening frame: ${o ? `${o.score}/10 ${o.problem || ''}` : 'not checked'}`);
   if (o && (!o.pro || o.score < 7)) { report.lines[0].fits = 'no'; report.lines[0].shows = `weak opening frame: ${o.problem || ''}`; }
 }
+
+if (script.verticalOnly) for (const s of srt) frameOf(video, Math.min((s.start + s.end) / 2, report.seconds - 0.08), 'crop=iw:ih*0.45:0:ih*0.15,scale=90:72', path.join(out, `look${s.n}.jpg`));
 
 // black frames, silences, loudness, frozen picture
 console.log('Black frames and silences');
@@ -260,6 +264,16 @@ if (script.verticalOnly) {
   const seen = new Map();
   for (const l of report.lines) for (const p of (l.pictures || []).slice(0, 1)) seen.set(p, [...(seen.get(p) || []), l.n]);
   for (const at of seen.values()) if (at.length > 2) fail.push(`the same picture on lines ${at.join(', ')}`);
+  // and by what is really on screen: different library entries can be the very same photograph
+  const looks = srt.map((s) => ({ n: s.n, look: fs.existsSync(path.join(out, `look${s.n}.jpg`)) ? ahashOf(path.join(out, `look${s.n}.jpg`)) : null }));
+  const counted = new Set();
+  for (const x of looks) {
+    if (counted.has(x.n)) continue;
+    const same = looks.filter((y) => nearCopy(x.look, y.look, 6)).map((y) => y.n);
+    same.forEach((n) => counted.add(n));
+    if (same.length > 2) fail.push(`lines ${same.join(', ')} look the same on screen`);
+  }
+  for (const s of srt) fs.rmSync(path.join(out, `look${s.n}.jpg`), { force: true });
 }
 const loose = report.lines.filter((l) => l.fits === 'loosely').length;
 if (loose > report.lines.length * 0.25) fail.push(`${loose} of ${report.lines.length} pictures only loosely fit`);
