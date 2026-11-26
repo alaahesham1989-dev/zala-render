@@ -1,0 +1,42 @@
+name: ZALA atlas audio - repair voices that open with the instruction
+
+on:
+  workflow_dispatch:
+    inputs:
+      keys:
+        description: "space-separated audio keys on R2"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zala-atlas-audio-fix
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      KEYS: ${{ inputs.keys }}
+      MEDIA_BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      GEMINI_API_KEY_ATLAS_AUDIO: ${{ secrets.GEMINI_API_KEY_ATLAS_AUDIO }}
+      ATLAS_VOICE_AR: ${{ vars.ATLAS_VOICE_AR }}
+      ATLAS_VOICE_EN: ${{ vars.ATLAS_VOICE_EN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install ffmpeg
+        run: sudo apt-get update -y && sudo apt-get install -y ffmpeg
+      - name: Repair
+        run: python3 media/tools/atlas-audio-fix.py
