@@ -19,6 +19,7 @@ const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH
 const page = await browser.newPage();
 await page.setViewport({ width: 390, height: 693, deviceScaleFactor: 2.77, isMobile: true, hasTouch: true });
 await page.setExtraHTTPHeaders({ 'Accept-Language': 'ar' });
+await page.evaluateOnNewDocument(() => localStorage.setItem('zala_lang', 'ar'));
 await page.goto(spec.page, { waitUntil: 'networkidle2', timeout: 90000 });
 await new Promise((r) => setTimeout(r, 3000));
 await page.screenshot({ path: path.join(local, 'form.jpg'), quality: 90 });
@@ -37,20 +38,48 @@ const own = [
 const rows = (fs.existsSync(itemsFile) ? fs.readFileSync(itemsFile, 'utf8').split('\n').filter(Boolean) : []).filter((l) => !own.some((o) => JSON.parse(l).id === o.id));
 fs.writeFileSync(itemsFile, [...rows, ...own.map((o) => JSON.stringify(o))].join('\n') + '\n');
 
+const UA = { 'User-Agent': 'ZALA-VIP-ads/1.0 (https://www.zalavip.com)' };
+const taken = new Set();
+async function commons(query) {
+  const u = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=25&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=1920`;
+  const r = await (await fetch(u, { headers: UA, signal: AbortSignal.timeout(30000) })).json();
+  const pages = Object.values(r.query?.pages || {}).sort((a, b) => a.index - b.index);
+  for (const p of pages) {
+    const i = p.imageinfo?.[0];
+    const licence = String(i?.extmetadata?.LicenseShortName?.value || '');
+    if (!i || i.mime !== 'image/jpeg' || i.width < 1400 || !/^(CC0|Public domain|CC BY( |-SA )[0-9.]+)/i.test(licence) || taken.has(p.title)) continue;
+    taken.add(p.title);
+    return { url: i.thumburl || i.url, page: i.descriptionurl, title: p.title.replace(/^File:|\.[a-z]+$/gi, ''), licence, author: String(i.extmetadata?.Artist?.value || 'Wikimedia Commons').replace(/<[^>]*>/g, '').trim().slice(0, 70) };
+  }
+  return null;
+}
+const found = [];
+for (const [n, l] of spec.lines.entries()) {
+  if (!l.commons) continue;
+  let hit = null;
+  for (const q of l.commons) { hit = await commons(q); if (hit) break; }
+  if (!hit) { console.log(`line ${n + 1}: no free photo found for ${l.commons[0]}`); continue; }
+  const pid = `${id}-c${n + 1}`;
+  found.push({ n, pid });
+  own.push(item(pid, 'x', hit.title, hit.title, { url: hit.url, source: 'Wikimedia Commons', source_url: hit.page, author: hit.author, license: hit.licence }));
+  console.log(`line ${n + 1}: ${hit.title} (${hit.licence})`);
+}
+fs.writeFileSync(itemsFile, [...rows, ...own.map((o) => JSON.stringify(o))].join('\n') + '\n');
+
 const specsFile = path.join(REPO, 'content', 'library', 'treasures.json');
 const specs = JSON.parse(fs.readFileSync(specsFile, 'utf8'));
 specs[id] = { title: spec.title, hook: spec.hook, seconds: 26, match: spec.queries.join('|'), archive: spec.queries[0], queries: spec.queries };
 fs.writeFileSync(specsFile, JSON.stringify(specs));
 
 const out = path.join(REPO, 'content', 'youtube', `${id}.json`);
-if (!fs.existsSync(out)) {
+{
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify({
     id, series: 'ZALA VIP partners', kind: 'promo', lang: 'ar', verticalOnly: true, directed: 8, packaged: true,
     voice: 'Orus', voiceStyle: 'اتكلم بالعامية المصرية بنبرة واثقة ودودة وسريعة شوية، زي صاحب شغل بيعرض فرصة بهدوء من غير مبالغة.', voiceTempo: 1,
     title: spec.title, description: spec.title, tags: [],
     endLine: 'كن شريكنا · اللينك في البايو · تابعنا', noEarlyMark: true,
-    chapters: [{ title: spec.title, lines: spec.lines.map((l) => ({ en: l.en, queries: l.queries || [], ...(l.use ? { pictures: [`${id}-${l.use}`], keep: true } : {}) })) }],
+    chapters: [{ title: spec.title, lines: spec.lines.map((l, n) => ({ en: l.en, queries: l.queries || [], ...(l.use ? { pictures: [`${id}-${l.use}`], keep: true } : found.find((f) => f.n === n) ? { pictures: [found.find((f) => f.n === n).pid], keep: true } : {}) })) }],
     reels: [{ chapter: 1, from: 0, title: spec.title, hook: spec.hook, badge: 'كن شريكنا', sub: '' }],
     prepared: { at: new Date().toISOString(), kind: 'promo' },
   }, null, 2) + '\n');

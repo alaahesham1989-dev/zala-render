@@ -50,7 +50,6 @@ jobs:
         run: |
           bash media/tools/line/ci-setup.sh content
           mkdir -p content/youtube content/library
-          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/script.json" "content/youtube/$ID.json" --endpoint-url "$E" --no-progress || true
           bash media/tools/line/ci-setup.sh render
           sudo apt-get install -y fonts-noto-naskh-arabic >/dev/null 2>&1 || true
           pip install --quiet pillow arabic-reshaper python-bidi cryptography
