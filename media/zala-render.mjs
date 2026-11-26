@@ -114,6 +114,12 @@ const reviewDir = (id) => path.join(OUT, id, 'DO-NOT-PUBLISH-internal');
 let LANG_FONT = '';
 let HAS_LONG = false;   // is there a long video of this story (an episode's reel, or script.longVideo)
 let SCRIPT_LANG = 'en';   // a Latin-script language other than English (Spanish)
+const SCREEN = {
+  en: { chapter: 'CHAPTER', recon: 'ARTISTIC RECONSTRUCTION', sub: 'SUBSCRIBE', like: 'LIKE  ·  COMMENT  ·  SHARE', trip: 'Plan your Egypt trip:  zalavip.com', next: 'WATCH NEXT', soon: 'THE NEXT CASE IS COMING' },
+  ar: { chapter: 'الفصل', recon: 'تصور فني', sub: 'اشترك', like: 'لايك  ·  كومنت  ·  شير', trip: 'خطط لرحلتك في مصر:  zalavip.com', next: 'شاهد كمان', soon: 'الحكاية الجاية في الطريق' },
+  es: { chapter: 'CAPÍTULO', recon: 'RECONSTRUCCIÓN ARTÍSTICA', sub: 'SUSCRÍBETE', like: 'ME GUSTA  ·  COMENTA  ·  COMPARTE', trip: 'Planea tu viaje a Egipto:  zalavip.com', next: 'A CONTINUACIÓN', soon: 'PRONTO, OTRA HISTORIA' },
+};
+const screen = () => SCREEN[LANG_FONT ? 'ar' : SCRIPT_LANG] || SCREEN.en;
 const ROYAL = /statue|bust|mask|gold|pharaoh|king|queen|crown|treasure|sarcophag|colossus|throne|jewel|coffin/i;
 const shotsFile = (id) => path.join(CONTENT, 'youtube', `${id}.shots.json`);
 
@@ -585,7 +591,7 @@ async function mapStill(place) {
     const small = filterPath(path.join(FONTS, 'Lato-Bold.ttf'));
     const name = `${file}.txt`;
     fs.writeFileSync(name, place.name.toUpperCase());
-    ff(['-i', raw, '-frames:v', '1', '-vf', `eq=saturation=0.85:brightness=-0.04,drawtext=fontfile='${font}':textfile='${filterPath(name)}':fontcolor=0xD4AF37:fontsize=110:borderw=6:bordercolor=black@0.8:x=(w-text_w)/2:y=h*0.68,drawtext=fontfile='${small}':text='Mapbox / OpenStreetMap':fontcolor=white@0.8:fontsize=28:x=w-text_w-30:y=h-50`, '-q:v', '3', file]);
+    ff(['-i', raw, '-frames:v', '1', '-vf', /[\u0600-\u06FF]/.test(place.name) ? 'eq=saturation=0.85:brightness=-0.04' : `eq=saturation=0.85:brightness=-0.04,drawtext=fontfile='${font}':textfile='${filterPath(name)}':fontcolor=0xD4AF37:fontsize=110:borderw=6:bordercolor=black@0.8:x=(w-text_w)/2:y=h*0.68,drawtext=fontfile='${small}':text='Mapbox / OpenStreetMap':fontcolor=white@0.8:fontsize=28:x=w-text_w-30:y=h-50`, '-q:v', '3', file]);
     fs.rmSync(raw, { force: true });
     fs.rmSync(name, { force: true });
     return file;
@@ -1251,7 +1257,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
     tl.flat.forEach((f) => {
       if (f.sfx === 'impact') ev.push(flashEvent(f.T0 + 0.3, W, H));
       if (f.li === 0 && f.ci > 0) ev.push(sweepEvent(f.T0 + 0.1, W, H));
-      if (lineAssets(data, f.key).some((a) => a.recon)) dl(4, f.T0, f.T1, 'Recon', `{\\an9\\pos(${W - 40},${H - 44})\\fad(200,200)}ARTISTIC RECONSTRUCTION`);
+      if (lineAssets(data, f.key).some((a) => a.recon)) dl(4, f.T0, f.T1, 'Recon', `{\\an9\\pos(${W - 40},${H - 44})\\fad(200,200)}${screen().recon}`);
     });
   }
   // Arabic channel: no subtitles — the callout plate and chapter title carry the artifact name in English
@@ -1262,7 +1268,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   const cards = [...firstOf.entries()].filter(([ci]) => ci > 0).map(([ci, f]) => ({ ci, t0: f.T0 - 0.15 }));
   cards.forEach(({ ci, t0 }) => {
     dl(6, t0, t0 + 4.2, 'ChNo', `{\\an7\\pos(84,62)\\fad(300,500)\\1c${GOLD}\\p1}m 0 0 l 4 0 4 104 0 104{\\p0}`);
-    dl(6, t0, t0 + 4.2, 'ChNo', `{\\an7\\pos(106,62)\\fad(500,600)}CHAPTER ${ci}`);
+    dl(6, t0, t0 + 4.2, 'ChNo', `{\\an7\\pos(106,62)\\fad(500,600)}${screen().chapter} ${ci}`);
     dl(6, t0, t0 + 4.2, 'ChTitle', `{\\an7\\pos(104,94)\\fad(600,600)}${aesc(script.chapters[ci].title)}`);
   });
 
@@ -1282,7 +1288,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   });
 
   // the short lines at the top wait for any chapter card or call-out to clear
-  if (!arabic && !LANG_FONT && script.teasers?.length) {   // an Arabic video (LANG_FONT set) never gets the English teaser lines
+  if (!arabic && !LANG_FONT && SCRIPT_LANG === 'en' && script.teasers?.length) {   // an Arabic video (LANG_FONT set) never gets the English teaser lines
     const busy = [...cards.map(({ t0 }) => [t0, t0 + 4.2]), ...callouts.map((f) => [f.T0 + 0.25, f.T0 + 3.85])].sort((a, b) => a[0] - b[0]);
     ev.push(...teaserEvents(script.teasers.map((x) => ({ t: (tl.flat[x.line]?.T0 ?? 0) + 0.1, text: x.text })).filter((x) => x.t < tl.mainEnd - 6), { W, busy, size: 64 }));
   }
@@ -1290,11 +1296,11 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
 
   // end card: the right half stays free for YouTube's end-screen elements
   const o = tl.mainEnd;
-  dl(6, o + 1.0, o + OUTRO - 0.8, 'Out1', '{\\an7\\pos(92,640)\\fad(500,500)}SUBSCRIBE');
-  dl(6, o + 1.6, o + OUTRO - 0.8, 'Out2', '{\\an7\\pos(96,780)\\fad(500,500)}LIKE  ·  COMMENT  ·  SHARE');
-  dl(6, o + 2.2, o + OUTRO - 0.8, 'Out3', '{\\an7\\pos(98,860)\\fad(500,500)}Plan your Egypt trip:  zalavip.com');
-  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next1', '{\\an7\\pos(1010,96)\\fad(500,500)}WATCH NEXT');
-  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next2', `{\\an7\\pos(1010,140)\\fad(500,500)}${aesc(script.nextPublished || 'THE NEXT CASE IS COMING')}`);
+  dl(6, o + 1.0, o + OUTRO - 0.8, 'Out1', '{\\an7\\pos(92,640)\\fad(500,500)}' + screen().sub);
+  dl(6, o + 1.6, o + OUTRO - 0.8, 'Out2', '{\\an7\\pos(96,780)\\fad(500,500)}' + screen().like);
+  dl(6, o + 2.2, o + OUTRO - 0.8, 'Out3', '{\\an7\\pos(98,860)\\fad(500,500)}' + screen().trip);
+  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next1', '{\\an7\\pos(1010,96)\\fad(500,500)}' + screen().next);
+  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next2', `{\\an7\\pos(1010,140)\\fad(500,500)}${aesc(script.nextPublished || screen().soon)}`);
   return head + ev.join('\n') + '\n';
 }
 

@@ -427,10 +427,10 @@ for (const l of empty) {
     const c = n < 5 && await cropOf(p, n);
     if (c) { l.pictures = [c.id]; uses.set(p.id, n + 1); fromCrops++; continue; }
   }
-  const clip = script.kind === 'promo' ? await promoClip(l.en) : script.verticalOnly ? null : await pixabayClip(l.en);
+  const clip = script.kind === 'promo' ? await promoClip(l.en) : (script.verticalOnly || script.kind === 'tour') ? null : await pixabayClip(l.en);
   if (clip) { l.clip = clip; fromVideo++; continue; }
   // For Arabic shorts: NEVER produce an empty/black Manim title scene. Use authentic artifacts from the library!
-  if (script.lang === 'ar' || script.verticalOnly) {
+  if ((script.lang || 'en') !== 'en' || script.verticalOnly || script.kind === 'tour') {
     const isBw = (p) => /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`);
     const available = clean.filter((p) => !banned.has(p.id) && !isBw(p) && (uses.get(p.id) || 0) < 3)
       .sort((a, b) => asked(l, b) - asked(l, a) || (uses.get(a.id) || 0) - (uses.get(b.id) || 0) || (b.shine || 0) - (a.shine || 0));
@@ -484,7 +484,9 @@ const minutes = lines.reduce((n, l) => n + String(l.en).split(/\s+/).length, 0) 
 const want = Math.ceil(minutes * 1.7) + 2;   // narration is slower than 150 words a minute
 const TEASERS = ['KEEP WATCHING', 'WATCH WHAT HAPPENS NEXT', 'STAY UNTIL THE END', 'THE BEST PART IS COMING', 'WAIT FOR IT', 'DO NOT LOOK AWAY'];
 script.teasers ||= [];
-for (let i = 3, k = 0; script.teasers.length < want && i < lines.length - 3; i += 1) {
+// the lines at the top of the screen are English words: other languages get none
+if ((script.lang || 'en') !== 'en') script.teasers = [];
+for (let i = 3, k = 0; (script.lang || 'en') === 'en' && script.teasers.length < want && i < lines.length - 3; i += 1) {
   if (script.teasers.some((t) => Math.abs(t.line - i) < 3)) continue;
   script.teasers.push({ line: i, text: TEASERS[k++ % TEASERS.length] });
 }
