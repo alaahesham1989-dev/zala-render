@@ -18,7 +18,7 @@ const log = (...a) => console.log('[atlas-audio]', ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const BASE = (process.env.MEDIA_BASE || '').replace(/\/$/, '');
 if (!BASE || !process.env.R2_BUCKET || !process.env.E) throw new Error('MEDIA_BASE, R2_BUCKET and E must be set');
-const key = cc === 'eg' ? `atlas/places/${slug}/audio/${lang}.mp3` : `atlas/world/${cc}/audio/${slug}.${lang}.mp3`;
+const key = cc === 'eg' ? `atlas/places/${slug}/audio/${lang}${process.env.ATLAS_OUT_SUFFIX || ''}.mp3` : `atlas/world/${cc}/audio/${slug}.${lang}.mp3`;
 const metaKey = `atlas/audio-meta/${cc}__${slug}__${lang}.json`;
 
 if (!process.env.ATLAS_FORCE && (await fetch(`${BASE}/${key}`, { method: 'HEAD' }).catch(() => null))?.ok) { log('already there:', key); process.exit(0); }
