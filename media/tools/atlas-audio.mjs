@@ -21,7 +21,7 @@ if (!BASE || !process.env.R2_BUCKET || !process.env.E) throw new Error('MEDIA_BA
 const key = cc === 'eg' ? `atlas/places/${slug}/audio/${lang}.mp3` : `atlas/world/${cc}/audio/${slug}.${lang}.mp3`;
 const metaKey = `atlas/audio-meta/${cc}__${slug}__${lang}.json`;
 
-if ((await fetch(`${BASE}/${key}`, { method: 'HEAD' }).catch(() => null))?.ok) { log('already there:', key); process.exit(0); }
+if (!process.env.ATLAS_FORCE && (await fetch(`${BASE}/${key}`, { method: 'HEAD' }).catch(() => null))?.ok) { log('already there:', key); process.exit(0); }
 const apiKey = process.env.GEMINI_API_KEY_ATLAS_AUDIO;
 if (!apiKey) throw new Error('GEMINI_API_KEY_ATLAS_AUDIO is not set (the map-audio Gemini project key)');
 
@@ -34,7 +34,6 @@ if (!text || text.length > 2500) throw new Error(`no usable guide text for ${cc}
 const MODELS = [...new Set([process.env.ATLAS_TTS_MODEL || 'gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts'])];
 let model = MODELS[0];
 const voice = (lang === 'ar' ? process.env.ATLAS_VOICE_AR : process.env.ATLAS_VOICE_EN) || 'Orus';
-const STYLE = 'Read this as a calm, warm, clear audio guide at a museum:';
 
 async function tts() {
   for (const candidate of MODELS) {
@@ -44,7 +43,7 @@ async function tts() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `${STYLE} ${text}` }] }],
+          contents: [{ parts: [{ text }] }], // only the words: an instruction in front gets read aloud
           generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
         }),
       });
