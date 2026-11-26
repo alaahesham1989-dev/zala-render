@@ -44,6 +44,8 @@ jobs:
       CHROME_PATH: /usr/bin/google-chrome
       NO_ARABIC_COPY: "1"
       NO_OUTBOX: "1"
+      # fewer, longer narrations where the words heard can be used to cut them (not Arabic, which is cut at its pauses)
+      VOICE_WORDS: ${{ matrix.lang == 'ar' && '190' || '260' }}
       MANIM_PY: /tmp/manim/bin/python
       E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
     steps:

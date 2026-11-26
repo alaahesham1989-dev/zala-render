@@ -42,7 +42,7 @@ const DEFAULT_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-tts';
 const DEFAULT_VOICE = 'Orus';
 const DEFAULT_STYLE = 'A gripping storyteller telling a true story to a friend: warm, confident and full of suspense, lively pace, natural pauses before the big reveals.';
 const AUDIO_TOKENS_PER_SEC = 25;   // measured on gemini-3.8-flash-tts
-const VOICE_WORDS_PER_REQUEST = 190;   // the free plan allows 10 voice requests a day: a 12-minute episode fits in them
+const VOICE_WORDS_PER_REQUEST = Number(process.env.VOICE_WORDS) || 190;   // the free plan allows 10 voice requests a day: a 12-minute episode fits in them
 const VOICE_REQUEST_GAP = 21000;   // and 3 a minute
 const GOLD = '&H0037AFD4&', WHITE = '&H00FFFFFF&';
 // the factory can add lighter models when these are all busy (GEMINI_TEXT_MODELS, comma separated)
