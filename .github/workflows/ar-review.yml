@@ -1,0 +1,50 @@
+name: ZALA Arabic group videos second look (read only)
+# Listens again to the Arabic shorts sent to the review group and makes a sheet of real frames of each.
+on:
+  push:
+    branches: [ar-review]
+permissions:
+  contents: read
+jobs:
+  look:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      WHISPER_MODEL: large-v3-turbo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tools
+        run: |
+          sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
+          python3 -m venv /tmp/whisper && /tmp/whisper/bin/pip install --quiet faster-whisper
+          echo "WHISPER_PY=/tmp/whisper/bin/python" >> "$GITHUB_ENV"
+          (cd media && npm ci --ignore-scripts)
+      - name: Listen and look
+        run: |
+          set -uo pipefail
+          mkdir -p heard
+          for id in ZV-AR01 ZV-AR02 ZV-AR03 ZV-AR06 ZV-AR07 ZV-AR08 ZV-AR09; do
+            curl -sf -o "$id.mp4" "${BASE%/}/renders/$id/publish/$id.mp4" || { echo "RESULT $id no video"; continue; }
+            curl -sf -o "$id.json" "${BASE%/}/renders/$id/review/review.json" || { echo "RESULT $id no review"; continue; }
+            node media/tools/hear-check.mjs "$id.mp4" "$id.json" ar "heard/$id.json" > /dev/null || echo "RESULT $id hearing failed"
+            [ -f "heard/$id.json" ] && node -e 'const r=require("./heard/"+process.argv[1]+".json"); console.log("RESULT", process.argv[1], "sound="+Math.round(r.soundSeconds), "lastCaption="+Math.round(r.lastCaption), "lines="+r.lines, "median="+r.lineScores.median, "min="+r.lineScores.min, "lufs="+JSON.stringify(r.loudness), "problems="+r.problems.length); r.problems.slice(0,4).forEach((p)=>console.log("RESULT   - "+String(p).slice(0,150)))' "$id"
+            d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$id.mp4")
+            step=$(python3 -c "print(max(0.5, ($d-0.6)/14))")
+            ffmpeg -v error -y -i "$id.mp4" -vf "fps=1/$step:start_time=0.3,scale=270:-1,tile=5x3" -frames:v 1 -q:v 4 "heard/$id.jpg"
+            rm -f "$id.mp4"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ar-second-look
+          path: heard/
+          retention-days: 14
