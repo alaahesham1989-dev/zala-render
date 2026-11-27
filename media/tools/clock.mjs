@@ -31,6 +31,7 @@ const SLOTS = [
   { wf: 'arabic-prep.yml', at: '05:00', needs: 'ARABIC_LIVE' },   // Arabic machine: off until the owner sets ARABIC_LIVE=1
   { wf: 'arabic.yml', at: '05:30', needs: 'ARABIC_LIVE' },
   { wf: 'photo-prep.yml', at: '06:05' },
+  { wf: 'long.yml', at: '08:20' },   // one long video a day, languages in turn; just after the free voice quota resets
   { wf: 'insights.yml', at: '09:47' },
   { wf: 'photos.yml', at: '18:00', inputs: ['-f', 'now=true'] },   // 1pm US Eastern
   ...[0, 3, 6, 9, 12, 15, 18, 21].map((h) => ({ wf: 'comments.yml', at: `${String(h).padStart(2, '0')}:17`, window: 170 })),
