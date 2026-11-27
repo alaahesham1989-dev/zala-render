@@ -1,0 +1,51 @@
+{
+  "channels": {
+    "ar": "@zalavip_ar",
+    "en": "@zalavip_en",
+    "es": "@zalavip_es"
+  },
+  "posts": [
+    {
+      "id": "ar-1128",
+      "lang": "ar",
+      "date": "2026-11-28",
+      "text": "مرتين في السنة الشمس بتدخل معبد أبو سمبل وتنوّر وش الملك.\nالحكاية كاملة هنا:\nhttps://youtu.be/7f6-GMbFiVc"
+    },
+    {
+      "id": "ar-1129",
+      "lang": "ar",
+      "date": "2026-11-29",
+      "text": "عندك عربية، أو مكتب بيورّد فنادق، أو بتنظّم رحلات في محافظتك؟\nكن شريكنا، وسجّل بياناتك:\nhttps://zalavip.com/partners"
+    },
+    {
+      "id": "ar-1130",
+      "lang": "ar",
+      "date": "2026-11-30",
+      "text": "جاي مصر ومحتاج حد يستقبلك في مطار القاهرة ويخلّص معاك؟\nZALA VIP، كونسيرج فاخر:\nhttps://zalavip.com"
+    },
+    {
+      "id": "en-1128",
+      "lang": "en",
+      "date": "2026-11-28",
+      "text": "Why did later pharaohs try to erase Queen Hatshepsut from history?\nhttps://youtu.be/e_V5FaSHnPk"
+    },
+    {
+      "id": "en-1130",
+      "lang": "en",
+      "date": "2026-11-30",
+      "text": "Planning a luxury trip to Egypt? Airport VIP service, private limousine and hotels, arranged on your behalf.\nhttps://zalavip.com"
+    },
+    {
+      "id": "es-1128",
+      "lang": "es",
+      "date": "2026-11-28",
+      "text": "¿Un puñal que no venía de este planeta?\nhttps://youtu.be/PzVk4n4eypU"
+    },
+    {
+      "id": "es-1130",
+      "lang": "es",
+      "date": "2026-11-30",
+      "text": "¿Planeas un viaje de lujo a Egipto? Asistencia VIP en el aeropuerto, limusina privada y hoteles, gestionados en su nombre.\nhttps://zalavip.com"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+name: ZALA Telegram posts of the day
+# The written posts of media/tools/social-posts.json go to the three audience channels, each once.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: zala-telegram-day
+  cancel-in-progress: false
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: What was sent before
+        run: |
+          set -uo pipefail
+          if ! out=$(aws s3 cp "s3://${R2_BUCKET}/social/telegram-done.json" telegram-done.json --endpoint-url "$E" --no-progress 2>&1); then
+            echo "$out" | grep -qiE "404|not exist|NoSuchKey" || { echo "cannot read what was sent: nothing is posted"; exit 1; }
+          fi
+      - name: Post
+        run: node media/tools/telegram-day.mjs
+      - name: Remember
+        if: always()
+        run: |
+          [ -f telegram-done.json ] && aws s3 cp telegram-done.json "s3://${R2_BUCKET}/social/telegram-done.json" --endpoint-url "$E" --no-progress || true

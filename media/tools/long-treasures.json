@@ -6,30 +6,159 @@
     "words": 3700,
     "match": "Karnak|Luxor|Thebes|Amun|Hypostyle|Sphinx|Opet|Hatshepsut|Thutmose|Amenhotep|obelisk|Mut",
     "archive": "Karnak temple Luxor temple Thebes avenue of sphinxes obelisk",
-    "queries": ["Karnak temple aerial", "Karnak great hypostyle hall columns", "Karnak avenue of ram sphinxes", "Karnak obelisk Hatshepsut", "Karnak sacred lake", "Karnak relief painted", "Karnak first pylon", "Amun statue ancient Egypt", "Luxor temple pylon obelisk", "Luxor temple colossi Ramesses II", "Luxor temple at night", "Luxor temple colonnade Amenhotep III", "Avenue of Sphinxes Luxor", "Opet festival relief", "Thutmose III statue", "Seti I relief Karnak", "Ramesses II statue Luxor", "Akhenaten statue", "Temple of Mut Sekhmet statues", "Thebes Nile west bank view"],
+    "queries": [
+      "Karnak temple aerial",
+      "Karnak great hypostyle hall columns",
+      "Karnak avenue of ram sphinxes",
+      "Karnak obelisk Hatshepsut",
+      "Karnak sacred lake",
+      "Karnak relief painted",
+      "Karnak first pylon",
+      "Amun statue ancient Egypt",
+      "Luxor temple pylon obelisk",
+      "Luxor temple colossi Ramesses II",
+      "Luxor temple at night",
+      "Luxor temple colonnade Amenhotep III",
+      "Avenue of Sphinxes Luxor",
+      "Opet festival relief",
+      "Thutmose III statue",
+      "Seti I relief Karnak",
+      "Ramesses II statue Luxor",
+      "Akhenaten statue",
+      "Temple of Mut Sekhmet statues",
+      "Thebes Nile west bank view"
+    ],
     "route": {
       "legs": [
-        { "mode": "fly", "from": "Cairo International Airport", "fromAr": "مطار القاهرة الدولي", "to": "Luxor Airport", "a": [31.4056, 30.1219], "b": [32.7066, 25.671] },
-        { "mode": "drive", "from": "Luxor Airport", "fromAr": "مطار الأقصر", "to": "Karnak", "a": [32.7066, 25.671], "b": [32.6573, 25.7188] }
+        {
+          "mode": "fly",
+          "from": "Cairo International Airport",
+          "fromAr": "مطار القاهرة الدولي",
+          "to": "Luxor Airport",
+          "a": [
+            31.4056,
+            30.1219
+          ],
+          "b": [
+            32.7066,
+            25.671
+          ]
+        },
+        {
+          "mode": "drive",
+          "from": "Luxor Airport",
+          "fromAr": "مطار الأقصر",
+          "to": "Karnak",
+          "a": [
+            32.7066,
+            25.671
+          ],
+          "b": [
+            32.6573,
+            25.7188
+          ]
+        }
       ],
-      "to": { "lat": 25.7188, "lng": 32.6573, "name": "Karnak Temple", "nameAr": "معابد الكرنك" },
+      "to": {
+        "lat": 25.7188,
+        "lng": 32.6573,
+        "name": "Karnak Temple",
+        "nameAr": "معابد الكرنك"
+      },
       "said": "طيران داخلي من مطار القاهرة لمطار الأقصر، وبعدها طريق قصير بالعربية لحد معابد الكرنك"
     },
     "places": [
-      { "name": "معابد الكرنك", "match": "الكرنك", "lat": 25.7188, "lng": 32.6573, "zoom": 16 },
-      { "name": "معبد الأقصر", "match": "معبد الأقصر", "lat": 25.6995, "lng": 32.6391, "zoom": 17 },
-      { "name": "طريق الكباش", "match": "طريق الكباش", "lat": 25.7092, "lng": 32.6480, "zoom": 16 },
-      { "name": "البحيرة المقدسة", "match": "البحيرة المقدسة", "lat": 25.7175, "lng": 32.6586, "zoom": 17 }
+      {
+        "name": "معابد الكرنك",
+        "match": "الكرنك",
+        "lat": 25.7188,
+        "lng": 32.6573,
+        "zoom": 16
+      },
+      {
+        "name": "معبد الأقصر",
+        "match": "معبد الأقصر",
+        "lat": 25.6995,
+        "lng": 32.6391,
+        "zoom": 17
+      },
+      {
+        "name": "طريق الكباش",
+        "match": "طريق الكباش",
+        "lat": 25.7092,
+        "lng": 32.648,
+        "zoom": 16
+      },
+      {
+        "name": "البحيرة المقدسة",
+        "match": "البحيرة المقدسة",
+        "lat": 25.7175,
+        "lng": 32.6586,
+        "zoom": 17
+      }
     ],
     "chapters": [
-      { "focus": "النزول على الأقصر: طيبة العاصمة القديمة، موقعها على النيل، ولماذا كانت مهمة", "wiki": ["Thebes, Egypt", "Luxor"] },
-      { "focus": "الدخول لمعابد الكرنك: الصرح الأول، مجمع آمون، وكيف كبر المعبد على مدى قرون", "wiki": ["Karnak", "Precinct of Amun-Re"] },
-      { "focus": "صالة الأعمدة الكبرى: الأعمدة، النقوش، والملوك الذين بنوها", "wiki": ["Great Hypostyle Hall", "Seti I"] },
-      { "focus": "المسلات وحتشبسوت وتحتمس التالت", "wiki": ["Hatshepsut", "Thutmose III", "Obelisk"] },
-      { "focus": "البحيرة المقدسة، الكهنة، ومعبد موت", "wiki": ["Precinct of Mut", "Amun", "Ancient Egyptian temple"] },
-      { "focus": "طريق الكباش وعيد الأوبت: الموكب بين الكرنك والأقصر", "wiki": ["Opet Festival", "Avenue of Sphinxes", "Criosphinx"] },
-      { "focus": "معبد الأقصر: أمنحتب التالت، رمسيس التاني، المسلة، وتوت عنخ آمون", "wiki": ["Luxor Temple", "Amenhotep III", "Luxor Obelisk"] },
-      { "focus": "أخناتون وتغيير العقيدة، ثم الترميم والاكتشافات، والختام بسؤال للمشاهد ودعوة هادية لزيارة zalavip.com", "wiki": ["Akhenaten", "Amarna Period", "Luxor Temple"] }
+      {
+        "focus": "النزول على الأقصر: طيبة العاصمة القديمة، موقعها على النيل، ولماذا كانت مهمة",
+        "wiki": [
+          "Thebes, Egypt",
+          "Luxor"
+        ]
+      },
+      {
+        "focus": "الدخول لمعابد الكرنك: الصرح الأول، مجمع آمون، وكيف كبر المعبد على مدى قرون",
+        "wiki": [
+          "Karnak",
+          "Precinct of Amun-Re"
+        ]
+      },
+      {
+        "focus": "صالة الأعمدة الكبرى: الأعمدة، النقوش، والملوك الذين بنوها",
+        "wiki": [
+          "Great Hypostyle Hall",
+          "Seti I"
+        ]
+      },
+      {
+        "focus": "المسلات وحتشبسوت وتحتمس التالت",
+        "wiki": [
+          "Hatshepsut",
+          "Thutmose III",
+          "Obelisk"
+        ]
+      },
+      {
+        "focus": "البحيرة المقدسة، الكهنة، ومعبد موت",
+        "wiki": [
+          "Precinct of Mut",
+          "Amun",
+          "Ancient Egyptian temple"
+        ]
+      },
+      {
+        "focus": "طريق الكباش وعيد الأوبت: الموكب بين الكرنك والأقصر",
+        "wiki": [
+          "Opet Festival",
+          "Avenue of Sphinxes",
+          "Criosphinx"
+        ]
+      },
+      {
+        "focus": "معبد الأقصر: أمنحتب التالت، رمسيس التاني، المسلة، وتوت عنخ آمون",
+        "wiki": [
+          "Luxor Temple",
+          "Amenhotep III",
+          "Luxor Obelisk"
+        ]
+      },
+      {
+        "focus": "أخناتون وتغيير العقيدة، ثم الترميم والاكتشافات، والختام بسؤال للمشاهد ودعوة هادية لزيارة zalavip.com",
+        "wiki": [
+          "Akhenaten",
+          "Amarna Period",
+          "Luxor Temple"
+        ]
+      }
     ]
   },
   "ZV-ESL01": {
@@ -39,30 +168,145 @@
     "words": 3250,
     "match": "Saqqara|Djoser|Imhotep|step pyramid|Serapeum|Unas|Memphis|mastaba|Dahshur|Bent Pyramid|Red Pyramid|Apis",
     "archive": "Saqqara step pyramid Djoser Memphis Serapeum Unas Dahshur",
-    "queries": ["Saqqara step pyramid Djoser", "Djoser complex columns", "Djoser statue", "Imhotep statue", "Serapeum of Saqqara sarcophagus", "Apis bull statue", "Pyramid of Unas texts", "Mastaba of Ti relief", "Mereruka tomb relief painted", "Memphis colossus of Ramesses II", "Memphis alabaster sphinx", "Mit Rahina museum", "Bent Pyramid Dahshur", "Red Pyramid Dahshur", "Ptah statue", "Old Kingdom statue painted", "Saqqara desert view", "Egyptian scribe statue Old Kingdom"],
+    "queries": [
+      "Saqqara step pyramid Djoser",
+      "Djoser complex columns",
+      "Djoser statue",
+      "Imhotep statue",
+      "Serapeum of Saqqara sarcophagus",
+      "Apis bull statue",
+      "Pyramid of Unas texts",
+      "Mastaba of Ti relief",
+      "Mereruka tomb relief painted",
+      "Memphis colossus of Ramesses II",
+      "Memphis alabaster sphinx",
+      "Mit Rahina museum",
+      "Bent Pyramid Dahshur",
+      "Red Pyramid Dahshur",
+      "Ptah statue",
+      "Old Kingdom statue painted",
+      "Saqqara desert view",
+      "Egyptian scribe statue Old Kingdom"
+    ],
     "route": {
       "legs": [
-        { "mode": "drive", "from": "Aeropuerto Internacional de El Cairo", "to": "Saqqara", "a": [31.4056, 30.1219], "b": [31.2164, 29.8713] }
+        {
+          "mode": "drive",
+          "from": "Aeropuerto Internacional de El Cairo",
+          "to": "Saqqara",
+          "a": [
+            31.4056,
+            30.1219
+          ],
+          "b": [
+            31.2164,
+            29.8713
+          ]
+        }
       ],
-      "to": { "lat": 29.8713, "lng": 31.2164, "name": "Saqqara" },
+      "to": {
+        "lat": 29.8713,
+        "lng": 31.2164,
+        "name": "Saqqara"
+      },
       "said": "un trayecto por carretera desde el aeropuerto de El Cairo hasta Saqqara"
     },
     "places": [
-      { "name": "Pirámide de Djoser", "match": "[Pp]irámide escalonada", "lat": 29.8713, "lng": 31.2164, "zoom": 16 },
-      { "name": "Serapeum", "match": "[Ss]erapeum|[Ss]erapeo", "lat": 29.8744, "lng": 31.2121, "zoom": 16 },
-      { "name": "Pirámide de Unas", "match": "Unas", "lat": 29.8678, "lng": 31.2150, "zoom": 17 },
-      { "name": "Menfis", "match": "Menfis", "lat": 29.8496, "lng": 31.2536, "zoom": 15 },
-      { "name": "Pirámide Acodada", "match": "[Aa]codada|[Rr]omboidal", "lat": 29.7903, "lng": 31.2094, "zoom": 16 },
-      { "name": "Pirámide Roja", "match": "[Pp]irámide [Rr]oja", "lat": 29.8087, "lng": 31.2062, "zoom": 16 }
+      {
+        "name": "Pirámide de Djoser",
+        "match": "[Pp]irámide escalonada",
+        "lat": 29.8713,
+        "lng": 31.2164,
+        "zoom": 16
+      },
+      {
+        "name": "Serapeum",
+        "match": "[Ss]erapeum|[Ss]erapeo",
+        "lat": 29.8744,
+        "lng": 31.2121,
+        "zoom": 16
+      },
+      {
+        "name": "Pirámide de Unas",
+        "match": "Unas",
+        "lat": 29.8678,
+        "lng": 31.215,
+        "zoom": 17
+      },
+      {
+        "name": "Menfis",
+        "match": "Menfis",
+        "lat": 29.8496,
+        "lng": 31.2536,
+        "zoom": 15
+      },
+      {
+        "name": "Pirámide Acodada",
+        "match": "[Aa]codada|[Rr]omboidal",
+        "lat": 29.7903,
+        "lng": 31.2094,
+        "zoom": 16
+      },
+      {
+        "name": "Pirámide Roja",
+        "match": "[Pp]irámide [Rr]oja",
+        "lat": 29.8087,
+        "lng": 31.2062,
+        "zoom": 16
+      }
     ],
     "chapters": [
-      { "focus": "La llegada a Saqqara: qué es esta necrópolis y su relación con Menfis", "wiki": ["Saqqara", "Memphis, Egypt"] },
-      { "focus": "El rey Djoser y su complejo funerario", "wiki": ["Djoser", "Pyramid of Djoser"] },
-      { "focus": "Imhotep, el arquitecto, y cómo se levantó la pirámide escalonada", "wiki": ["Imhotep", "Pyramid of Djoser"] },
-      { "focus": "La pirámide de Unas y los Textos de las Pirámides", "wiki": ["Pyramid of Unas", "Pyramid Texts"] },
-      { "focus": "Las mastabas de los nobles y la vida pintada en sus paredes", "wiki": ["Mastaba", "Mastaba of Ti", "Mereruka"] },
-      { "focus": "El Serapeum y el toro Apis", "wiki": ["Serapeum of Saqqara", "Apis (deity)"] },
-      { "focus": "Menfis y Dahshur: la pirámide Acodada y la pirámide Roja; cierre con una pregunta y una invitación tranquila a zalavip.com", "wiki": ["Dahshur", "Bent Pyramid", "Red Pyramid"] }
+      {
+        "focus": "La llegada a Saqqara: qué es esta necrópolis y su relación con Menfis",
+        "wiki": [
+          "Saqqara",
+          "Memphis, Egypt"
+        ]
+      },
+      {
+        "focus": "El rey Djoser y su complejo funerario",
+        "wiki": [
+          "Djoser",
+          "Pyramid of Djoser"
+        ]
+      },
+      {
+        "focus": "Imhotep, el arquitecto, y cómo se levantó la pirámide escalonada",
+        "wiki": [
+          "Imhotep",
+          "Pyramid of Djoser"
+        ]
+      },
+      {
+        "focus": "La pirámide de Unas y los Textos de las Pirámides",
+        "wiki": [
+          "Pyramid of Unas",
+          "Pyramid Texts"
+        ]
+      },
+      {
+        "focus": "Las mastabas de los nobles y la vida pintada en sus paredes",
+        "wiki": [
+          "Mastaba",
+          "Mastaba of Ti",
+          "Mereruka"
+        ]
+      },
+      {
+        "focus": "El Serapeum y el toro Apis",
+        "wiki": [
+          "Serapeum of Saqqara",
+          "Apis (deity)"
+        ]
+      },
+      {
+        "focus": "Menfis y Dahshur: la pirámide Acodada y la pirámide Roja; cierre con una pregunta y una invitación tranquila a zalavip.com",
+        "wiki": [
+          "Dahshur",
+          "Bent Pyramid",
+          "Red Pyramid"
+        ]
+      }
     ]
   },
   "ZV-ENL01": {
@@ -72,28 +316,416 @@
     "words": 2550,
     "match": "Abu Simbel|Aswan|Philae|Ramesses|Nefertari|Nubia|Isis|High Dam|obelisk|Kadesh|UNESCO",
     "archive": "Abu Simbel temples Aswan Philae Nubia relocation",
-    "queries": ["Abu Simbel great temple colossi", "Abu Simbel interior hall", "Abu Simbel small temple Nefertari", "Abu Simbel relief Ramesses chariot", "Abu Simbel relocation 1960s", "Nefertari statue", "Ramesses II statue", "Philae temple Isis", "Philae temple columns", "Aswan Nile felucca", "Aswan High Dam", "Unfinished obelisk Aswan", "Lake Nasser", "Nubian temple", "Isis relief Philae", "Trajan kiosk Philae"],
+    "queries": [
+      "Abu Simbel great temple colossi",
+      "Abu Simbel interior hall",
+      "Abu Simbel small temple Nefertari",
+      "Abu Simbel relief Ramesses chariot",
+      "Abu Simbel relocation 1960s",
+      "Nefertari statue",
+      "Ramesses II statue",
+      "Philae temple Isis",
+      "Philae temple columns",
+      "Aswan Nile felucca",
+      "Aswan High Dam",
+      "Unfinished obelisk Aswan",
+      "Lake Nasser",
+      "Nubian temple",
+      "Isis relief Philae",
+      "Trajan kiosk Philae"
+    ],
     "route": {
       "legs": [
-        { "mode": "fly", "from": "Cairo International Airport", "to": "Aswan Airport", "a": [31.4056, 30.1219], "b": [32.82, 23.9644] },
-        { "mode": "drive", "from": "Aswan Airport", "to": "Abu Simbel", "a": [32.82, 23.9644], "b": [31.6258, 22.3372] }
+        {
+          "mode": "fly",
+          "from": "Cairo International Airport",
+          "to": "Aswan Airport",
+          "a": [
+            31.4056,
+            30.1219
+          ],
+          "b": [
+            32.82,
+            23.9644
+          ]
+        },
+        {
+          "mode": "drive",
+          "from": "Aswan Airport",
+          "to": "Abu Simbel",
+          "a": [
+            32.82,
+            23.9644
+          ],
+          "b": [
+            31.6258,
+            22.3372
+          ]
+        }
       ],
-      "to": { "lat": 22.3372, "lng": 31.6258, "name": "Abu Simbel" },
+      "to": {
+        "lat": 22.3372,
+        "lng": 31.6258,
+        "name": "Abu Simbel"
+      },
       "said": "a domestic flight from Cairo to Aswan, then the long desert road to Abu Simbel"
     },
     "places": [
-      { "name": "Abu Simbel", "match": "Abu Simbel", "lat": 22.3372, "lng": 31.6258, "zoom": 16 },
-      { "name": "Philae Temple", "match": "Philae", "lat": 24.0257, "lng": 32.8844, "zoom": 16 },
-      { "name": "Aswan High Dam", "match": "High Dam", "lat": 23.9706, "lng": 32.8776, "zoom": 14 },
-      { "name": "Unfinished Obelisk", "match": "[Uu]nfinished [Oo]belisk", "lat": 24.0768, "lng": 32.8956, "zoom": 17 }
+      {
+        "name": "Abu Simbel",
+        "match": "Abu Simbel",
+        "lat": 22.3372,
+        "lng": 31.6258,
+        "zoom": 16
+      },
+      {
+        "name": "Philae Temple",
+        "match": "Philae",
+        "lat": 24.0257,
+        "lng": 32.8844,
+        "zoom": 16
+      },
+      {
+        "name": "Aswan High Dam",
+        "match": "High Dam",
+        "lat": 23.9706,
+        "lng": 32.8776,
+        "zoom": 14
+      },
+      {
+        "name": "Unfinished Obelisk",
+        "match": "[Uu]nfinished [Oo]belisk",
+        "lat": 24.0768,
+        "lng": 32.8956,
+        "zoom": 17
+      }
     ],
     "chapters": [
-      { "focus": "Flying south: Aswan, the Nile and Nubia, Egypt's southern gate", "wiki": ["Aswan", "Nubia"] },
-      { "focus": "The Great Temple of Abu Simbel and its colossal figures", "wiki": ["Abu Simbel", "Abu Simbel temples"] },
-      { "focus": "Ramesses II and the battle of Kadesh shown on the walls", "wiki": ["Ramesses II", "Battle of Kadesh"] },
-      { "focus": "The small temple of Queen Nefertari and the goddess Hathor", "wiki": ["Nefertari", "Abu Simbel temples", "Hathor"] },
-      { "focus": "The rescue: the High Dam, the rising water and the UNESCO campaign that moved the temples", "wiki": ["Aswan Dam", "International Campaign to Save the Monuments of Nubia"] },
-      { "focus": "Philae, the temple of Isis, the unfinished obelisk; close with a question and a quiet invitation to zalavip.com", "wiki": ["Philae", "Unfinished obelisk", "Isis"] }
+      {
+        "focus": "Flying south: Aswan, the Nile and Nubia, Egypt's southern gate",
+        "wiki": [
+          "Aswan",
+          "Nubia"
+        ]
+      },
+      {
+        "focus": "The Great Temple of Abu Simbel and its colossal figures",
+        "wiki": [
+          "Abu Simbel",
+          "Abu Simbel temples"
+        ]
+      },
+      {
+        "focus": "Ramesses II and the battle of Kadesh shown on the walls",
+        "wiki": [
+          "Ramesses II",
+          "Battle of Kadesh"
+        ]
+      },
+      {
+        "focus": "The small temple of Queen Nefertari and the goddess Hathor",
+        "wiki": [
+          "Nefertari",
+          "Abu Simbel temples",
+          "Hathor"
+        ]
+      },
+      {
+        "focus": "The rescue: the High Dam, the rising water and the UNESCO campaign that moved the temples",
+        "wiki": [
+          "Aswan Dam",
+          "International Campaign to Save the Monuments of Nubia"
+        ]
+      },
+      {
+        "focus": "Philae, the temple of Isis, the unfinished obelisk; close with a question and a quiet invitation to zalavip.com",
+        "wiki": [
+          "Philae",
+          "Unfinished obelisk",
+          "Isis"
+        ]
+      }
+    ]
+  },
+  "ZV-TGIZA": {
+    "lang": "ar",
+    "subject": "جولة افتراضية في هضبة الجيزة: الأهرامات وأبو الهول ومراكب الملك والمتحف المصري الكبير",
+    "minutes": 25,
+    "words": 3700,
+    "match": "Giza|Khufu|Khafre|Menkaure|Sphinx|pyramid|Egyptian Museum|solar boat|Merer",
+    "archive": "Giza pyramids Sphinx Khufu ship Grand Egyptian Museum",
+    "queries": [
+      "Giza pyramids aerial",
+      "Great Pyramid of Giza blocks",
+      "Great Sphinx of Giza",
+      "Pyramid of Khafre casing",
+      "Pyramid of Menkaure",
+      "Khufu ship solar boat",
+      "Grand Egyptian Museum",
+      "Giza plateau desert",
+      "Khufu statue",
+      "Menkaure triad statue",
+      "Giza workers village",
+      "Great Pyramid grand gallery"
+    ],
+    "route": {
+      "legs": [
+        {
+          "mode": "drive",
+          "from": "Cairo International Airport",
+          "fromAr": "مطار القاهرة الدولي",
+          "to": "Giza Pyramids",
+          "a": [
+            31.4056,
+            30.1219
+          ],
+          "b": [
+            31.1342,
+            29.9792
+          ]
+        }
+      ],
+      "to": {
+        "lat": 29.9792,
+        "lng": 31.1342,
+        "name": "Giza Pyramids",
+        "nameAr": "أهرامات الجيزة"
+      },
+      "said": "طريق بالعربية من مطار القاهرة الدولي لحد هضبة أهرامات الجيزة"
+    },
+    "places": [
+      {
+        "name": "الهرم الأكبر",
+        "match": "الهرم الأكبر",
+        "lat": 29.9792,
+        "lng": 31.1342,
+        "zoom": 16
+      },
+      {
+        "name": "هرم خفرع",
+        "match": "خفرع",
+        "lat": 29.9761,
+        "lng": 31.1308,
+        "zoom": 16
+      },
+      {
+        "name": "أبو الهول",
+        "match": "أبو الهول",
+        "lat": 29.9753,
+        "lng": 31.1376,
+        "zoom": 17
+      },
+      {
+        "name": "هرم منكاورع",
+        "match": "منكاورع",
+        "lat": 29.9725,
+        "lng": 31.1282,
+        "zoom": 16
+      },
+      {
+        "name": "المتحف المصري الكبير",
+        "match": "المتحف المصري الكبير",
+        "lat": 29.9946,
+        "lng": 31.1188,
+        "zoom": 16
+      }
+    ],
+    "chapters": [
+      {
+        "focus": "النزول على الهضبة: ليه الجيزة بالذات",
+        "wiki": [
+          "Giza pyramid complex",
+          "Giza"
+        ]
+      },
+      {
+        "focus": "الهرم الأكبر والملك خوفو",
+        "wiki": [
+          "Great Pyramid of Giza",
+          "Khufu"
+        ]
+      },
+      {
+        "focus": "مركب خوفو ويوميات مرر اللي بتحكي نقل الحجر",
+        "wiki": [
+          "Khufu ship",
+          "Diary of Merer"
+        ]
+      },
+      {
+        "focus": "هرم خفرع ومجموعته",
+        "wiki": [
+          "Pyramid of Khafre",
+          "Khafre"
+        ]
+      },
+      {
+        "focus": "أبو الهول وأسراره",
+        "wiki": [
+          "Great Sphinx of Giza"
+        ]
+      },
+      {
+        "focus": "هرم منكاورع وتماثيله",
+        "wiki": [
+          "Pyramid of Menkaure",
+          "Menkaure"
+        ]
+      },
+      {
+        "focus": "العمال اللي بنوا الأهرامات وعاشوا إزاي",
+        "wiki": [
+          "Egyptian pyramid construction techniques",
+          "Giza pyramid complex"
+        ]
+      },
+      {
+        "focus": "المتحف المصري الكبير جنب الهضبة",
+        "wiki": [
+          "Grand Egyptian Museum"
+        ]
+      }
+    ]
+  },
+  "ZV-TALEX": {
+    "lang": "ar",
+    "subject": "جولة افتراضية في الإسكندرية: المنارة والمكتبة وعمود السواري ومقابر كوم الشقافة",
+    "minutes": 25,
+    "words": 3700,
+    "match": "Alexandria|Alexander|Ptolem|Cleopatra|Pharos|Lighthouse|Library|Qaitbay|Pompey|Shoqafa|Serapeum",
+    "archive": "Alexandria Egypt lighthouse library Qaitbay Pompey pillar catacombs",
+    "queries": [
+      "Alexandria corniche aerial",
+      "Citadel of Qaitbay",
+      "Bibliotheca Alexandrina",
+      "Pompey Pillar Alexandria",
+      "Catacombs of Kom El Shoqafa",
+      "Montaza Palace",
+      "Lighthouse of Alexandria drawing",
+      "Alexander the Great bust",
+      "Cleopatra bust",
+      "Ptolemy coin",
+      "Serapeum Alexandria sphinx",
+      "Alexandria harbour"
+    ],
+    "route": {
+      "legs": [
+        {
+          "mode": "drive",
+          "from": "Cairo International Airport",
+          "fromAr": "مطار القاهرة الدولي",
+          "to": "Alexandria",
+          "a": [
+            31.4056,
+            30.1219
+          ],
+          "b": [
+            29.9187,
+            31.2001
+          ]
+        }
+      ],
+      "to": {
+        "lat": 31.2001,
+        "lng": 29.9187,
+        "name": "Alexandria",
+        "nameAr": "الإسكندرية"
+      },
+      "said": "طريق بالعربية من مطار القاهرة الدولي لحد الإسكندرية على البحر"
+    },
+    "places": [
+      {
+        "name": "مكتبة الإسكندرية",
+        "match": "مكتبة الإسكندرية",
+        "lat": 31.2089,
+        "lng": 29.9092,
+        "zoom": 17
+      },
+      {
+        "name": "قلعة قايتباي",
+        "match": "قايتباي",
+        "lat": 31.214,
+        "lng": 29.8856,
+        "zoom": 17
+      },
+      {
+        "name": "عمود السواري",
+        "match": "عمود السواري",
+        "lat": 31.1825,
+        "lng": 29.8964,
+        "zoom": 17
+      },
+      {
+        "name": "كوم الشقافة",
+        "match": "كوم الشقافة",
+        "lat": 31.1786,
+        "lng": 29.8931,
+        "zoom": 17
+      },
+      {
+        "name": "المنتزه",
+        "match": "المنتزه",
+        "lat": 31.2885,
+        "lng": 30.016,
+        "zoom": 15
+      }
+    ],
+    "chapters": [
+      {
+        "focus": "الوصول للإسكندرية: مدينة الإسكندر على البحر",
+        "wiki": [
+          "History of Alexandria",
+          "Alexandria"
+        ]
+      },
+      {
+        "focus": "المنارة اللي كانت من عجايب الدنيا وقلعة قايتباي مكانها",
+        "wiki": [
+          "Lighthouse of Alexandria",
+          "Citadel of Qaitbay"
+        ]
+      },
+      {
+        "focus": "المكتبة القديمة والمكتبة الجديدة",
+        "wiki": [
+          "Library of Alexandria",
+          "Bibliotheca Alexandrina"
+        ]
+      },
+      {
+        "focus": "البطالمة وكليوباترا",
+        "wiki": [
+          "Cleopatra",
+          "Ptolemaic Kingdom"
+        ]
+      },
+      {
+        "focus": "عمود السواري ومعبد السرابيوم",
+        "wiki": [
+          "Pompey's Pillar",
+          "Serapeum of Alexandria"
+        ]
+      },
+      {
+        "focus": "مقابر كوم الشقافة تحت الأرض",
+        "wiki": [
+          "Catacombs of Kom El Shoqafa"
+        ]
+      },
+      {
+        "focus": "المدن الغرقانة تحت الميه",
+        "wiki": [
+          "Heracleion",
+          "Antirhodos"
+        ]
+      },
+      {
+        "focus": "إسكندرية الحديثة والمنتزه",
+        "wiki": [
+          "Montaza Palace",
+          "Alexandria"
+        ]
+      }
     ]
   }
 }

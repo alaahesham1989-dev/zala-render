@@ -12,7 +12,10 @@ const queue = read('long-queue.json');
 
 export function languageOf(now) {
   const days = Math.floor((now - Date.parse(`${queue.startDay}T00:00:00Z`)) / 864e5);
-  return queue.order[((days % queue.order.length) + queue.order.length) % queue.order.length];
+  const opening = queue.opening || [];
+  if (days >= 0 && days < opening.length) return opening[days];
+  const turn = days < 0 ? days : days - opening.length;
+  return queue.order[((turn % queue.order.length) + queue.order.length) % queue.order.length];
 }
 
 async function passed(id) {
