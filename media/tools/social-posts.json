@@ -1,0 +1,77 @@
+{
+  "channels": {
+    "ar": "@zalavip_ar",
+    "en": "@zalavip_en",
+    "es": "@zalavip_es"
+  },
+  "posts": [
+    {
+      "id": "ar-channels",
+      "lang": "ar",
+      "date": "2026-11-27",
+      "pin": true,
+      "text": "أهلاً بيك في ZALA VIP، كونسيرج فاخر في مصر.\nحكايات مصر، واستقبال المطار، والليموزين، والفنادق."
+    },
+    {
+      "id": "en-channels",
+      "lang": "en",
+      "date": "2026-11-27",
+      "pin": true,
+      "text": "Welcome to ZALA VIP, your luxury concierge in Egypt.\nStories of Egypt, airport VIP service, private limousine and hotels."
+    },
+    {
+      "id": "es-channels",
+      "lang": "es",
+      "date": "2026-11-27",
+      "pin": true,
+      "text": "Bienvenido a ZALA VIP, su concierge de lujo en Egipto.\nHistorias de Egipto, asistencia VIP en el aeropuerto, limusina privada y hoteles."
+    },
+    {
+      "id": "ar-1128",
+      "lang": "ar",
+      "date": "2026-11-28",
+      "text": "مرتين في السنة الشمس بتدخل معبد أبو سمبل وتنوّر وش الملك.\nالحكاية كاملة هنا:\nhttps://youtu.be/7f6-GMbFiVc"
+    },
+    {
+      "id": "ar-1129",
+      "lang": "ar",
+      "date": "2026-11-29",
+      "text": "عندك عربية، أو مكتب بيورّد فنادق، أو بتنظّم رحلات في محافظتك؟\nكن شريكنا، وسجّل بياناتك:\nhttps://zalavip.com/partners"
+    },
+    {
+      "id": "ar-1130",
+      "lang": "ar",
+      "date": "2026-11-30",
+      "text": "جاي مصر ومحتاج حد يستقبلك في مطار القاهرة ويخلّص معاك؟\nZALA VIP، كونسيرج فاخر:\nhttps://zalavip.com"
+    },
+    {
+      "id": "en-1128",
+      "lang": "en",
+      "date": "2026-11-28",
+      "text": "Why did later pharaohs try to erase Queen Hatshepsut from history?\nhttps://youtu.be/e_V5FaSHnPk"
+    },
+    {
+      "id": "en-1130",
+      "lang": "en",
+      "date": "2026-11-30",
+      "text": "Planning a luxury trip to Egypt? Airport VIP service, private limousine and hotels, arranged on your behalf.\nhttps://zalavip.com"
+    },
+    {
+      "id": "es-1128",
+      "lang": "es",
+      "date": "2026-11-28",
+      "text": "¿Un puñal que no venía de este planeta?\nhttps://youtu.be/PzVk4n4eypU"
+    },
+    {
+      "id": "es-1130",
+      "lang": "es",
+      "date": "2026-11-30",
+      "text": "¿Planeas un viaje de lujo a Egipto? Asistencia VIP en el aeropuerto, limusina privada y hoteles, gestionados en su nombre.\nhttps://zalavip.com"
+    }
+  ],
+  "footer": {
+    "ar": "قنواتنا:\nيوتيوب: https://www.youtube.com/@zalavip-AR\nفيسبوك: https://www.facebook.com/1427095477152118\nإنستجرام: https://www.instagram.com/zalavip_ar/\nX: https://x.com/zalavip_ar\nالموقع: https://zalavip.com",
+    "en": "Follow ZALA VIP:\nYouTube: https://www.youtube.com/@zalavip\nFacebook: https://www.facebook.com/108172631323930\nInstagram: https://www.instagram.com/zalavip9/\nX: https://x.com/zalavip_en\nWebsite: https://zalavip.com",
+    "es": "Síguenos:\nYouTube: https://www.youtube.com/@zalavip_es\nFacebook: https://www.facebook.com/1367931369746384\nX: https://x.com/zalavip_es\nWeb: https://zalavip.com"
+  }
+}
