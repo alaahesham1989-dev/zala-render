@@ -15,7 +15,7 @@ HEAR_KEYS = [k for k in (AUDIO_KEY, os.environ.get('GEMINI_API_KEY_ATLAS')) if k
 TTS = ['gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts']
 HEAR = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.8-flash']
 ORDER = 'sa ae jo om qa kw bh lb tn ma dz iq mr tr fr it es gb gr de pt nl at ch us jp th mx my id vn in kr sg br ar pe cl co ca za ke tz et gh'.split()
-PLACES = int(os.environ.get('VOICE_PLACES') or 10)  # both languages of each
+PLACES = int(os.environ.get('VOICE_PLACES') or 300)  # both languages of each
 AUDIT = int(os.environ.get('AUDIT_LIMIT') or 40)
 BUCKET = f"s3://{os.environ['R2_BUCKET']}"
 TODAY = datetime.date.today().isoformat()
@@ -101,22 +101,32 @@ def reverent(text):
     return out.stdout or text
 
 
-def make_new():
-    aws('sync', f'{BUCKET}/atlas-work', f'{tmp}/w', '--exclude', '*', '--include', '*/scripts/*')
-    made = refused = 0
-    places = set()
+def queue():
+    """(country, slug) in the owner's order: all of Saudi Arabia, then ten places in each other country, then the rest."""
+    ready = {}
     for cc in ORDER:
         try:
             ranked = [p['slug'] for p in json.loads(get(f'{BASE}/atlas/world/{cc}/places.json'))]
         except Exception:  # noqa: BLE001
             continue
+        ready[cc] = []
         for slug in ranked:
             path = f'{tmp}/w/{cc}/scripts/{slug}.json'
-            if not os.path.exists(path):
-                continue
-            script = json.load(open(path, encoding='utf-8'))
-            if not (script.get('model') == 'curated' or (script.get('review') or {}).get('verdict') in ('ok', 'fix')):
-                continue  # only texts the reviewer has passed
+            if os.path.exists(path):
+                script = json.load(open(path, encoding='utf-8'))
+                if script.get('model') == 'curated' or (script.get('review') or {}).get('verdict') in ('ok', 'fix'):
+                    ready[cc].append(slug)  # only texts the reviewer has passed
+    others = [cc for cc in ready if cc != 'sa']
+    return ([('sa', s) for s in ready.get('sa', [])] + [(cc, s) for cc in others for s in ready[cc][:10]]
+            + [(cc, s) for cc in others for s in ready[cc][10:]])
+
+
+def make_new():
+    aws('sync', f'{BUCKET}/atlas-work', f'{tmp}/w', '--exclude', '*', '--include', '*/scripts/*')
+    made = refused = 0
+    places = set()
+    for cc, slug in queue():
+            script = json.load(open(f'{tmp}/w/{cc}/scripts/{slug}.json', encoding='utf-8'))
             for lang in ('ar', 'en'):
                 key = f'atlas/world/{cc}/audio/{slug}.{lang}.mp3'
                 if (len(places) >= PLACES and f'{cc}/{slug}' not in places) or len(spent) == len(TTS):
