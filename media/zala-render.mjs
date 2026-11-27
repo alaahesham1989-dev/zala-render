@@ -26,7 +26,7 @@ import { buildAss as buildReelAss, shapeArabic } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
 import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
 import { config as laneConfig } from './tools/lang/paths.mjs';
-import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
+import { groupLines, splitChunk, PartialCut } from './lib/voice-chunks.mjs';
 import { numerals } from './lib/display-numbers.mjs';
 import { screenPictures, directEpisode } from './lib/director.mjs';
 import { timedWords, heardOf, captionEvents, dustEvents, sweepEvent, flashEvent, teaserEvents } from './lib/punch.mjs';
@@ -218,7 +218,7 @@ async function speakLine(text, vp, file) {
     let res, data;
     try {
       res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(300000),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(900000),   // a long narration takes minutes; asking again would cost a request
       });
       data = await res.json();
     } catch (e) {
@@ -341,10 +341,15 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
           splitChunk(chunk, group.map((f) => pronounce(f.say)), files);
           log(`  [${group[0].label} to ${group[group.length - 1].label}] ${durationOf(chunk).toFixed(1)}s, ${group.length} lines`);
         } catch (e) {
+          if (e instanceof PartialCut) {
+            log(`  [${group[0].label}] ${e.done} of ${group.length} lines kept (${e.message}), asking again for the rest`);
+            queue.unshift(group.slice(e.done));
+          } else {
           log(`  [${group[0].label}] could not cut this narration at its pauses (${e.message}), asking for these lines in two smaller parts`);
           files.forEach((x) => fs.rmSync(x, { force: true }));
           const half = Math.ceil(group.length / 2);
           queue.unshift(group.slice(0, half), group.slice(half));
+          }
         }
         if (fresh) await sleep(VOICE_REQUEST_GAP);
       }

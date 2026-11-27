@@ -12,6 +12,7 @@ import { CONTENT } from '../lib/paths.mjs';
 import { ahashOf, nearCopy } from '../lib/ahash.mjs';
 import { hearProblems, LIMITS } from '../lib/heard.mjs';
 import { hearVideo, loudness, loudnessProblems } from '../lib/listen.mjs';
+import { inLang } from '../lib/lang-check.mjs';
 
 // Ancient Egypt and hieroglyph vocabulary is unusual for a TTS voice and for Whisper alike: a mismatch on one of
 // these words should never fail a line the way a real missing sentence does. content/youtube/hard-words.json grows
@@ -255,6 +256,9 @@ const wrong = [];
 const pkgFile = path.join(publish, `${id}.youtube.json`);
 const pkg = fs.existsSync(pkgFile) ? JSON.parse(fs.readFileSync(pkgFile, 'utf8')) : {};
 const lastSpeech = srt[srt.length - 1].end;
+// a long tour once came out mostly in English under an Arabic title: every line must be in its own language
+const stray = spoken === 'en' ? [] : script.chapters.flatMap((c) => c.lines).filter((l) => l.en && !inLang(l.en, spoken));
+if (stray.length > 2) fail.push(`${stray.length} lines are not in the video language: ${stray[0].en.slice(0, 60)}`);
 if (srt.length !== lines.length) fail.push(`subtitles have ${srt.length} lines, the script ${lines.length}`);
 for (const l of report.lines) {
   // Arabic and Spanish are judged by letters, further down

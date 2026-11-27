@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ff, durationOf } from './ff.mjs';
 import { alignLines, detectSilences } from './align.mjs';
+import { normalize } from './heard.mjs';
 
 const wordsOf = (text) => String(text).trim().split(/\s+/).filter(Boolean).length;
 
@@ -28,6 +29,14 @@ export function groupLines(pending, flat, maxWords) {
 
 export const tokens = (s) => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
 
+// for cutting only: Arabic words are folded to one spelling (tokens() above keeps Latin letters only)
+const cutTokens = (s) => (/[\u0621-\u064A]/.test(String(s)) ? normalize(s, 'ar') : tokens(s));
+
+/** The start of a long narration was read out well but a later line was not found: the lines before it are kept. */
+export class PartialCut extends Error {
+  constructor(done, message) { super(message); this.done = done; }
+}
+
 /** Longest common sequence between the script's words and the heard words: script word index -> heard word index. */
 export function matchWords(script, heard) {
   const n = script.length, m = heard.length;
@@ -45,12 +54,12 @@ export function matchWords(script, heard) {
  * the cut goes in the longest pause. heard: [{w, start, end}], silences: [{s, e, d}], duration of the file.
  */
 export function cutsFromWords(texts, heard, silences, duration) {
-  const lineTokens = texts.map(tokens);
+  const arabic = texts.some((t) => /[\u0621-\u064A]/.test(t));
+  const lineTokens = texts.map(cutTokens);
   const script = lineTokens.flat();
-  const said = heard.flatMap((h, idx) => tokens(h.w).map((w) => ({ w, idx })));
+  const said = heard.flatMap((h, idx) => cutTokens(h.w).map((w) => ({ w, idx })));
   const map = matchWords(script, said.map((x) => x.w));
   const found = map.filter((x) => x >= 0).length;
-  if (found / script.length < 0.6) throw new Error(`only ${Math.round((found / script.length) * 100)}% of the words were recognised`);
   const wordAt = (i) => heard[said[map[i]].idx];
   const starts = [];
   lineTokens.reduce((at, l, i) => { starts[i] = at; return at + l.length; }, 0);
@@ -74,7 +83,22 @@ export function cutsFromWords(texts, heard, silences, duration) {
   }
   lines[0].t0 = 0;
   lines[lines.length - 1].t1 = duration;
-  return { lines, recognised: found / script.length };
+  // every line must be heard on its own: a long narration that stops early or skips a sentence must not pass
+  // because the rest of it is good. Egyptian Arabic is written many ways, so it asks for fewer exact words.
+  const lineMin = arabic ? 0.35 : 0.5;
+  let at = 0;
+  const share = lineTokens.map((l) => { const got = l.filter((_, i) => map[at + i] >= 0).length; at += l.length; return l.length < 3 ? 1 : got / l.length; });
+  const bad = share.findIndex((x) => x < lineMin);
+  const overall = found / script.length;
+  const bounds = (() => { let a = 0; return lineTokens.map((l) => { a += l.length; return a; }); })();
+  if (bad >= 0 || overall < (arabic ? 0.45 : 0.6)) {
+    // keep the lines up to two before the first bad one: their cut points sit between two well heard lines
+    const done = bad >= 2 && map.slice(0, bounds[bad - 1]).filter((x) => x >= 0).length / bounds[bad - 1] >= (arabic ? 0.45 : 0.6) ? bad - 1 : 0;
+    const why = bad >= 0 ? `line ${bad + 1} of ${texts.length} was not heard` : `only ${Math.round(overall * 100)}% of the words were recognised`;
+    if (!done) throw new Error(why);
+    return { lines, recognised: overall, done, why };
+  }
+  return { lines, recognised: overall };
 }
 
 function heardWords(file) {
@@ -114,14 +138,21 @@ export function splitChunk(chunk, texts, files) {
   // 60% floor, and the caller retries with ever-smaller chunks — burning the whole day's voice quota on one line (found
   // on ZV-AR01: 3 keys used up in one round). Go straight to the pause-only cut instead of attempting this at all.
   const arabic = texts.some((t) => /[؀-ۿ]/.test(t));
-  const heard = arabic ? null : heardWords(chunk);
+  // Arabic is heard only by the multilingual model (ZALA_SPOKEN=ar); with the English one it matched nothing
+  const heard = arabic && process.env.ZALA_SPOKEN !== 'ar' ? null : heardWords(chunk);
   if (texts.length === 1) { ff(['-i', chunk, '-ar', '48000', files[0]]); if (heard?.length) saveWords(0, 0, durationOf(chunk), heard); return; }
-  let lines = null;
+  let lines = null, partial = null;
   if (heard?.length) {
     const silences = detectSilences(chunk, '-34dB', 0.07);
-    const cut = cutsFromWords(texts, heard, silences, durationOf(chunk));
-    lines = cut.lines;
-    console.log(`  words recognised: ${Math.round(cut.recognised * 100)}%`);
+    try {
+      const cut = cutsFromWords(texts, heard, silences, durationOf(chunk));
+      lines = cut.done ? cut.lines.slice(0, cut.done) : cut.lines;
+      if (cut.done) partial = new PartialCut(cut.done, cut.why);
+      console.log(`  words recognised: ${Math.round(cut.recognised * 100)}%`);
+    } catch (e) {
+      if (!arabic) throw e;
+      lines = cutByPauses(chunk, texts);
+    }
   } else if (!arabic && process.env.CI) {
     throw new Error('word timing is not available on the server');
   } else {
@@ -131,4 +162,5 @@ export function splitChunk(chunk, texts, files) {
     ff(['-ss', l.t0.toFixed(3), '-to', l.t1.toFixed(3), '-i', chunk, '-af', 'afade=t=in:d=0.015,areverse,afade=t=in:d=0.015,areverse', '-ar', '48000', files[i]]);
     if (heard?.length) saveWords(i, l.t0, l.t1, heard);
   });
+  if (partial) throw partial;
 }

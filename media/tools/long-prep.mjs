@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { askJson } from './gemini-lite.mjs';
 import { proofArabic } from '../lib/arabic-proof.mjs';
+import { inLang } from '../lib/lang-check.mjs';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const id = process.argv[2];
@@ -23,7 +24,6 @@ const others = read(placesFile, []).filter((p) => !spec.places.some((x) => x.nam
 write(placesFile, [...spec.places, ...others]);
 
 const out = path.join(REPO, 'content', 'youtube', `${id}.json`);
-if (fs.existsSync(out)) { console.log(`${id} is written already`); process.exit(0); }
 
 const LANGS = {
   ar: { name: 'العامية المصرية الأصيلة، بأسلوب حكواتي وثائقي هادي وذكي (مش مبالغة ومش فصحى)', style: 'اتكلم بالعامية المصرية الأصيلة زي حكواتي سينمائي وثائقي: صوت عميق ودافي وهادي، فيه تشويق من غير مبالغة، ووقفات طبيعية.' },
@@ -31,6 +31,38 @@ const LANGS = {
   en: { name: 'plain, vivid spoken American English (simple words, for viewers 45 and older), calm documentary storytelling', style: undefined },
 };
 const L = LANGS[spec.lang];
+
+// every spoken line must be in the video's language: a line that is not gets rewritten in it, or the run stops
+// before any voice is paid for
+async function inOwnLanguage(lines) {
+  for (let round = 1; round <= 6; round++) {
+    const wrong = lines.filter((l) => !inLang(l.en, spec.lang));
+    if (!wrong.length) return;
+    console.log(`language: ${wrong.length} lines are not in "${spec.lang}", rewriting (round ${round})`);
+    for (let i = 0; i < wrong.length; i += 12) {
+      const part = wrong.slice(i, i + 12);
+      const r = await askJson(`Translate these narration lines of a documentary into: ${L.name}.
+Keep every fact, name, date and number exactly; add nothing, drop nothing; natural spoken sentences. Never leave a line in English.
+Return JSON {"lines": [{"n": 1, "line": "the translated line"}]}.
+${JSON.stringify(part.map((l, k) => ({ n: k + 1, line: l.en })))}`, { temperature: 0.2 });
+      for (const t of r?.lines || []) {
+        const l = part[t.n - 1];
+        if (l && t.line && inLang(t.line, spec.lang) && t.line.length > l.en.length * 0.5 && t.line.length < l.en.length * 1.8) { l.en = spec.lang === 'ar' ? proofArabic([t.line]).fixed[0] : t.line; if (l.card) l.card = ''; }
+      }
+      await sleep(8000);
+    }
+  }
+  const left = lines.filter((l) => !inLang(l.en, spec.lang)).length;
+  if (left) throw new Error(`${left} lines are still not in "${spec.lang}"`);
+}
+
+if (fs.existsSync(out)) {
+  const script = read(out);
+  await inOwnLanguage(script.chapters.flatMap((x) => x.lines));
+  write(out, script);
+  console.log(`${id} is written already, every line is in "${spec.lang}"`);
+  process.exit(0);
+}
 
 const UA = { 'User-Agent': 'ZALA-VIP-tours/1.0 (https://www.zalavip.com)' };
 const sources = new Set();
@@ -69,10 +101,11 @@ Walk the viewer through the place: "now we stand before...", what to look at, wh
 Use ONLY the facts in the TEXT. Never invent or guess a name, date or number; if unsure, say it in general terms or leave it out. Never say we filmed inside. No hype, no "subscribe".
 ${told ? `Earlier chapters already told this (do not repeat it):\n${told}` : ''}
 For each line give 2 short ENGLISH picture search queries that would really show it.
-Return JSON {"title": "short chapter title in the same language", "lines": [{"en": "the spoken line", "flight": false, "queries": ["", ""]}]}
+Every "line" is written in that language only${spec.lang === 'en' ? '' : ', never in English, although the TEXT is English'}.
+Return JSON {"title": "short chapter title in the same language", "lines": [{"line": "the spoken line", "flight": false, "queries": ["", ""]}]}
 TEXT:
 ${text.slice(0, 40000)}`, { temperature: 0.6 });
-    const fresh = (s?.lines || []).filter((l) => l.en && !lines.some((x) => x.en === l.en));
+    const fresh = (s?.lines || []).map((l) => ({ ...l, en: l.line || l.en })).filter((l) => l.en && !lines.some((x) => x.en === l.en));
     if (!fresh.length) { await sleep(30000); continue; }
     const check = await askJson(`Check each line against the TEXT. A line is bad only when it states a name, date, number or event that the text does not support, or contradicts it.
 Return JSON {"bad": [{"n": 1, "why": ""}]}.
@@ -88,6 +121,7 @@ ${text.slice(0, 40000)}`, { temperature: 0.1 });
   }
   if (count(lines) < per * 0.75) throw new Error(`chapter ${c + 1}: only ${count(lines)} of ${per} words`);
 
+  await inOwnLanguage(lines);
   if (spec.lang === 'ar') {
     // wrong or non-Egyptian words slipped through before ("تخلّص هندسي"): a language pass that may only swap words
     const p = await askJson(`راجع السطور دي لغوياً بالعامية المصرية. صلّح بس الكلمة الغلط أو اللي مالهاش معنى في السياق أو اللي مش مصري. متغيرش المعنى ولا الأسماء ولا الأرقام ولا ترتيب الجمل.
@@ -104,6 +138,8 @@ ${JSON.stringify(lines.map((l, i) => ({ n: i + 1, line: l.en })))}`, { temperatu
   write(draftFile, draft);
 }
 
+// chapters kept from an earlier run are held to the same rule
+await inOwnLanguage(draft.chapters.flatMap((x) => x.lines));
 // the map flight covers at most the first three lines
 const first = draft.chapters[0].lines;
 first.forEach((l, i) => { if (i < 3) l.flight = true; else delete l.flight; });
