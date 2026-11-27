@@ -31,6 +31,10 @@ const SLOTS = [
   { wf: 'arabic-prep.yml', at: '05:00', needs: 'ARABIC_LIVE' },   // Arabic machine: off until the owner sets ARABIC_LIVE=1
   { wf: 'arabic.yml', at: '05:30', needs: 'ARABIC_LIVE' },
   { wf: 'photo-prep.yml', at: '06:05' },
+  // the world map: ten places get their voice two hours before Gemini's free quota renews (08:00 UTC, 07:00 in summer),
+  // and the review + writing walk starts just after it renews
+  { wf: 'atlas-voices.yml', at: '06:00', window: 100 },
+  { wf: 'atlas-world-daily.yml', at: '08:20' },
   { wf: 'insights.yml', at: '09:47' },
   { wf: 'telegram-day.yml', at: '15:00' },   // the audience channels: today's written posts, 6 pm Cairo
   { wf: 'photos.yml', at: '18:00', inputs: ['-f', 'now=true'] },   // 1pm US Eastern
