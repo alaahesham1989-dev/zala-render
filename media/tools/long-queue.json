@@ -1,0 +1,97 @@
+{
+  "startDay": "2026-11-28",
+  "order": [
+    "ar",
+    "es",
+    "en"
+  ],
+  "size": {
+    "ar": {
+      "minutes": 25,
+      "words": 3700
+    },
+    "es": {
+      "minutes": 20,
+      "words": 3250
+    },
+    "en": {
+      "minutes": 15,
+      "words": 2550
+    }
+  },
+  "videos": {
+    "ar": [
+      {
+        "id": "ZV-ARL01",
+        "topic": "ZV-ARL01"
+      },
+      {
+        "id": "ZV-ARL02",
+        "topic": "ZV-TGIZA"
+      },
+      {
+        "id": "ZV-ARL03",
+        "topic": "ZV-TALEX"
+      },
+      {
+        "id": "ZV-ARL04",
+        "topic": "ZV-ESL01"
+      },
+      {
+        "id": "ZV-ARL05",
+        "topic": "ZV-ENL01"
+      }
+    ],
+    "es": [
+      {
+        "id": "ZV-ESL01",
+        "topic": "ZV-ESL01"
+      },
+      {
+        "id": "ZV-ESL02",
+        "topic": "ZV-ENL01"
+      },
+      {
+        "id": "ZV-ESL03",
+        "topic": "ZV-ARL01"
+      },
+      {
+        "id": "ZV-ESL04",
+        "topic": "ZV-TGIZA"
+      },
+      {
+        "id": "ZV-ESL05",
+        "topic": "ZV-TALEX"
+      }
+    ],
+    "en": [
+      {
+        "id": "ZV-ENL01",
+        "topic": "ZV-ENL01"
+      },
+      {
+        "id": "ZV-ENL02",
+        "topic": "ZV-ARL01"
+      },
+      {
+        "id": "ZV-ENL03",
+        "topic": "ZV-ESL01"
+      },
+      {
+        "id": "ZV-ENL04",
+        "topic": "ZV-TGIZA"
+      },
+      {
+        "id": "ZV-ENL05",
+        "topic": "ZV-TALEX"
+      }
+    ]
+  },
+  "opening": [
+    "ar",
+    "ar",
+    "ar",
+    "es",
+    "es"
+  ]
+}

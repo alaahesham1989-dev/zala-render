@@ -26,7 +26,7 @@ import { buildAss as buildReelAss, shapeArabic } from './lib/captions.mjs';
 import { CACHE, CONTENT, OUT, TMP, FONTS, BRAND, REPO } from './lib/paths.mjs';
 import { geminiKeys, keyFor, markSpent, clearSpent, keyRefused } from './lib/gemini-keys.mjs';
 import { config as laneConfig } from './tools/lang/paths.mjs';
-import { groupLines, splitChunk } from './lib/voice-chunks.mjs';
+import { groupLines, splitChunk, PartialCut } from './lib/voice-chunks.mjs';
 import { numerals } from './lib/display-numbers.mjs';
 import { screenPictures, directEpisode } from './lib/director.mjs';
 import { timedWords, heardOf, captionEvents, dustEvents, sweepEvent, flashEvent, teaserEvents } from './lib/punch.mjs';
@@ -42,7 +42,7 @@ const DEFAULT_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-tts';
 const DEFAULT_VOICE = 'Orus';
 const DEFAULT_STYLE = 'A gripping storyteller telling a true story to a friend: warm, confident and full of suspense, lively pace, natural pauses before the big reveals.';
 const AUDIO_TOKENS_PER_SEC = 25;   // measured on gemini-3.8-flash-tts
-const VOICE_WORDS_PER_REQUEST = 190;   // the free plan allows 10 voice requests a day: a 12-minute episode fits in them
+const VOICE_WORDS_PER_REQUEST = Number(process.env.VOICE_WORDS) || 190;   // the free plan allows 10 voice requests a day: a 12-minute episode fits in them
 const VOICE_REQUEST_GAP = 21000;   // and 3 a minute
 const GOLD = '&H0037AFD4&', WHITE = '&H00FFFFFF&';
 // the factory can add lighter models when these are all busy (GEMINI_TEXT_MODELS, comma separated)
@@ -102,7 +102,7 @@ function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
     ci, li, key: `${ci}.${li}`, label: l.label || `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
-    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip, extra: l.extra,
+    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, take: l.take, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip, extra: l.extra,
   })));
   return limit ? flat.slice(0, limit) : flat;
 }
@@ -112,6 +112,16 @@ const outDir = (id) => path.join(OUT, id, 'publish');
 const reviewDir = (id) => path.join(OUT, id, 'DO-NOT-PUBLISH-internal');
 // an Arabic copy (script.lang 'ar') draws every text in an Arabic font
 let LANG_FONT = '';
+let HAS_LONG = false;   // is there a long video of this story (an episode's reel, or script.longVideo)
+let SCRIPT_LANG = 'en';
+let END_LINE = '';   // an ad's own closing words (script.endLine)
+let MARK_FROM = 0;   // seconds before our mark appears (an ad opens without a logo)   // a Latin-script language other than English (Spanish)
+const SCREEN = {
+  en: { chapter: 'CHAPTER', recon: 'ARTISTIC RECONSTRUCTION', sub: 'SUBSCRIBE', like: 'LIKE  ·  COMMENT  ·  SHARE', trip: 'Plan your Egypt trip:  zalavip.com', next: 'WATCH NEXT', soon: 'THE NEXT CASE IS COMING' },
+  ar: { chapter: 'الفصل', recon: 'تصور فني', sub: 'اشترك', like: 'لايك  ·  كومنت  ·  شير', trip: 'خطط لرحلتك في مصر:  zalavip.com', next: 'شاهد كمان', soon: 'الحكاية الجاية في الطريق' },
+  es: { chapter: 'CAPÍTULO', recon: 'RECONSTRUCCIÓN ARTÍSTICA', sub: 'SUSCRÍBETE', like: 'ME GUSTA  ·  COMENTA  ·  COMPARTE', trip: 'Planea tu viaje a Egipto:  zalavip.com', next: 'A CONTINUACIÓN', soon: 'PRONTO, OTRA HISTORIA' },
+};
+const screen = () => SCREEN[LANG_FONT ? 'ar' : SCRIPT_LANG] || SCREEN.en;
 const ROYAL = /statue|bust|mask|gold|pharaoh|king|queen|crown|treasure|sarcophag|colossus|throne|jewel|coffin/i;
 const shotsFile = (id) => path.join(CONTENT, 'youtube', `${id}.shots.json`);
 
@@ -171,7 +181,7 @@ const voiceParams = (script) => ({
   model: DEFAULT_MODEL, voice: script.voice || DEFAULT_VOICE, style: script.voiceStyle || DEFAULT_STYLE, tempo: Number(script.voiceTempo) || 1,
 });
 const voiceFileOf = (script, f, vp = voiceParams(script)) => f.extra ? extraVoice(script, f.say) :
-  path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo].join('|'))}.wav`);
+  path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo, ...(f.take ? [f.take] : [])].join('|'))}.wav`);
 
 const extraVoice = (script, text) => path.join(CACHE, 'voice', script.id, `x-${hash(text)}.wav`);
 
@@ -208,7 +218,7 @@ async function speakLine(text, vp, file) {
     let res, data;
     try {
       res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(300000),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: AbortSignal.timeout(900000),   // a long narration takes minutes; asking again would cost a request
       });
       data = await res.json();
     } catch (e) {
@@ -331,10 +341,15 @@ async function stageVoice(script, flat, { voiceFrom } = {}) {
           splitChunk(chunk, group.map((f) => pronounce(f.say)), files);
           log(`  [${group[0].label} to ${group[group.length - 1].label}] ${durationOf(chunk).toFixed(1)}s, ${group.length} lines`);
         } catch (e) {
+          if (e instanceof PartialCut) {
+            log(`  [${group[0].label}] ${e.done} of ${group.length} lines kept (${e.message}), asking again for the rest`);
+            queue.unshift(group.slice(e.done));
+          } else {
           log(`  [${group[0].label}] could not cut this narration at its pauses (${e.message}), asking for these lines in two smaller parts`);
           files.forEach((x) => fs.rmSync(x, { force: true }));
           const half = Math.ceil(group.length / 2);
           queue.unshift(group.slice(0, half), group.slice(half));
+          }
         }
         if (fresh) await sleep(VOICE_REQUEST_GAP);
       }
@@ -583,7 +598,7 @@ async function mapStill(place) {
     const small = filterPath(path.join(FONTS, 'Lato-Bold.ttf'));
     const name = `${file}.txt`;
     fs.writeFileSync(name, place.name.toUpperCase());
-    ff(['-i', raw, '-frames:v', '1', '-vf', `eq=saturation=0.85:brightness=-0.04,drawtext=fontfile='${font}':textfile='${filterPath(name)}':fontcolor=0xD4AF37:fontsize=110:borderw=6:bordercolor=black@0.8:x=(w-text_w)/2:y=h*0.68,drawtext=fontfile='${small}':text='Mapbox / OpenStreetMap':fontcolor=white@0.8:fontsize=28:x=w-text_w-30:y=h-50`, '-q:v', '3', file]);
+    ff(['-i', raw, '-frames:v', '1', '-vf', /[\u0600-\u06FF]/.test(place.name) ? 'eq=saturation=0.85:brightness=-0.04' : `eq=saturation=0.85:brightness=-0.04,drawtext=fontfile='${font}':textfile='${filterPath(name)}':fontcolor=0xD4AF37:fontsize=110:borderw=6:bordercolor=black@0.8:x=(w-text_w)/2:y=h*0.68,drawtext=fontfile='${small}':text='Mapbox / OpenStreetMap':fontcolor=white@0.8:fontsize=28:x=w-text_w-30:y=h-50`, '-q:v', '3', file]);
     fs.rmSync(raw, { force: true });
     fs.rmSync(name, { force: true });
     return file;
@@ -1249,7 +1264,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
     tl.flat.forEach((f) => {
       if (f.sfx === 'impact') ev.push(flashEvent(f.T0 + 0.3, W, H));
       if (f.li === 0 && f.ci > 0) ev.push(sweepEvent(f.T0 + 0.1, W, H));
-      if (lineAssets(data, f.key).some((a) => a.recon)) dl(4, f.T0, f.T1, 'Recon', `{\\an9\\pos(${W - 40},${H - 44})\\fad(200,200)}ARTISTIC RECONSTRUCTION`);
+      if (lineAssets(data, f.key).some((a) => a.recon)) dl(4, f.T0, f.T1, 'Recon', `{\\an9\\pos(${W - 40},${H - 44})\\fad(200,200)}${screen().recon}`);
     });
   }
   // Arabic channel: no subtitles — the callout plate and chapter title carry the artifact name in English
@@ -1260,7 +1275,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   const cards = [...firstOf.entries()].filter(([ci]) => ci > 0).map(([ci, f]) => ({ ci, t0: f.T0 - 0.15 }));
   cards.forEach(({ ci, t0 }) => {
     dl(6, t0, t0 + 4.2, 'ChNo', `{\\an7\\pos(84,62)\\fad(300,500)\\1c${GOLD}\\p1}m 0 0 l 4 0 4 104 0 104{\\p0}`);
-    dl(6, t0, t0 + 4.2, 'ChNo', `{\\an7\\pos(106,62)\\fad(500,600)}CHAPTER ${ci}`);
+    dl(6, t0, t0 + 4.2, 'ChNo', `{\\an7\\pos(106,62)\\fad(500,600)}${screen().chapter} ${ci}`);
     dl(6, t0, t0 + 4.2, 'ChTitle', `{\\an7\\pos(104,94)\\fad(600,600)}${aesc(script.chapters[ci].title)}`);
   });
 
@@ -1280,7 +1295,7 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
   });
 
   // the short lines at the top wait for any chapter card or call-out to clear
-  if (!arabic && !LANG_FONT && script.teasers?.length) {   // an Arabic video (LANG_FONT set) never gets the English teaser lines
+  if (!arabic && !LANG_FONT && SCRIPT_LANG === 'en' && script.teasers?.length) {   // an Arabic video (LANG_FONT set) never gets the English teaser lines
     const busy = [...cards.map(({ t0 }) => [t0, t0 + 4.2]), ...callouts.map((f) => [f.T0 + 0.25, f.T0 + 3.85])].sort((a, b) => a[0] - b[0]);
     ev.push(...teaserEvents(script.teasers.map((x) => ({ t: (tl.flat[x.line]?.T0 ?? 0) + 0.1, text: x.text })).filter((x) => x.t < tl.mainEnd - 6), { W, busy, size: 64 }));
   }
@@ -1288,11 +1303,11 @@ function masterAss(tl, script, { arabic, data = { lines: {} } }) {
 
   // end card: the right half stays free for YouTube's end-screen elements
   const o = tl.mainEnd;
-  dl(6, o + 1.0, o + OUTRO - 0.8, 'Out1', '{\\an7\\pos(92,640)\\fad(500,500)}SUBSCRIBE');
-  dl(6, o + 1.6, o + OUTRO - 0.8, 'Out2', '{\\an7\\pos(96,780)\\fad(500,500)}LIKE  ·  COMMENT  ·  SHARE');
-  dl(6, o + 2.2, o + OUTRO - 0.8, 'Out3', '{\\an7\\pos(98,860)\\fad(500,500)}Plan your Egypt trip:  zalavip.com');
-  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next1', '{\\an7\\pos(1010,96)\\fad(500,500)}WATCH NEXT');
-  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next2', `{\\an7\\pos(1010,140)\\fad(500,500)}${aesc(script.nextPublished || 'THE NEXT CASE IS COMING')}`);
+  dl(6, o + 1.0, o + OUTRO - 0.8, 'Out1', '{\\an7\\pos(92,640)\\fad(500,500)}' + screen().sub);
+  dl(6, o + 1.6, o + OUTRO - 0.8, 'Out2', '{\\an7\\pos(96,780)\\fad(500,500)}' + screen().like);
+  dl(6, o + 2.2, o + OUTRO - 0.8, 'Out3', '{\\an7\\pos(98,860)\\fad(500,500)}' + screen().trip);
+  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next1', '{\\an7\\pos(1010,96)\\fad(500,500)}' + screen().next);
+  dl(6, o + 2.6, o + OUTRO - 0.8, 'Next2', `{\\an7\\pos(1010,140)\\fad(500,500)}${aesc(script.nextPublished || screen().soon)}`);
   return head + ev.join('\n') + '\n';
 }
 
@@ -1345,7 +1360,8 @@ function reelScene(s, out) {
   const tall = 2880, cropW = Math.round((tall * VW) / VH);
   const fullW = Math.round((width / height) * tall);
 
-  if (s.isAr) {
+  // the chosen opening picture fills the whole frame (no blurred borders, no pan that starts at an edge)
+  if (s.isAr && !s.opening) {
     if (width > height * 1.15) {
       // Landscape photo in 9:16 frame: Blurred ambient luxury background + sharp centered full image
       const bg = `scale=${VW}:${VH}:force_original_aspect_ratio=increase,crop=${VW}:${VH},gblur=sigma=45,eq=brightness=-0.22:saturation=0.85`;
@@ -1360,7 +1376,7 @@ function reelScene(s, out) {
       '-frames:v', String(FR), '-an', ...X264, out];
   }
 
-  if (fullW > cropW * 1.15) {
+  if (fullW > cropW * 1.15 && !s.opening) {
     // a wide photo travels across the frame so the whole picture is seen, nothing is lost to a centre crop
     const E = `((1-cos(PI*t/${s.dur.toFixed(3)}))/2)`;
     const x = s.idx % 2 ? `(iw-ow)*${E}` : `(iw-ow)*(1-${E})`;
@@ -1408,9 +1424,10 @@ function reelAss(reel, words, total, outro = REEL_OUTRO, speechEnd = total) {
   }
   const e0 = total - outro + 0.2;
   const end1Text = isAr ? (shapeArabic(['زالا VIP'])[0] || 'زالا VIP') : (LANG_FONT ? 'زالا VIP' : 'ZALA VIP CONCIERGE');
-  const end2Text = isAr ? (shapeArabic(['حكايات الفراعنة اللي مسمعتهاش'])[0] || 'حكايات الفراعنة اللي مسمعتهاش') : (LANG_FONT ? 'حكايات الفراعنة اللي مسمعتهاش' : 'FULL STORY ON YOUTUBE  ·  zalavip.com');
+  const end2Text = isAr ? (shapeArabic(['حكايات الفراعنة اللي مسمعتهاش'])[0] || 'حكايات الفراعنة اللي مسمعتهاش') : (LANG_FONT ? 'حكايات الفراعنة اللي مسمعتهاش' : SCRIPT_LANG === 'es' ? 'PLANEA TU VIAJE A EGIPTO  ·  zalavip.com' : HAS_LONG ? 'FULL STORY ON YOUTUBE  ·  zalavip.com' : 'PLAN YOUR EGYPT TRIP  ·  zalavip.com');
+  const closing = END_LINE ? (isAr ? (shapeArabic([END_LINE])[0] || END_LINE) : END_LINE) : '';
   lines.push(dl(e0, total, 'End1', `{\\an8\\pos(${VW / 2},1250)\\fad(250,0)}${end1Text}`));
-  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${end2Text}`));
+  lines.push(dl(e0 + 0.2, total, 'End2', `{\\an8\\pos(${VW / 2},1370)\\fad(250,0)}${closing || end2Text}`));
   return base.replace('\n\n[Events]', `\n${styles}\n\n[Events]`) + [...lines, ...dustEvents(0, speechEnd, VW, VH, { every: 0.4, orbsEvery: 2.4, seed: 11 }), sweepEvent(0.15, VW, VH)].join('\n') + '\n';
 }
 
@@ -1444,7 +1461,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     const anyPicture = () => reel.lines.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card && !a.map) || tl.flat.flatMap((x) => lineAssets(data, x.key)).find((a) => !a.card && !a.map);
     let assets = list.length ? list : [lastAsset || anyPicture()];
     // the first picture under the big opening words is a royal one (a statue, a mask, gold), never a dark or empty frame
-    if (i === 0) {
+    if (i === 0 && !script.openingChosen) {
       const royal = reel.lines.flatMap((x) => data.lines[x.key]?.beats || []).find((b) => b.asset && !b.asset.card && !b.asset.map && ROYAL.test(b.need || ''));
       if (royal) assets = [royal.asset, ...assets.filter((a) => a !== royal.asset)];
     }
@@ -1453,7 +1470,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
     words.push(...timedWords(f.cap, heardOf(voiceFileOf(script, f)), d).map((w) => ({ w: w.w, t0: w.t0 + t, t1: w.t1 + t })));
     assets.forEach((asset, b) => {
       lastAsset = asset;
-      scenes.push({ asset, start: start + (b * lineSpan) / assets.length, idx: scenes.length, sfx: f.sfx });
+      scenes.push({ asset, start: start + (b * lineSpan) / assets.length, idx: scenes.length, sfx: f.sfx, opening: !scenes.length && Boolean(script.openingChosen) });
     });
     if (f.sfx === 'impact') events.push({ name: 'impact', t: t + 0.3, g: 0.7 });
     if (f.sfx === 'hit') events.push({ name: 'hit', t, g: 0.8 });
@@ -1478,7 +1495,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
   const isAr = Boolean(LANG_FONT) || script.lang === 'ar' || /[\u0600-\u06FF]/.test(String(reel.hook || reel.title || ''));
   const clips = [];
   await pool(scenes.map((s, i) => ({ s, i })), 3, async ({ s }) => {
-    s.out = path.join(rw, `${hash(`${s.asset.file}|${s.idx}|${s.dur.toFixed(3)}`)}.mp4`);
+    s.out = path.join(rw, `${hash(`${s.asset.file}|${s.idx}|${s.dur.toFixed(3)}${s.opening ? '|opening' : ''}`)}.mp4`);
     s.isAr = isAr;
     if (!okClip(s.out)) await encodeTo(s.out, (part) => reelScene(s, part));
   });
@@ -1510,7 +1527,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
 
   const assFile = path.join(rw, 'captions.ass');
   fs.writeFileSync(assFile, reelAss(reel, words, total, outro, speechEnd), 'utf8');
-  g += `;[all]${GRADE}[gr];[${n + 1}:v]scale=-2:100,format=rgba,colorchannelmixer=aa=0.85[wm];[gr][wm]overlay=W-w-40:60:enable='lt(t,${(speechEnd).toFixed(2)})'[o];[o]${subsFilter(assFile)}[v]`;
+  g += `;[all]${GRADE}[gr];[${n + 1}:v]scale=-2:100,format=rgba,colorchannelmixer=aa=0.85[wm];[gr][wm]overlay=W-w-40:60:enable='between(t,${MARK_FROM},${(speechEnd).toFixed(2)})'[o];[o]${subsFilter(assFile)}[v]`;
   const gf = path.join(rw, 'graph.filter');
   fs.writeFileSync(gf, g);
 
@@ -1757,6 +1774,10 @@ async function main() {
   // arabic.yml only installs/bundles Noto Naskh Arabic (apt fonts-noto-naskh-arabic, media/brand/fonts/NotoNaskhArabic-Bold.ttf);
   // "Noto Kufi Arabic" is never on that machine, so libass fell back to a font with no Arabic glyphs — boxes on screen
   if (script.lang === 'ar') { LANG_FONT = 'Noto Naskh Arabic'; process.env.ZALA_CAPTION_FONT = LANG_FONT; }
+  else if (script.lang && script.lang !== 'en') { SCRIPT_LANG = script.lang; process.env.ZALA_SPOKEN = script.lang; }
+  HAS_LONG = !script.verticalOnly || Boolean(script.longVideo);
+  END_LINE = script.endLine || '';
+  MARK_FROM = script.noEarlyMark ? 3 : 0;
   const flat = flatten(script, limit);
 
   if (cmd === 'check') { process.exit(stageCheck(script, flat, { voiceFrom }) ? 0 : 1); }

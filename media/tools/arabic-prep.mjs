@@ -110,8 +110,8 @@ function loadPictures() {
 }
 
 // ── 3. write the Arabic short script ────────────────────────────────
-const TARGET_WORDS = 124;  // ~56-58 seconds at Egyptian speech pace (~2.15 words/sec)
-const TARGET_LINES = 8;    // 8 lines for a full 57-59 second short
+const TARGET_WORDS = Number(process.env.ZALA_SHORT_WORDS) || 124;  // ~56-58 seconds at Egyptian speech pace (~2.15 words/sec)
+const TARGET_LINES = Number(process.env.ZALA_SHORT_LINES) || 8;    // 8 lines for a full 57-59 second short
 
 async function writeScript(bank, pics) {
   const known = new Set(pics.map((p) => p.id));
@@ -122,8 +122,8 @@ ${DIRECTION}
 ${SHOT_RULES}
 
 قواعد الشورت:
-- المدة المطلوبة: دقيقة كاملة (حوالي ٥٧ إلى ٥٨ ثانية) = تقريباً ١٢٠ إلى ١٢٨ كلمة بالعامية المصرية.
-- عدد السطور: ٨ سطور بالظبط.
+- المدة المطلوبة: حوالي ${Math.round(TARGET_WORDS / 2.15)} ثانية = تقريباً ${TARGET_WORDS - 4} إلى ${TARGET_WORDS + 4} كلمة بالعامية المصرية.
+- عدد السطور: ${TARGET_LINES} سطور بالظبط.
 - أسلوب الحكي: نبرة حكواتي سينمائي ذكي، وقفات تشويقية، وجمل قصيرة إيقاعية تشد الودن.
 - كل سطر: جملة أو جملتين بالعامية، مع مراعاة التدفق الموسيقي والوقفات.
 - السطر الأول: الهوك الصادم اللي يشد من أول ثانية.

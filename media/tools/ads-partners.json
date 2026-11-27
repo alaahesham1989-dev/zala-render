@@ -1,0 +1,142 @@
+{
+  "note": "Three 'be our partner' ads (owner's order 2026-11-26, texts: zala-vip/docs/design/ADS_PARTNERS_3.md). Production only, never published from here. TikTok and Instagram only.",
+  "ZV-AD01": {
+    "title": "كن شريكنا: ليموزين ومطار",
+    "hook": "عندك عربية؟",
+    "page": "https://www.zalavip.com/partners/airport-limousine",
+    "queries": [
+      "black sedan car",
+      "chauffeur car door",
+      "Cairo International Airport terminal",
+      "airport road Cairo",
+      "Cairo airport arrivals hall"
+    ],
+    "lines": [
+      {
+        "en": "عندك عربية نضيفة وبتيجي في ميعادك؟",
+        "use": "owner"
+      },
+      {
+        "en": "في ZALA VIP، كونسيرج فاخر في مصر، بنسجّل شركاء ليموزين ومطار.",
+        "queries": [
+          "Cairo airport terminal",
+          "airport road car"
+        ],
+        "commons": [
+          "File:Cairo Airport Terminal 3.jpg"
+        ]
+      },
+      {
+        "en": "القاهرة، إسكندرية، الغردقة، أو أي مدينة إنت فيها.",
+        "use": "map"
+      },
+      {
+        "en": "اكتب مدينتك وعربيتك والورق اللي معاك، وفريقنا هيكلمك على واتساب.",
+        "use": "form"
+      },
+      {
+        "en": "كن شريكنا. اللينك في البايو.",
+        "use": "owner"
+      }
+    ],
+    "aiDisclosure": true
+  },
+  "ZV-AD02": {
+    "title": "كن شريكنا: موردين فنادق B2B",
+    "hook": "مورّد فنادق؟",
+    "page": "https://www.zalavip.com/partners",
+    "queries": [
+      "luxury hotel lobby Cairo",
+      "hotel reception desk",
+      "hotel room key",
+      "hotel room Nile view",
+      "laptop office desk work"
+    ],
+    "lines": [
+      {
+        "en": "مكتبك بيورّد فنادق B2B؟ يبقى بندوّر عليك.",
+        "use": "owner"
+      },
+      {
+        "en": "ZALA VIP كونسيرج فاخر، وعايزين موردين فنادق لضيوفنا.",
+        "queries": [
+          "hotel reception desk",
+          "hotel room key"
+        ],
+        "commons": [
+          "File:Lobby Kempinski .JPG"
+        ]
+      },
+      {
+        "en": "أسعار صافية واضحة، وشروط إلغاء مفهومة.",
+        "queries": [
+          "laptop office desk",
+          "hotel lobby"
+        ],
+        "commons": [
+          "File:Cherry Maryski Hotel lobby.jpg"
+        ]
+      },
+      {
+        "en": "سجّل اسم مكتبك ومدينتك والمناطق اللي بتغطيها.",
+        "use": "form"
+      },
+      {
+        "en": "كن شريكنا. اللينك في البايو.",
+        "use": "owner"
+      }
+    ],
+    "aiDisclosure": true
+  },
+  "ZV-AD03": {
+    "title": "كن شريكنا: رحلات في كل المحافظات",
+    "hook": "بتنظّم رحلات؟",
+    "page": "https://www.zalavip.com/partners",
+    "queries": [
+      "Aswan Nile felucca",
+      "Luxor temple sunrise",
+      "Sinai mountains Egypt",
+      "Red Sea coast Egypt",
+      "Siwa oasis",
+      "Alexandria corniche"
+    ],
+    "lines": [
+      {
+        "en": "بتنظّم رحلات في محافظتك وعارفها شبر شبر؟",
+        "use": "owner"
+      },
+      {
+        "en": "ZALA VIP بيسجّل شركاء رحلات في الجمهورية كلها.",
+        "queries": [
+          "Aswan Nile felucca"
+        ],
+        "commons": [
+          "felucca Nile Aswan",
+          "Aswan Nile"
+        ]
+      },
+      {
+        "en": "الأقصر وأسوان، سينا والبحر الأحمر، إسكندرية والواحات.",
+        "queries": [
+          "Siwa oasis",
+          "Red Sea coast",
+          "Sinai mountains"
+        ],
+        "commons": [
+          "Red Sea beach Sharm el-Sheikh coast",
+          "Siwa oasis landscape"
+        ]
+      },
+      {
+        "en": "اكتب مدينتك والرحلات اللي بتقدمها والورق اللي معاك.",
+        "use": "form"
+      },
+      {
+        "en": "كن شريكنا. اللينك في البايو.",
+        "use": "owner"
+      }
+    ],
+    "aiDisclosure": true
+  },
+  "aiDisclosure": "REQUIRED at upload on TikTok and Instagram: turn on the AI-generated content label (the presenter picture is generated). Our server publisher does not set it, so it is done by hand."
+}

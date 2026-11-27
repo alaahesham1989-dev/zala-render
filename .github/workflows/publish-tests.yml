@@ -1,0 +1,54 @@
+name: ZALA publish approved test shorts
+# Publishes only the videos listed in media/tools/publish-tests.json (the owner's approval). A re-run posts nothing twice.
+on:
+  push:
+    branches: [publish-shorts]
+concurrency:
+  group: zala-publish-tests
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - { id: ZV-ART01, lang: ar }
+          - { id: ZV-ENT01, lang: en }
+          - { id: ZV-EST01, lang: es }
+    env:
+      ID: ${{ matrix.id }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ matrix.lang == 'es' && (secrets.YOUTUBE_REFRESH_TOKEN_ES || 'missing') || matrix.lang == 'ar' && secrets.YOUTUBE_REFRESH_TOKEN_AR || secrets.YOUTUBE_REFRESH_TOKEN }}
+      META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bring the approved package
+        run: |
+          set -euo pipefail
+          aws s3 sync "s3://${R2_BUCKET}/renders/$ID/publish" publish --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/script.json" script.json --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/items.jsonl" items.jsonl --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" verdict.json --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/published.json" published.json --endpoint-url "$E" --no-progress || true
+      - name: Publish
+        run: node media/tools/publish-tests.mjs "$ID"
+      - name: Remember what was published
+        if: always()
+        run: |
+          [ -f published.json ] && aws s3 cp published.json "s3://${R2_BUCKET}/renders/$ID/published.json" --endpoint-url "$E" --no-progress || true

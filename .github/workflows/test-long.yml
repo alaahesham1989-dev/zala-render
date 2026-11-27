@@ -1,0 +1,171 @@
+name: ZALA test long tours (one per language, R2 only)
+# One long virtual tour per language: script chapter by chapter, map flight, pictures, voice, render, quality check.
+# No publishing, no outbox, no queue, no shared state saved, no publishing token or Meta account.
+# Everything made is kept on R2, so a second run continues (voice already paid for is never made again).
+on:
+  push:
+    branches: [test-long]
+concurrency:
+  group: zala-test-long
+  cancel-in-progress: false
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { id: ZV-ARL01, lang: ar }
+          - { id: ZV-ESL01, lang: es }
+          - { id: ZV-ENL01, lang: en }
+    env:
+      ID: ${{ matrix.id }}
+      LANG_CODE: ${{ matrix.lang }}
+      ZALA_LINE: ${{ matrix.lang }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      # a long video needs more voice requests than one free key gives in a day: its own key first, then the others
+      # (English production is paused). The two atlas keys are never touched.
+      GEMINI_API_KEYS: ${{ matrix.lang == 'ar' && format('{0},{1},{2},{3}', secrets.GEMINI_API_KEY_AR, secrets.GEMINI_API_KEY, secrets.GEMINI_API_KEY_3, secrets.GEMINI_API_KEYS) || matrix.lang == 'es' && format('{0},{1},{2},{3}', secrets.GEMINI_API_KEY_ES, secrets.GEMINI_API_KEY_3, secrets.GEMINI_API_KEYS, secrets.GEMINI_API_KEY) || format('{0},{1},{2}', secrets.GEMINI_API_KEYS, secrets.GEMINI_API_KEY, secrets.GEMINI_API_KEY_3) }}
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+      NO_ARABIC_COPY: "1"
+      NO_OUTBOX: "1"
+      # the free voice gives 10 requests a day per project: long narrations (about 3.5 minutes each), cut here by the words heard
+      VOICE_WORDS: "600"
+      MANIM_PY: /tmp/manim/bin/python
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Passed already?
+        run: |
+          done=no
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass ? 0 : 1)' && done=yes
+          echo "DONE=$done" >> "$GITHUB_ENV"; echo "RESULT $ID passed earlier: $done"
+      - name: Library and earlier work on this video
+        if: env.DONE != 'yes'
+        run: |
+          bash media/tools/line/ci-setup.sh content
+          mkdir -p content/youtube content/library content/long
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/script.json" "content/youtube/$ID.json" --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/draft.json" "content/long/$ID.json" --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/items.jsonl" own-items.jsonl --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
+          [ -s own-items.jsonl ] && cat own-items.jsonl >> content/library/items.jsonl || true
+          if [ -f "content/youtube/$ID.json" ] && aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" verdict-last.json --endpoint-url "$E" --no-progress; then node media/tools/revoice.mjs "content/youtube/$ID.json" verdict-last.json; fi
+          node -e '
+            const fs=require("fs"), f="content/library/treasures.json", id=process.env.ID, s=require("./media/tools/long-treasures.json")[id];
+            const lib=JSON.parse(fs.readFileSync(f)); lib[id]={ title:s.subject, hook:s.subject, seconds:s.minutes*60, match:s.match, archive:s.archive, queries:s.queries };
+            fs.writeFileSync(f, JSON.stringify(lib));'
+      - name: Tools
+        if: env.DONE != 'yes'
+        run: |
+          bash media/tools/line/ci-setup.sh render
+          sudo apt-get install -y fonts-noto-naskh-arabic >/dev/null 2>&1 || true
+          pip install --quiet pillow arabic-reshaper python-bidi
+          mkdir -p ~/.local/share/fonts && cp media/brand/fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f
+          aws s3 sync "s3://${R2_BUCKET}/render-cache/work/$ID" "media/tmp/render/$ID" --endpoint-url "$E" --no-progress || true
+          node --test media/lib/heard.test.mjs media/lib/punch.test.mjs media/lib/voice-chunks.test.mjs
+      - name: Write the script (chapter by chapter, kept as it grows)
+        if: env.DONE != 'yes'
+        run: |
+          set -uo pipefail
+          for i in 1 2 3 4; do
+            node media/tools/long-prep.mjs "$ID" && break
+            aws s3 cp "content/long/$ID.json" "s3://${R2_BUCKET}/renders/$ID/draft.json" --endpoint-url "$E" --no-progress || true
+            echo "prep: waiting 5 minutes"; sleep 300
+          done
+          [ -f "content/youtube/$ID.json" ]
+          aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress
+      - name: The map flight (from space to the place)
+        if: env.DONE != 'yes'
+        run: |
+          set -uo pipefail
+          node media/tools/tour-flight.mjs "$ID" || echo "RESULT $ID map flight stopped"
+          aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress
+      - name: Make and check (listen and look), fixing once
+        if: env.DONE != 'yes'
+        timeout-minutes: 290
+        run: |
+          set -uo pipefail
+          exec > >(tee -a run.log) 2>&1
+          for round in 1 2; do
+            review=""; [ -f review-last.json ] && review=review-last.json
+            [ "$round" -gt 1 ] && { review="quality-$ID/verdict.json"; [ -f "quality-$ID/review.json" ] && review="quality-$ID/review.json"; }
+            bash media/tools/line/make.sh "$ID" tour "$review" || { echo "RESULT $ID make stopped (round $round)"; continue; }
+            if bash media/tools/line/quality.sh "$ID" "quality-$ID"; then break; fi
+            echo "QUALITY: $ID fixing (round $round)"
+          done
+      - name: Keep on R2
+        if: always() && env.DONE != 'yes'
+        run: |
+          [ -f "content/youtube/$ID.json" ] && aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress || true
+          [ -f "content/long/$ID.json" ] && aws s3 cp "content/long/$ID.json" "s3://${R2_BUCKET}/renders/$ID/draft.json" --endpoint-url "$E" --no-progress || true
+          if [ -f content/library/items.jsonl ]; then node -e 'const fs=require("fs"); let used=new Set(); try { used=new Set(JSON.parse(fs.readFileSync("content/youtube/"+process.env.ID+".json")).chapters.flatMap((c)=>c.lines).flatMap((l)=>l.pictures||[])); } catch {} fs.writeFileSync("own-items.jsonl", fs.readFileSync("content/library/items.jsonl","utf8").split("\n").filter((l)=>l && ((JSON.parse(l).topics||[]).includes(process.env.ID) || used.has(JSON.parse(l).id))).join("\n")+"\n")'; aws s3 cp own-items.jsonl "s3://${R2_BUCKET}/renders/$ID/items.jsonl" --endpoint-url "$E" --no-progress || true; fi
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress --quiet; done
+          [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
+          [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          if [ ! -f "quality-$ID/verdict.json" ] || ! node -e 'process.exit(require("./quality-"+process.env.ID+"/verdict.json").pass?0:1)'; then [ -d "media/tmp/render/$ID" ] && aws s3 sync "media/tmp/render/$ID" "s3://${R2_BUCKET}/render-cache/work/$ID" --endpoint-url "$E" --no-progress --exclude "*.ass" --quiet || true; fi
+          [ -f run.log ] && aws s3 cp run.log "s3://${R2_BUCKET}/renders/$ID/run.log" --endpoint-url "$E" --no-progress || true
+      - name: Result
+        if: always()
+        run: |
+          v="media/out/$ID/publish/$ID.mp4"
+          [ -f "$v" ] && echo "RESULT $ID seconds=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$v")"
+          [ -f "quality-$ID/verdict.json" ] && node -e 'const v=require("./quality-"+process.env.ID+"/verdict.json"); console.log("RESULT", v.id, "pass="+v.pass, "notes="+(v.notes||[]).length); v.reasons.slice(0,12).forEach((r)=>console.log("RESULT  - "+r.slice(0,200)))'
+          [ -f "quality-$ID/review.json" ] && node -e 'const r=require("./quality-"+process.env.ID+"/review.json"); console.log("RESULT heard", JSON.stringify(r.hearing||null), "loudness", JSON.stringify(r.audio.loudness))'
+          true
+
+  phone:
+    # a copy for the owner's phone: the same 1080p picture, newer compression, audio untouched; only for videos that passed
+    needs: make
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include: 
+          - { id: ZV-ARL01 }
+          - { id: ZV-ESL01 }
+          - { id: ZV-ENL01 }
+    env:
+      ID: ${{ matrix.id }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - name: Make the phone copy once
+        run: |
+          set -uo pipefail
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" v.json --endpoint-url "$E" --no-progress || exit 0
+          grep -q '"pass": *true' v.json || { echo "$ID has not passed: no copy"; exit 0; }
+          if aws s3 ls "s3://${R2_BUCKET}/renders/$ID/phone/$ID.mp4" --endpoint-url "$E" > /dev/null; then echo "$ID has its copy"; exit 0; fi
+          sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/publish/$ID.mp4" src.mp4 --endpoint-url "$E" --no-progress
+          ffmpeg -v error -y -i src.mp4 -map 0:v:0 -map 0:a:0 -c:v libx265 -preset medium -crf 22 -pix_fmt yuv420p -tag:v hvc1 -x265-params log-level=error -c:a copy -movflags +faststart phone.mp4
+          echo "RESULT $ID phone copy $(( $(stat -c%s phone.mp4)/1000000 ))MB"
+          aws s3 cp phone.mp4 "s3://${R2_BUCKET}/renders/$ID/phone/$ID.mp4" --endpoint-url "$E" --no-progress --content-type video/mp4

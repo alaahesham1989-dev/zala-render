@@ -16,6 +16,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { CONTENT, ROOT, TMP } from '../lib/paths.mjs';
 import { numerals } from '../lib/display-numbers.mjs';
 import { askJson } from './gemini-lite.mjs';
+import { keyFor } from '../lib/gemini-keys.mjs';
+import { ahashOf, nearCopy } from '../lib/ahash.mjs';
 
 const id = process.argv[2];
 const dry = process.argv.includes('--dry');
@@ -100,7 +102,10 @@ function score(line, p) {
   return strong.length * 4 + nm.length + w.length;
 }
 
+for (const l of lines) if (l.pictures?.length) l.pictures = l.pictures.filter((p) => byId.has(p));
 const uses = new Map();
+// how many words of the line's English picture searches a picture's own description carries
+const asked = (l, p) => { const hay = textOf(p).toLowerCase(); return [...new Set(words((l.queries || []).join(' ')))].filter((w) => hay.includes(w)).length; };
 // what the review refused on any earlier render of this episode: picture ids and video pages, never chosen again
 const banned = new Set(script.banned || []);
 for (const l of lines) for (const p of l.pictures || []) uses.set(p, (uses.get(p) || 0) + 1);
@@ -226,7 +231,8 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   const rev = JSON.parse(fs.readFileSync(reviewAt, 'utf8'));
   for (const r of rev.lines || []) {
     const l = lines[r.n - 1];
-    if (!l || (r.fits !== 'no' && !r.pictureProblem)) continue;
+    const tooLoose = (rev.lines || []).filter((x) => x.fits === 'loosely').length > (rev.lines || []).length * 0.25;
+    if (!l || l.keep || (r.fits !== 'no' && !r.pictureProblem && !r.watermark && !(tooLoose && r.fits === 'loosely' && r.n > 1))) continue;
     for (const p of l.pictures || []) banned.add(p);
     if (l.clip?.page) banned.add(l.clip.page);
     if (l.clip?.prep) banned.add(l.clip.url);
@@ -248,7 +254,8 @@ if (reviewAt && fs.existsSync(reviewAt)) {
   const learned = [...new Set([...known, ...candidates])];
   if (learned.length > known.length) { fs.mkdirSync(path.dirname(hardFile), { recursive: true }); fs.writeFileSync(hardFile, JSON.stringify({ words: learned.sort() }, null, 2) + '\n'); log(`learned ${learned.length - known.length} hard word(s) for every future episode: ${candidates.filter((w) => !known.includes(w)).join(', ')}`); }
   // the plain-English rewrite below is for English scripts only: on an Arabic script it turned the Arabic lines into English
-  if (bad.length && script.lang !== 'ar') {
+  // (a Spanish line would go the same way)
+  if (bad.length && (script.lang || 'en') === 'en') {
     const fix = await askJson(`A text-to-speech voice could not clearly match these spoken lines to their written words (hard names, foreign spellings, or awkward phrasing).
 Rewrite each line in plain, natural spoken American English a voice reads cleanly: same meaning and facts, same rough length, but avoid foreign
 transliterated spellings, hyphenated names and tongue-twisting phrasing; spell a hard name the simple common way or describe it instead if needed.
@@ -299,6 +306,106 @@ log(`prepared Flow shots placed: ${fromPrep}`);
 const openingBoost = (l, p) => (!script.verticalOnly || l !== lines[0]) ? 0
   : (p.shine ? 3 : 0) + (p.recon ? 2 : 0) + (/photo/i.test(p.seen?.type || '') ? 2 : 0)
     - (/drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.what || ''} ${p.title || ''}`) ? 8 : 0);
+// ── the opening frame ────────────────────────────────────────────────
+// descriptions do not say reliably that a plate is grey or faded, so the picture itself is measured
+const DRAWN = /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map|document|typescript|manuscript page|letter|report|catalogue|PHOTO0{3}/i;
+const kindOf = (p) => `${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`;
+async function colour(p) {
+  try {
+    const dir = path.join(TMP, 'gapfill', id);
+    fs.mkdirSync(dir, { recursive: true });
+    const src = path.join(dir, `${hash(p.url)}.src`);
+    if (!fs.existsSync(src)) {
+      const res = await fetch(p.url, { headers: { 'User-Agent': 'ZalaRender/1.0 (https://www.zalavip.com)' }, signal: AbortSignal.timeout(60000) });
+      if (!res.ok) return null;
+      fs.writeFileSync(src, Buffer.from(await res.arrayBuffer()));
+    }
+    const r = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', ['-hide_banner', '-nostats', '-i', src, '-frames:v', '1', '-vf', 'scale=96:96,signalstats,metadata=print', '-f', 'null', '-'], { encoding: 'utf8' });
+    const num = (k) => Number((String(r.stderr).match(new RegExp(`signalstats\\.${k}=([\\d.]+)`)) || [])[1]);
+    return { sat: num('SATAVG'), light: num('YAVG') };
+  } catch { return null; }
+}
+const strong = (c) => c && c.sat >= 18 && c.light >= 55 && c.light <= 205;
+
+/** The eye that judges the finished short looks at the candidates first, cropped as the first frame will be. */
+async function judge(list) {
+  const parts = [{ text: `Pick the first frame of a vertical short titled "${script.title}". It decides whether people stop scrolling.
+Best: sharp, rich colour and light, one clear strong subject that fills the frame, really showing the subject of the title (a picture of another place or monument is wrong), no text or watermark.
+Return only JSON {"best": 0, "score": 1}, best = the number of the picture, score = 1 to 10.` }];
+  const shown = [];
+  for (const p of list) {
+    const src = path.join(TMP, 'gapfill', id, `${hash(p.url)}.src`);
+    const out = `${src}.first.jpg`;
+    const r = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-frames:v', '1', '-vf', "crop='min(iw,ih*9/16)':'min(ih,iw*16/9)',scale=360:640", '-q:v', '5', out]);
+    if (r.status !== 0 || !fs.existsSync(out)) continue;
+    parts.push({ text: `Picture ${shown.length}: ${String(p.title).slice(0, 90)}` }, { inlineData: { mimeType: 'image/jpeg', data: fs.readFileSync(out).toString('base64') } });
+    shown.push(p);
+  }
+  for (const model of ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']) {
+    const key = keyFor(model);
+    if (!key) continue;
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } }), signal: AbortSignal.timeout(120000),
+      });
+      const data = await res.json();
+      const answer = JSON.parse(data?.candidates?.[0]?.content?.parts?.find((x) => x.text)?.text || 'null');
+      if (answer && shown[answer.best]) return { p: shown[answer.best], score: answer.score };
+    } catch (e) { log(`opening frame judge: ${e.name}`); }
+  }
+  return shown[0] ? { p: shown[0], score: null } : null;
+}
+
+// chosen once, and again only when the review refused it (a refused picture has just been taken off the line)
+const first = lines[0];
+const nowFirst = first && byId.get((first.pictures || [])[0]);
+if (!dry && script.verticalOnly && first && !first.keep && !first.map && !first.clip && !(reviewAt && nowFirst)) {
+  const ranked = [];
+  const pool = [...(nowFirst ? [nowFirst] : []), ...clean.filter((x) => x !== nowFirst).sort((a, b) => (b.shine || 0) - (a.shine || 0))];
+  for (const p of pool.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x))).slice(0, 60)) {
+    const c = await colour(p);
+    if (strong(c)) ranked.push({ p, value: Math.min(c.sat, 60) + (p.shine || 0) * 30 + (p.recon ? 10 : 0) + (p === nowFirst ? 15 : 0) });
+  }
+  const best = ranked.length ? await judge(ranked.sort((a, b) => b.value - a.value).slice(0, 10).map((x) => x.p)) : null;
+  if (best) { first.pictures = [best.p.id]; script.openingChosen = true; log(`opening frame (${best.score ?? '?'}/10): ${best.p.title}`); }
+  else log('opening frame: no colourful photograph in the library');
+}
+
+if (script.verticalOnly && !dry) {
+  // older library pictures carry no hash, so every candidate's look is measured from the picture itself
+  const looks = new Map();
+  const look = async (p) => {
+    if (!looks.has(p.id)) {
+      await colour(p);   // downloads it
+      looks.set(p.id, ahashOf(path.join(TMP, 'gapfill', id, `${hash(p.url)}.src`)));
+    }
+    return looks.get(p.id);
+  };
+  const shown = [];
+  const grey = async (p) => { const c = await colour(p); return !c || c.sat < 8; };
+  const repeats = async (p) => { const h = await look(p); return shown.some((x) => x.id === p.id || nearCopy(x.look, h)); };
+  let swapped = 0;
+  for (const [n, l] of lines.entries()) {
+    const p = byId.get((l.pictures || [])[0]);
+    if (!p || l.keep) continue;
+    const bad = n > 0 && (DRAWN.test(kindOf(p)) || await grey(p));
+    if (!bad && !(await repeats(p))) { shown.push({ id: p.id, look: await look(p) }); continue; }
+    let other = null;
+    for (const c of clean.filter((x) => !banned.has(x.id) && !DRAWN.test(kindOf(x)) && !uses.get(x.id))
+      .sort((a, b) => asked(l, b) - asked(l, a) || (b.shine || 0) - (a.shine || 0)).slice(0, 40)) {
+      if (!(await grey(c)) && !(await repeats(c))) { other = c; break; }
+    }
+    if (!other) { shown.push({ id: p.id, look: await look(p) }); continue; }
+    uses.set(p.id, Math.max(0, (uses.get(p.id) || 1) - 1));
+    uses.set(other.id, 1);
+    l.pictures = [other.id];
+    shown.push({ id: other.id, look: await look(other) });
+    swapped++;
+  }
+  log(`variety: ${swapped} repeated or unfit pictures replaced`);
+}
+
 const empty = lines.filter((l) => !(l.pictures || []).length && !l.map && !l.clip);
 log(`${id}: ${empty.length} of ${lines.length} lines have nothing to show`);
 const scenes = [];
@@ -320,13 +427,13 @@ for (const l of empty) {
     const c = n < 5 && await cropOf(p, n);
     if (c) { l.pictures = [c.id]; uses.set(p.id, n + 1); fromCrops++; continue; }
   }
-  const clip = script.kind === 'promo' ? await promoClip(l.en) : await pixabayClip(l.en);
+  const clip = script.kind === 'promo' ? await promoClip(l.en) : (script.verticalOnly || script.kind === 'tour') ? null : await pixabayClip(l.en);
   if (clip) { l.clip = clip; fromVideo++; continue; }
   // For Arabic shorts: NEVER produce an empty/black Manim title scene. Use authentic artifacts from the library!
-  if (script.lang === 'ar' || script.verticalOnly) {
+  if ((script.lang || 'en') !== 'en' || script.verticalOnly || script.kind === 'tour') {
     const isBw = (p) => /drawing|engraving|sketch|lithograph|scan|plate|black.and.white|line art|diagram|map/i.test(`${p.seen?.type || ''} ${p.seen?.check?.kind || ''} ${p.seen?.what || ''} ${p.title || ''}`);
     const available = clean.filter((p) => !banned.has(p.id) && !isBw(p) && (uses.get(p.id) || 0) < 3)
-      .sort((a, b) => (b.shine || 0) - (a.shine || 0));
+      .sort((a, b) => asked(l, b) - asked(l, a) || (uses.get(a.id) || 0) - (uses.get(b.id) || 0) || (b.shine || 0) - (a.shine || 0));
     if (available.length) {
       const pick = available[0];
       l.pictures = [pick.id];
@@ -377,7 +484,9 @@ const minutes = lines.reduce((n, l) => n + String(l.en).split(/\s+/).length, 0) 
 const want = Math.ceil(minutes * 1.7) + 2;   // narration is slower than 150 words a minute
 const TEASERS = ['KEEP WATCHING', 'WATCH WHAT HAPPENS NEXT', 'STAY UNTIL THE END', 'THE BEST PART IS COMING', 'WAIT FOR IT', 'DO NOT LOOK AWAY'];
 script.teasers ||= [];
-for (let i = 3, k = 0; script.teasers.length < want && i < lines.length - 3; i += 1) {
+// the lines at the top of the screen are English words: other languages get none
+if ((script.lang || 'en') !== 'en') script.teasers = [];
+for (let i = 3, k = 0; (script.lang || 'en') === 'en' && script.teasers.length < want && i < lines.length - 3; i += 1) {
   if (script.teasers.some((t) => Math.abs(t.line - i) < 3)) continue;
   script.teasers.push({ line: i, text: TEASERS[k++ % TEASERS.length] });
 }

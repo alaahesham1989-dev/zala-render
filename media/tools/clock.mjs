@@ -35,6 +35,7 @@ const SLOTS = [
   // and the review + writing walk starts just after it renews
   { wf: 'atlas-voices.yml', at: '06:00', window: 100 },
   { wf: 'atlas-world-daily.yml', at: '08:20' },
+  { wf: 'long.yml', at: '08:20' },   // one long video a day, languages in turn; just after the free voice quota resets
   { wf: 'insights.yml', at: '09:47' },
   { wf: 'telegram-day.yml', at: '15:00' },   // the audience channels: today's written posts, 6 pm Cairo
   { wf: 'photos.yml', at: '18:00', inputs: ['-f', 'now=true'] },   // 1pm US Eastern

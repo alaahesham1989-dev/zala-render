@@ -77,6 +77,11 @@ export function captionEvents(words, { style, maxWords = 4, maxChars = 26, layer
   groups.forEach((g, n) => {
     const next = groups[n + 1]?.[0]?.t0 ?? Infinity;
     const groupEnd = Math.min(g[g.length - 1].t1 + hold, next);
+    if (g.some((x) => /[\u0600-\u06FF]/.test(x.w))) {
+      const t0 = g[0].t0;
+      if (groupEnd - t0 >= 0.01) ev.push(`Dialogue: ${layer},${assTime(t0)},${assTime(groupEnd)},${style},,0,0,0,,{\\fad(60,0)}\u200F${g.map((x) => esc(x.w)).join(' ')}\u200F`);
+      return;
+    }
     g.forEach((cur, i) => {
       const t1 = i + 1 < g.length ? g[i + 1].t0 : groupEnd;
       if (t1 - cur.t0 < 0.01) return;

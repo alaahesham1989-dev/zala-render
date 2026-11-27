@@ -1,0 +1,131 @@
+name: ZALA test shorts (one per language, R2 only)
+# Makes and checks one short per language and keeps it on R2. No publishing, no outbox, no queue, no shared state saved,
+# and no publishing token or Meta account is given to the job. A second run fixes the same video, it does not start over.
+on:
+  push:
+    branches: [test-shorts]
+concurrency:
+  group: zala-test-shorts
+  cancel-in-progress: false
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { id: ZV-ART01, lang: ar }
+          - { id: ZV-ENT01, lang: en }
+          - { id: ZV-EST01, lang: es }
+    env:
+      ID: ${{ matrix.id }}
+      LANG_CODE: ${{ matrix.lang }}
+      ZALA_LINE: ${{ matrix.lang }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      GEMINI_API_KEY: ${{ matrix.lang == 'ar' && secrets.GEMINI_API_KEY_AR || matrix.lang == 'es' && secrets.GEMINI_API_KEY_ES || secrets.GEMINI_API_KEY }}
+      GEMINI_API_KEY_3: ${{ matrix.lang == 'en' && secrets.GEMINI_API_KEY_3 || '' }}
+      GEMINI_API_KEYS: ${{ matrix.lang == 'en' && secrets.GEMINI_API_KEYS || '' }}
+      GEMINI_TEXT_MODELS: gemini-3.5-flash,gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VITE_MEDIA_BASE_URL: ${{ secrets.VITE_MEDIA_BASE_URL }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      CHROME_PATH: /usr/bin/google-chrome
+      NO_ARABIC_COPY: "1"
+      NO_OUTBOX: "1"
+      ZALA_LIBRARY_TARGET: "90"
+      MANIM_PY: /tmp/manim/bin/python
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Library and earlier work on this video (read only)
+        run: |
+          bash media/tools/line/ci-setup.sh content
+          mkdir -p content/youtube content/library
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/script.json" "content/youtube/$ID.json" --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/items.jsonl" own-items.jsonl --endpoint-url "$E" --no-progress || true
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
+          [ -s own-items.jsonl ] && cat own-items.jsonl >> content/library/items.jsonl || true
+          node -e '
+            const fs=require("fs"), read=(f)=>JSON.parse(fs.readFileSync(f,"utf8"));
+            const tests=read("media/tools/test-treasures.json"), ar=read("media/tools/arabic-treasures.json"), id=process.env.ID;
+            const spec = tests[id].from ? ar[tests[id].from] : tests[id];
+            const lib=read("content/library/treasures.json"); lib[id]=spec; fs.writeFileSync("content/library/treasures.json", JSON.stringify(lib));
+            if (tests[id].from) { ar[id]=spec; fs.writeFileSync("media/tools/arabic-treasures.json", JSON.stringify(ar)); }'
+      - name: Passed already?
+        run: |
+          # a passed video is left alone unless test-treasures.json raises its "rev" (a fix was asked for)
+          want=$(node -e 'console.log(require("./media/tools/test-treasures.json")[process.env.ID].rev || 1)')
+          have=$(aws s3 cp "s3://${R2_BUCKET}/renders/$ID/rev.txt" - --endpoint-url "$E" 2>/dev/null || echo 1)
+          done=no
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" done.json --endpoint-url "$E" --no-progress && node -e 'process.exit(require("./done.json").pass ? 0 : 1)' && [ "$have" -ge "$want" ] && done=yes
+          echo "DONE=$done" >> "$GITHUB_ENV"; echo "REV=$want" >> "$GITHUB_ENV"
+          echo "RESULT $ID passed earlier: $done (rev $have, wanted $want)"
+      - name: Tools
+        if: env.DONE != 'yes'
+        run: |
+          bash media/tools/line/ci-setup.sh render
+          sudo apt-get install -y fonts-noto-naskh-arabic >/dev/null 2>&1 || true
+          pip install --quiet pillow arabic-reshaper python-bidi
+          node --test media/lib/heard.test.mjs
+      - name: Prepare the script (once)
+        if: env.DONE != 'yes'
+        run: |
+          set -uo pipefail
+          if [ -f "content/youtube/$ID.json" ]; then echo "script kept from the earlier run"; exit 0; fi
+          for i in 1 2 3; do
+            if [ "$LANG_CODE" = ar ]; then ZALA_SHORT_WORDS=165 ZALA_SHORT_LINES=10 node media/tools/arabic-prep.mjs "$ID" Orus; else node media/tools/test-prep.mjs "$ID"; fi
+            [ -f "content/youtube/$ID.json" ] && exit 0
+            echo "prep: waiting 3 minutes"; sleep 180
+          done
+          exit 1
+      - name: Asked fixes to the script (only the changed line is voiced again)
+        if: env.DONE != 'yes'
+        run: |
+          node -e '
+            const fs=require("fs"), id=process.env.ID, f=`content/youtube/${id}.json`;
+            const fixes=require("./media/tools/test-treasures.json")[id].fixes || [];
+            if (!fixes.length) process.exit(0);
+            const s=JSON.parse(fs.readFileSync(f));
+            for (const l of s.chapters.flatMap((c)=>c.lines)) for (const [from,to] of fixes) if (l.en.includes(from)) { l.en=l.en.replace(from,to); console.log("fixed:", l.en); }
+            fs.writeFileSync(f, JSON.stringify(s,null,2));'
+      - name: Make and check (listen and look), fixing up to three times
+        if: env.DONE != 'yes'
+        run: |
+          set -uo pipefail
+          last=""; [ -f review-last.json ] && last=review-last.json
+          bash media/tools/line/run.sh "$ID" short "$last" 2>&1 | tee run.log || true
+      - name: Keep on R2
+        if: always() && env.DONE != 'yes'
+        run: |
+          [ -f "content/youtube/$ID.json" ] && aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress || true
+          if [ -f content/library/items.jsonl ]; then node -e 'const fs=require("fs"); let used=new Set(); try { used=new Set(JSON.parse(fs.readFileSync("content/youtube/"+process.env.ID+".json")).chapters.flatMap((c)=>c.lines).flatMap((l)=>l.pictures||[])); } catch {} fs.writeFileSync("own-items.jsonl", fs.readFileSync("content/library/items.jsonl","utf8").split("\n").filter((l)=>l && ((JSON.parse(l).topics||[]).includes(process.env.ID) || used.has(JSON.parse(l).id))).join("\n")+"\n")'; aws s3 cp own-items.jsonl "s3://${R2_BUCKET}/renders/$ID/items.jsonl" --endpoint-url "$E" --no-progress || true; fi
+          for d in voice meta music; do [ -d "media/cache/$d" ] && aws s3 sync "media/cache/$d" "s3://${R2_BUCKET}/render-cache/$d" --endpoint-url "$E" --no-progress; done
+          [ -d "media/out/$ID" ] && aws s3 sync "media/out/$ID" "s3://${R2_BUCKET}/renders/$ID" --endpoint-url "$E" --no-progress
+          [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
+          [ -f "quality-$ID/verdict.json" ] && node -e 'process.exit(require("./quality-"+process.env.ID+"/verdict.json").pass ? 0 : 1)' && echo "$REV" | aws s3 cp - "s3://${R2_BUCKET}/renders/$ID/rev.txt" --endpoint-url "$E" --no-progress || true
+          [ -f run.log ] && aws s3 cp run.log "s3://${R2_BUCKET}/renders/$ID/run.log" --endpoint-url "$E" --no-progress || true
+      - name: Result
+        if: always()
+        run: |
+          v="media/out/$ID/publish/$ID.mp4"
+          [ -f "$v" ] && echo "RESULT $ID seconds=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$v")"
+          [ -f "quality-$ID/verdict.json" ] && node -e 'const v=require("./quality-"+process.env.ID+"/verdict.json"); console.log("RESULT", v.id, "pass="+v.pass); v.reasons.forEach((r)=>console.log("RESULT  - "+r.slice(0,200)))'
+          [ -f "quality-$ID/review.json" ] && node -e 'const r=require("./quality-"+process.env.ID+"/review.json"); console.log("RESULT heard", JSON.stringify(r.hearing||null), "loudness", JSON.stringify(r.audio.loudness), "opening", r.opening?.score)'
+          true

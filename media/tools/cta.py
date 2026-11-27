@@ -270,6 +270,14 @@ def process(src, out, lang, kind, vid, force):
         vd = float(run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', voice]).stdout.strip())
         main_c, main_start = cues[-1]
         vs = main_start + 0.4
+        spoken_end = 0.0
+        srt_file = os.path.join(os.path.dirname(src), f'{vid}.en.srt')
+        if kind == 'short' and os.path.exists(srt_file):
+            for line in open(srt_file, encoding='utf-8'):
+                if '-->' in line:
+                    h, m, s = line.split('-->')[1].strip().replace(',', '.').split(':')
+                    spoken_end = int(h) * 3600 + int(m) * 60 + float(s)
+        vs = max(vs, spoken_end + 0.15)   # two voices at once were heard on ZV-AR04 and ZV-AR05
         if kind == 'short':
             tail = max(0.0, vs + vd + 0.5 - dur)
         cmd += ['-i', voice]
