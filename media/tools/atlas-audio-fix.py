@@ -62,7 +62,7 @@ for key in os.environ['KEYS'].split():
             src, out = f'{tmp}/a.mp3', f'{tmp}/b.mp3'
             open(src, 'wb').write(get(BASE + key))
             first = heard(src)
-            if os.environ.get('REMAKE') == '1' or slug in ('hurghada-marina', 'three-pools-dahab'):
+            if os.environ.get('REMAKE') == '1' or slug in ('hurghada-marina', 'three-pools-dahab', '6th-of-october-panorama'):
                 gen = subprocess.run(['node', 'media/tools/atlas-audio.mjs', 'eg', slug, 'en'], env={**os.environ, 'ATLAS_FORCE': '1', 'ATLAS_OUT_SUFFIX': '.v2'}, capture_output=True, text=True)
                 print(f"FIX|{slug}|{'made again as v2' if gen.returncode == 0 else 'NOT MADE ' + (gen.stderr or '')[-120:]}", flush=True)
                 continue
