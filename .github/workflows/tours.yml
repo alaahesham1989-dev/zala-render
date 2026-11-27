@@ -131,5 +131,5 @@ jobs:
           n=$(echo ${MADE:-} | wc -w); want=$(echo ${IDS:-} | wc -w)
           [ "$want" = 0 ] && exit 0   # a day with no tour to make says nothing
           if [ "$n" -gt 0 ]; then MSG="ZALA الجولات الافتراضية: $n من $want فيديو جولة عدّوا التحضير والتصنيع والجودة واتجدولوا (${MADE})."
-          else MSG="ZALA الجولات: لسه بتتصلح، ولا جولة عدّت الجودة النهارده (${IDS}). هتتعاد لوحدها بكرة."; fi
-          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          else MSG=""; echo "quiet: ZALA الجولات: لسه بتتصلح، ولا جولة عدّت الجودة النهارده (${IDS}). هتتعاد لوحدها بكرة."; fi
+          if [ -n "$MSG" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

@@ -8,7 +8,7 @@
 // Usage (clock.yml): node media/tools/clock.mjs
 import { execFileSync } from 'node:child_process';
 import { isProduction } from './lang/paths.mjs';
-import { byChat, findTrouble, troubleText } from '../lib/watchdog.mjs';
+import { findTrouble, troubleLine, mayRetry, needsHand, handText } from '../lib/watchdog.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY;
 const LIFE_MS = Number(process.env.CLOCK_MINUTES || 320) * 60e3;
@@ -75,25 +75,35 @@ function queue(now) {
   if (start('meta.yml', ['-f', 'episode=queue'])) lastMeta = now.getTime();
 }
 
-// the watchdog: every quarter hour, tell the owner once about runs that failed, hang or wait too long
+// the watchdog: every quarter hour, retry what failed (once, only runs that publish nothing) and write it in this log.
+// The owner is messaged only for what needs his hand, once a day per kind.
 let looked = born - 15 * 60e3;
 const told = new Set();
+const asked = new Set();
 async function watch(now) {
   if (now.getTime() - looked < 15 * 60e3) return;
   let list;
-  try { list = JSON.parse(gh('run', 'list', '-R', REPO, '-L', '60', '--json', 'databaseId,workflowName,status,conclusion,createdAt,updatedAt')); } catch { return; }
+  try { list = JSON.parse(gh('run', 'list', '-R', REPO, '-L', '60', '--json', 'databaseId,workflowName,status,conclusion,createdAt,updatedAt,attempt')); } catch { return; }
   const trouble = findTrouble(list, { now: now.getTime(), since: looked, told });
   looked = now.getTime();
-  if (!trouble.length) return;
-  trouble.forEach((t) => told.add(t.id));
-  log(troubleText(trouble, REPO));
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-  const chats = { admin: process.env.ADMIN_CHAT || process.env.TELEGRAM_CHAT_ID, arabic: process.env.AR_CHAT };
-  for (const [chat, items] of byChat(trouble, chats)) {
+  for (const t of trouble) {
+    told.add(t.id);
+    log(troubleLine(t));
+    if (t.why !== 'failed') continue;
+    let text = '';
+    try { text = execFileSync('gh', ['run', 'view', String(t.id), '-R', REPO, '--log-failed'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 90000, maxBuffer: 1 << 27 }); } catch { /* the log is not there yet */ }
+    const need = needsHand(text);
+    if (!need && mayRetry(t.name, list.find((r) => r.databaseId === t.id)?.attempt)) {
+      try { gh('run', 'rerun', String(t.id), '-R', REPO, '--failed'); log(`tried again: ${t.name} (run ${t.id})`); } catch (e) { log(`could not retry run ${t.id}: ${String(e.message).slice(0, 80)}`); }
+      continue;
+    }
+    const key = need && `${now.toISOString().slice(0, 10)} ${need.kind}`;
+    const token = process.env.TELEGRAM_BOT_TOKEN, chat = process.env.ADMIN_CHAT || process.env.TELEGRAM_CHAT_ID;
+    if (!need || asked.has(key) || !token || !chat) continue;
+    asked.add(key);
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(20e3),
-      body: JSON.stringify({ chat_id: chat, text: troubleText(items, REPO), disable_web_page_preview: true }),
+      body: JSON.stringify({ chat_id: chat, text: handText(need, t.name, REPO, t.id), disable_web_page_preview: true }),
     });
     if (!res.ok) log(`watchdog message not sent: ${res.status}`);
   }

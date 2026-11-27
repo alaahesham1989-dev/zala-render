@@ -66,5 +66,5 @@ jobs:
           made=$(echo "$line" | grep -o '^[^0-9]*[0-9]*' | grep -o '[0-9]*' || echo 0)
           waiting=$(echo "$line" | grep -oE '[0-9]+ waiting' | grep -o '[0-9]*' || echo "?")
           if [ "${made:-0}" -gt 0 ] 2>/dev/null; then MSG=""
-          else MSG="ZALA تحضير الصور: محتاج نظرة، النهارده مفيش صورة واحدة اتجهزت (راجع السجل)."; fi
+          else MSG=""; echo "quiet: ZALA تحضير الصور: محتاج نظرة، النهارده مفيش صورة واحدة اتجهزت (راجع السجل)."; fi
           if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && [ -n "${MSG:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

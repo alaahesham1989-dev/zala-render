@@ -23,14 +23,22 @@ export function findTrouble(runs, { now, since, told = new Set(), ignore = QUIET
   return out;
 }
 
-const WHY = { failed: 'فشل', stuck: 'معلّق من أكتر من خمس ساعات ونص', waiting: 'مستني دوره من أكتر من تلات ساعات' };
+// Owner, 2026-11-27: no failure messages. A failed run is tried again once by itself and written in the clock's log;
+// the owner hears only about what nothing but his own hand can fix.
+// Only runs that publish nothing are retried, so nothing can ever be posted twice.
+export const RETRY = ['ZALA Arabic prep', 'ZALA Arabic Short', 'ZALA prep', 'ZALA long', 'ZALA picture post — prep', 'ZALA insights'];
+export const mayRetry = (name, attempt) => attempt === 1 && RETRY.some((n) => String(name).startsWith(n));
 
-export const troubleText = (list, repo) =>
-  ['⚠️ حارس المصنع:', ...list.map((t) => `• ${t.name}: ${WHY[t.why]}\nhttps://github.com/${repo}/actions/runs/${t.id}`)].join('\n');
+const NEEDS_HAND = [
+  { kind: 'login', test: /invalid_grant|Token has been expired or revoked|Error validating access token|Session has expired/i, ask: 'دخول حساب انتهى (يوتيوب أو ميتا). محتاج تسجل الدخول من جديد.' },
+  { kind: 'key', test: /API key not valid|API_KEY_INVALID|API key expired|reported as leaked/i, ask: 'مفتاح من مفاتيح المصنع وقف. محتاج مفتاح جديد منك.' },
+  // not the ordinary "quota exceeded, check your billing" of a free limit: only a service that will not run without paying
+  { kind: 'payment', test: /payment required|BILLING_DISABLED|billing account (is )?(disabled|closed)/i, ask: 'خدمة بتطلب دفع. ما دفعتش حاجة، ومحتاج قرارك.' },
+];
 
-// Arabic machine trouble goes to the Arabic group; everything else to the owner's own chat, never the
-// English review group.
-export const byChat = (list, { admin, arabic }) => [
-  [arabic || admin, list.filter((t) => /Arabic/i.test(t.name))],
-  [admin, list.filter((t) => !/Arabic/i.test(t.name))],
-].filter(([chat, items]) => chat && items.length);
+/** What the owner has to do, read from a failed run's log; null when there is nothing for him. */
+export const needsHand = (log) => NEEDS_HAND.find((n) => n.test.test(String(log))) || null;
+
+export const handText = (need, name, repo, id) => `ZALA: ${need.ask}\n(${name})\nhttps://github.com/${repo}/actions/runs/${id}`;
+
+export const troubleLine = (t) => `${t.name}: ${t.why} (run ${t.id})`;

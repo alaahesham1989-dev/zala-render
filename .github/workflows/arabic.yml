@@ -124,7 +124,7 @@ jobs:
           [ -n "${ID:-}" ] && [ -d "quality-$ID" ] && aws s3 sync "quality-$ID" "s3://${R2_BUCKET}/renders/$ID/review" --endpoint-url "$E" --no-progress
           aws s3 cp run.log "s3://${R2_BUCKET}/renders/${ID:-arabic}/run.log" --endpoint-url "$E" --no-progress || true
       - name: Telegram (the video, for the owner to watch)
-        if: always() && env.ID != ''
+        if: always() && env.ID != '' && env.PASS == 'yes'
         run: |
           v=$(ls media/out/${ID:-x}/publish/*.mp4 2>/dev/null | head -1)
           cap="ZALA عربي: ${ID:-?} — الفحص: ${PASS:-no}. مش متجدول، مستني موافقتك."

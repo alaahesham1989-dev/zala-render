@@ -115,5 +115,5 @@ jobs:
           want=$(echo "$EPS" | wc -w)
           if [ "$ok" -gt 0 ] && [ "$ok" = "$want" ]; then MSG=""
           elif [ "$ok" -gt 0 ]; then MSG=""
-          else MSG="ZALA التحضير: محتاج نظرة، مفيش ولا حلقة اتحضرت من $want اللي كانوا مفروض يتحضروا ($EPS)."; fi
+          else MSG=""; echo "quiet: prep made nothing"; fi
           if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && [ -n "${MSG:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

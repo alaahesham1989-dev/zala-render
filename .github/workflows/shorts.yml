@@ -183,5 +183,5 @@ jobs:
           # quiet on real success; speaks up only when truly stuck (owner's standing order) — zero made despite a
           # real attempt is exactly the silent bug that hid the stuck-promo problem for a whole day (2026-11-14)
           if [ "$n" -gt 0 ]; then MSG="ZALA الشورتس: $n شورت مستقل عدّى التحضير والتصنيع والجودة واتجدول النهارده."
-          else MSG="ZALA الشورتس: محتاج نظرة، النهارده مفيش شورت واحد عدّى (راجع السجل)."; fi
-          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi
+          else MSG=""; echo "quiet: ZALA الشورتس: محتاج نظرة، النهارده مفيش شورت واحد عدّى (راجع السجل)."; fi
+          if [ -n "$MSG" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

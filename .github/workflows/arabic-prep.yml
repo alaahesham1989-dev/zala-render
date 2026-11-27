@@ -95,5 +95,5 @@ jobs:
         if: always() && (env.ID != '' || inputs.source != '')
         run: |
           if [ -f "content/youtube/${ID:-x}.json" ]; then MSG=""
-          else MSG="ZALA عربي - تحضير: ${ID:-${{ inputs.source }}} فشل، شوف السجل."; fi
+          else MSG=""; echo "quiet: ZALA عربي - تحضير: ${ID:-${{ inputs.source }}} فشل، شوف السجل."; fi
           if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && [ -n "${MSG:-}" ]; then curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=$MSG" >/dev/null || true; fi

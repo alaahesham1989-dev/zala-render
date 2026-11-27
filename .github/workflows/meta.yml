@@ -72,6 +72,6 @@ jobs:
           node media/tools/state-save.mjs "meta: published queued items" content/meta-queue.json
           failed=$(node -e "const q=require('./content/meta-queue.json');console.log(q.filter(x=>x.failed&&Date.parse(x.done)>Date.now()-3600e3).map(x=>x.episode+' '+x.which+' ('+x.failed.join('+')+')').join(', '))")
           if [ -n "$failed" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
-            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA النشر: محتاج نظرة، اتجرب 3 مرات وما نزلش: $failed" >/dev/null || true
+            echo "quiet: not published after 3 tries: $failed"
           fi
           exit $rc

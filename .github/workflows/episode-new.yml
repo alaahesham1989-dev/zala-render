@@ -113,5 +113,5 @@ jobs:
           node media/tools/preview-board.mjs preview.html && aws s3 cp preview.html "s3://${R2_BUCKET}/preview/index.html" --endpoint-url "$E" --content-type "text/html; charset=utf-8" --no-progress || true
           V=$(aws s3 cp "s3://${R2_BUCKET}/renders/${EP}/review/verdict.json" - --endpoint-url "$E" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const v=JSON.parse(s);console.log(v.pass?"الفحص عدّى":"الفحص وقف: "+(v.reasons||[]).slice(0,3).join(" | "))}catch{console.log("مفيش نتيجة فحص")}})')
           if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
-            curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA: حلقة جديدة $EP خلصت (${{ job.status }}). $V" >/dev/null || true
+            [ "${{ job.status }}" = success ] && curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode "text=ZALA: حلقة جديدة $EP خلصت (${{ job.status }}). $V" >/dev/null || true
           fi
