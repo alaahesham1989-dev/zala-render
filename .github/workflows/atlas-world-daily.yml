@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: zala-atlas-world-daily
+  group: zala-atlas-world-daily${{ inputs.only && '-only' || '' }}
   cancel-in-progress: false
 
 jobs:
