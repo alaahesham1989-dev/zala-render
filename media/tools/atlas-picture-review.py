@@ -103,53 +103,58 @@ def push(key, data, cache):
     aws('cp', path, f'{BUCKET}/{key}', '--content-type', 'application/json; charset=utf-8', '--cache-control', cache)
 
 
-seen = pull('atlas-work/_review/pictures.json', {})
-hidden = pull('atlas/world/hidden-pictures.json', {})
-looked = removed = fails = 0
+def main():
+    seen = pull('atlas-work/_review/pictures.json', {})
+    hidden = pull('atlas/world/hidden-pictures.json', {})
+    looked = removed = fails = 0
 
 
-def save():
-    push('atlas-work/_review/pictures.json', seen, 'no-cache')
-    push('atlas/world/hidden-pictures.json', hidden, 'public, max-age=3600')
+    def save():
+        push('atlas-work/_review/pictures.json', seen, 'no-cache')
+        push('atlas/world/hidden-pictures.json', hidden, 'public, max-age=3600')
 
 
-for cc in ORDER:
-    if looked >= LIMIT or fails >= 4:
-        break
-    if ONLY and cc not in {o.split('/')[0] for o in ONLY}:
-        continue
-    for pid, name, category, summary, urls in places(cc):
+    for cc in ORDER:
         if looked >= LIMIT or fails >= 4:
             break
-        if (ONLY and pid not in ONLY) or (not ONLY and pid in seen):
+        if ONLY and cc not in {o.split('/')[0] for o in ONLY}:
             continue
-        urls = list(dict.fromkeys(clean(u) for u in urls if u and u.startswith('http')))[:14]
-        images = []
-        for n, u in enumerate(urls, 1):
-            data = get(thumb(u), tries=2)
-            if data and len(data) < 900_000:
-                images.append((n, data))
-            time.sleep(0.2)
-        if not images:
-            continue
-        answer = look(ASK.format(name=name, category=category, summary=summary[:300]), images)
-        if answer is None:
-            fails += 1
-            continue
-        fails = 0
-        looked += 1
-        drop = {int(h['n']): str(h.get('why', ''))[:80] for h in answer.get('hide', []) if str(h.get('n', '')).isdigit() and 1 <= int(h['n']) <= len(urls)}
-        record = {'date': TODAY, 'pictures': len(images), 'hidden': len(drop)}
-        if drop and len(drop) >= len(images):
-            record = {**record, 'hidden': 0, 'note': 'every picture was refused: needs a person'}
-            drop = {}
-        for n, why in drop.items():
-            hidden[urls[n - 1]] = why
-            removed += 1
-            print(f'  {pid} picture {n} hidden: {why} | {urllib.parse.unquote(urls[n - 1].rsplit("/", 1)[-1])[:60]}', flush=True)
-        seen[pid] = record
-        if looked % 20 == 0:
-            save()
-        time.sleep(3)
-save()
-print(f'[pictures] places looked at {looked}, pictures hidden {removed}, places done so far {len(seen)}', flush=True)
+        for pid, name, category, summary, urls in places(cc):
+            if looked >= LIMIT or fails >= 4:
+                break
+            if (ONLY and pid not in ONLY) or (not ONLY and pid in seen):
+                continue
+            urls = list(dict.fromkeys(clean(u) for u in urls if u and u.startswith('http')))[:14]
+            images = []
+            for n, u in enumerate(urls, 1):
+                data = get(thumb(u), tries=2)
+                if data and len(data) < 900_000:
+                    images.append((n, data))
+                time.sleep(0.2)
+            if not images:
+                continue
+            answer = look(ASK.format(name=name, category=category, summary=summary[:300]), images)
+            if answer is None:
+                fails += 1
+                continue
+            fails = 0
+            looked += 1
+            drop = {int(h['n']): str(h.get('why', ''))[:80] for h in answer.get('hide', []) if str(h.get('n', '')).isdigit() and 1 <= int(h['n']) <= len(urls)}
+            record = {'date': TODAY, 'pictures': len(images), 'hidden': len(drop)}
+            if drop and len(drop) >= len(images):
+                record = {**record, 'hidden': 0, 'note': 'every picture was refused: needs a person'}
+                drop = {}
+            for n, why in drop.items():
+                hidden[urls[n - 1]] = why
+                removed += 1
+                print(f'  {pid} picture {n} hidden: {why} | {urllib.parse.unquote(urls[n - 1].rsplit("/", 1)[-1])[:60]}', flush=True)
+            seen[pid] = record
+            if looked % 20 == 0:
+                save()
+            time.sleep(3)
+    save()
+    print(f'[pictures] places looked at {looked}, pictures hidden {removed}, places done so far {len(seen)}', flush=True)
+
+
+if __name__ == '__main__':
+    main()
