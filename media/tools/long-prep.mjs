@@ -56,9 +56,28 @@ ${JSON.stringify(part.map((l, k) => ({ n: k + 1, line: l.en })))}`, { temperatur
   if (left) throw new Error(`${left} lines are still not in "${spec.lang}"`);
 }
 
+// wrong or non-Egyptian words slipped through before ("تخلّص هندسي"): a language pass that may only swap words
+async function proofread(lines) {
+  for (let i = 0; i < lines.length; i += 25) {
+    const part = lines.slice(i, i + 25);
+    const p = await askJson(`راجع السطور دي لغوياً بالعامية المصرية. صلّح بس الكلمة الغلط أو اللي مالهاش معنى في السياق أو اللي مش مصري. متغيرش المعنى ولا الأسماء ولا الأرقام ولا ترتيب الجمل.
+رجّع JSON {"fixes": [{"n": 1, "line": "السطر بعد التصليح"}]} للسطور اللي اتغيرت بس.
+وصلّح كمان أي تعبير مترجم حرفياً من الإنجليزي ومعناه طلع غلط (مثال: "راساً على تحت" معناها مقلوب، والمقصود "على طول").
+${JSON.stringify(part.map((l, k) => ({ n: k + 1, line: l.en })))}`, { temperature: 0.1 });
+    for (const f of p?.fixes || []) {
+      const l = part[f.n - 1];
+      if (l && f.line && inLang(f.line, 'ar') && Math.abs(f.line.length - l.en.length) < l.en.length * 0.15) { console.log(`  proofread ${i + f.n}: ${f.line.slice(0, 80)}`); l.en = f.line; }
+    }
+  }
+  const proofed = proofArabic(lines.map((l) => l.en));
+  lines.forEach((l, i) => { l.en = proofed.fixed[i]; });
+}
+
 if (fs.existsSync(out)) {
   const script = read(out);
   await inOwnLanguage(script.chapters.flatMap((x) => x.lines));
+  // once, before any of it is voiced: the lines rewritten from English get the same language pass as new ones
+  if (spec.lang === 'ar' && !script.proofed) { await proofread(script.chapters.flatMap((x) => x.lines)); script.proofed = true; }
   write(out, script);
   console.log(`${id} is written already, every line is in "${spec.lang}"`);
   process.exit(0);
@@ -122,18 +141,7 @@ ${text.slice(0, 40000)}`, { temperature: 0.1 });
   if (count(lines) < per * 0.75) throw new Error(`chapter ${c + 1}: only ${count(lines)} of ${per} words`);
 
   await inOwnLanguage(lines);
-  if (spec.lang === 'ar') {
-    // wrong or non-Egyptian words slipped through before ("تخلّص هندسي"): a language pass that may only swap words
-    const p = await askJson(`راجع السطور دي لغوياً بالعامية المصرية. صلّح بس الكلمة الغلط أو اللي مالهاش معنى في السياق أو اللي مش مصري. متغيرش المعنى ولا الأسماء ولا الأرقام ولا ترتيب الجمل.
-رجّع JSON {"fixes": [{"n": 1, "line": "السطر بعد التصليح"}]} للسطور اللي اتغيرت بس.
-${JSON.stringify(lines.map((l, i) => ({ n: i + 1, line: l.en })))}`, { temperature: 0.1 });
-    for (const f of p?.fixes || []) {
-      const l = lines[f.n - 1];
-      if (l && f.line && Math.abs(f.line.length - l.en.length) < l.en.length * 0.15) { console.log(`  proofread ${f.n}: ${f.line.slice(0, 80)}`); l.en = f.line; }
-    }
-    const proofed = proofArabic(lines.map((l) => l.en));
-    lines.forEach((l, i) => { l.en = proofed.fixed[i]; });
-  }
+  if (spec.lang === 'ar') await proofread(lines);
   draft.chapters[c] = { title, lines: lines.map((l) => ({ en: l.en, queries: l.queries || [], ...(c === 0 && l.flight ? { flight: true } : {}) })) };
   write(draftFile, draft);
 }
