@@ -38,6 +38,7 @@ const SLOTS = [
   { wf: 'insights.yml', at: '09:47' },
   { wf: 'telegram-day.yml', at: '15:00' },   // the audience channels: today's written posts, 6 pm Cairo
   { wf: 'photos.yml', at: '18:00', inputs: ['-f', 'now=true'] },   // 1pm US Eastern
+  { wf: 'cleanup.yml', at: '03:30', inputs: ['-f', 'apply=yes'] },   // smart storage cleanup (media/lib/cleanup-rules.mjs)
   ...[0, 3, 6, 9, 12, 15, 18, 21].map((h) => ({ wf: 'comments.yml', at: `${String(h).padStart(2, '0')}:17`, window: 170 })),
 ];
 

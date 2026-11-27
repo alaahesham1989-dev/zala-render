@@ -1,0 +1,43 @@
+name: ZALA storage cleanup
+
+# Removes useless files from storage as we go (rules and protections: media/lib/cleanup-rules.mjs).
+# Started daily by the clock; "apply=no" only reports.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "yes = remove, no = only report"
+        required: false
+        default: "no"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storage-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      APPLY: ${{ inputs.apply }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the rules
+        run: node --test media/lib/cleanup-rules.test.mjs
+      - name: Clean
+        run: |
+          if [ "$APPLY" = yes ]; then node media/tools/cleanup.mjs --apply; else node media/tools/cleanup.mjs; fi
