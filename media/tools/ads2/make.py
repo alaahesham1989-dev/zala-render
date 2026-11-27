@@ -283,6 +283,22 @@ def phone_frame(bg, shots, t, dur, chips):
     return img
 
 
+def cards_frame(bg, t, cards):
+    """Golden cards that flip open one after the other."""
+    img = Image.blend(bg.filter(ImageFilter.GaussianBlur(14)), DARK, 0.6)
+    d = ImageDraw.Draw(img)
+    for i, c in enumerate(cards):
+        k = (t - c['at'] + 0.15) / 0.4
+        if k <= 0:
+            continue
+        s = max(0.02, pop(k))
+        cy = 620 + i * 380
+        d.rounded_rectangle([W / 2 - 400 * s, cy - 140, W / 2 + 400 * s, cy + 140], radius=36 * min(1, s), fill=BLACK, outline=GOLD, width=5)
+        if s > 0.6:
+            text(d, (W / 2, cy), c['name'], font('serif', int(104 * min(1.05, s))), fill=GOLD)
+    return img
+
+
 def end_card(t, logo):
     img = DARK.copy()
     from PIL import ImageChops
@@ -440,7 +456,7 @@ def main():
     shots = [Image.open(f'{WORK}/form/{n}').convert('RGB') for n in sorted(os.listdir(f'{WORK}/form'))]
     base = map_base()
 
-    sounds = [(0.05, buzz()), (0.1, drum()), (card_at, drum()), (card_at + 0.05, ting()), (card_at + 0.85, ting() * 0.8)]
+    sounds = [(0.05, buzz() if SPEC.get('opening', 'buzz') == 'buzz' else ting()), (0.1, drum()), (card_at, drum()), (card_at + 0.05, ting()), (card_at + 0.85, ting() * 0.8)]
     video = subprocess.Popen(['ffmpeg', '-y', '-v', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-',
                               '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-pix_fmt', 'yuv420p', f'{WORK}/video.mp4'],
                              stdin=subprocess.PIPE)
@@ -458,7 +474,7 @@ def main():
             gen = clip_frames(f"{WORK}/{line['clip']}", line['from'], line['to'], n)
             if 'thud_at_word' in line:
                 sounds.append((starts[i] + offs[line['thud_at_word']][0] + 0.15, thud()))
-        elif kind == 'phone':
+        elif kind in ('phone', 'cards'):
             gen = clip_frames(f"{WORK}/{line['clip']}", line['from'], line['to'], n)
         elif kind == 'present':
             body = frame_of(card_at - starts[i])
@@ -481,6 +497,8 @@ def main():
                 cur = Image.composite(DARK, cur, SHADE)
             elif kind == 'map':
                 cur = map_frame(base, tt, marks_here)
+            elif kind == 'cards':
+                cur = cards_frame(next(gen), tt, marks_here)
             elif kind == 'phone':
                 cur = phone_frame(next(gen), shots, tt, dur, marks_here)
             else:
