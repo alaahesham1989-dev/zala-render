@@ -1,9 +1,13 @@
 name: ZALA world atlas - daily, until the free quota ends
 
 on:
-  schedule:
-    - cron: '40 8 * * *'   # just after Gemini's free quota renews
   workflow_dispatch:
+    inputs:
+      review_limit:
+        description: "texts to review before writing"
+        required: false
+        default: "900"
+        type: string
 
 permissions:
   actions: write
@@ -14,7 +18,46 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      GEMINI_API_KEY_ATLAS: ${{ secrets.GEMINI_API_KEY_ATLAS }}
+      GEMINI_API_KEY_ATLAS_2: ${{ secrets.GEMINI_API_KEY_ATLAS_AUDIO }}
+      REVIEW_LIMIT: ${{ inputs.review_limit || '900' }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bring the tools from R2
+        run: aws s3 sync "s3://${R2_BUCKET}/atlas-work/_site" site --endpoint-url "$E" --no-progress
+      - name: Review the texts that nobody has checked yet
+        run: |
+          set -o pipefail
+          python site/scripts/world_atlas/review_scripts.py | tee log.txt
+          grep -E "^\[review\]" log.txt >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Publish the countries that changed
+        run: |
+          for cc in $(grep -E "^TOUCHED" log.txt | cut -d' ' -f2-); do
+            before=$(gh run list -w atlas-world.yml -L 1 --json databaseId --jq '.[0].databaseId // 0')
+            gh workflow run atlas-world.yml -f cc="$cc" -f limit=0 >/dev/null
+            id=$before
+            for i in $(seq 1 30); do sleep 6; id=$(gh run list -w atlas-world.yml -L 1 --json databaseId --jq '.[0].databaseId // 0'); [ "$id" != "$before" ] && break; done
+            while [ "$(gh run view "$id" --json status --jq .status)" != "completed" ]; do sleep 30; done
+          done
+
   walk:
+    needs: review
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
