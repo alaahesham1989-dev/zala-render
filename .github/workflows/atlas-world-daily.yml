@@ -3,6 +3,15 @@ name: ZALA world atlas - daily, until the free quota ends
 on:
   workflow_dispatch:
     inputs:
+      picture_limit:
+        description: "places whose pictures are checked"
+        required: false
+        default: "300"
+        type: string
+      only:
+        description: "check only these places (cc/slug ...), nothing else runs"
+        required: false
+        type: string
       review_limit:
         description: "texts to review before writing"
         required: false
@@ -18,7 +27,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  pictures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      GEMINI_API_KEY_ATLAS: ${{ secrets.GEMINI_API_KEY_ATLAS }}
+      GEMINI_API_KEY_ATLAS_AUDIO: ${{ secrets.GEMINI_API_KEY_ATLAS_AUDIO }}
+      PICTURE_LIMIT: ${{ inputs.picture_limit || '300' }}
+      ONLY: ${{ inputs.only }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Look at the pictures
+        run: python media/tools/atlas-picture-review.py | tee -a "$GITHUB_STEP_SUMMARY"
+
   review:
+    needs: pictures
+    if: ${{ always() && !inputs.only }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
@@ -57,7 +91,7 @@ jobs:
 
   walk:
     needs: review
-    if: ${{ always() }}
+    if: ${{ always() && !inputs.only }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
