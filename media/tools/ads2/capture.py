@@ -24,8 +24,12 @@ def step(name, page, target=None, action=None):
 with sync_playwright() as p:
     b = p.chromium.launch()
     page = b.new_page(viewport={'width': 390, 'height': 780}, device_scale_factor=3, locale='ar-EG', is_mobile=True, has_touch=True)
-    page.goto(spec['url'], wait_until='networkidle', timeout=90000)
-    page.wait_for_selector('form', timeout=60000)
+    page.goto(spec['url'], wait_until='domcontentloaded', timeout=90000)   # the site keeps a live connection open
+    try:
+        page.wait_for_selector('form button[aria-pressed]', timeout=60000)
+    except Exception:
+        sys.exit(f'no form on the page (title: {page.title()!r})')
+    page.wait_for_timeout(2500)
 
     def service():
         for t in spec['service']:

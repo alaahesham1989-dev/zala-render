@@ -257,9 +257,9 @@ def map_frame(base, t, cities):
 def phone_frame(bg, shots, t, dur, chips):
     img = Image.blend(bg.filter(ImageFilter.GaussianBlur(18)), DARK, 0.55)
     idx = min(len(shots) - 1, int(max(0, t) / (dur * 0.8) * len(shots)))
-    pw, ph = 590, 1180
+    pw, ph = 540, 1080
     rise = ease(t / 0.45)
-    x, y = (W - pw) // 2, int(120 + (1 - rise) * 500)
+    x, y = (W - pw) // 2, int(90 + (1 - rise) * 500)
     d = ImageDraw.Draw(img)
     d.rounded_rectangle([x - 16, y - 16, x + pw + 16, y + ph + 16], radius=72, fill=(6, 6, 6), outline=GOLD, width=3)
     shot = shots[idx].resize((pw, ph), Image.LANCZOS)
@@ -272,7 +272,7 @@ def phone_frame(bg, shots, t, dur, chips):
         if k <= 0:
             continue
         s = pop(k)
-        cx, cy = W - 190 - i * 350, 1560
+        cx, cy = W - 190 - i * 350, 1265
         d.rounded_rectangle([cx - 150 * s, cy - 55 * s, cx + 150 * s, cy + 55 * s], radius=55 * s, fill=BLACK, outline=GOLD, width=4)
         text(d, (cx - 24 * s, cy), c['name'], font('bold', int(50 * max(0.2, s))))
         tx = cx + 92 * s
@@ -494,7 +494,7 @@ def main():
             else:
                 shown = cur.copy()
             if not (kind == 'present' and tt >= card_at - starts[i]):
-                draw_caption(shown, groups, tt, {'phone': 1745, 'map': 1400}.get(kind, 1400))
+                draw_caption(shown, groups, tt, 1425)
             video.stdin.write(shown.tobytes())
             if a + j in marks:
                 keep[a + j] = shown.resize((270, 480), Image.LANCZOS)
@@ -516,7 +516,9 @@ def main():
         fx[a:a + len(snd)] += snd[:n - a]
     voice *= 0.7 / (np.max(np.abs(voice)) + 1e-9)
     k = SR // 10
-    level = np.convolve(np.abs(voice), np.ones(k) / k, mode='same')
+    acc = np.concatenate([[0.0], np.cumsum(np.abs(voice))])
+    idx = np.arange(n)
+    level = (acc[np.minimum(n, idx + k // 2)] - acc[np.maximum(0, idx - k // 2)]) / k
     duck = 1 - 0.6 * np.clip(level / 0.04, 0, 1)
     bed = np.zeros(n)
     m = music(total)
