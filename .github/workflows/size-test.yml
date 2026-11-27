@@ -1,0 +1,36 @@
+name: ZALA lighter video test (read only)
+# How much smaller can the finished videos be before the eye notices? Encodes short pieces and compares them.
+on:
+  push:
+    branches: [size-test]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+    steps:
+      - run: sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
+      - name: Encode and compare
+        run: |
+          set -uo pipefail
+          mkdir -p out
+          for item in "ZV-VAR01 600" "ZV-AR08 5" "ZV-AR06 20"; do
+            set -- $item; id=$1; at=$2
+            ffmpeg -v error -y -ss "$at" -i "${BASE%/}/renders/$id/publish/$id.mp4" -t 20 -c copy "$id-src.mp4" || { echo "RESULT $id no source"; continue; }
+            for crf in 21 22 23; do
+              ffmpeg -v error -y -i "$id-src.mp4" -c:v libx264 -preset medium -crf $crf -maxrate 6M -bufsize 12M -pix_fmt yuv420p -an "$id-$crf.mp4"
+              ssim=$(ffmpeg -v info -i "$id-$crf.mp4" -i "$id-src.mp4" -lavfi "[0:v]format=yuv420p[a];[1:v]format=yuv420p[b];[a][b]ssim" -f null - 2>&1 | grep -oE "All:[0-9.]+" | tail -1)
+              rate() { ffprobe -v error -select_streams v:0 -show_entries stream=bit_rate -of csv=p=0 "$1"; }
+              echo "RESULT $id crf=$crf was=$(( $(rate $id-src.mp4)/1000 ))k now=$(( $(rate $id-$crf.mp4)/1000 ))k $ssim"
+            done
+            # the same moment at real size: left the old file, right crf 22
+            ffmpeg -v error -y -ss 7 -i "$id-src.mp4" -ss 7 -i "$id-22.mp4" -filter_complex "[0:v]crop=640:640:(iw-640)/2:(ih-640)/2[a];[1:v]crop=640:640:(iw-640)/2:(ih-640)/2[b];[a]pad=650:640:0:0:white[c];[c][b]hstack" -frames:v 1 -q:v 2 "out/$id.jpg"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: size-test
+          path: out/
+          retention-days: 7
