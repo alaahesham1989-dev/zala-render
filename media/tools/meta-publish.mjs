@@ -58,7 +58,8 @@ async function toFacebook(pkg, id, which) {
   const up = await fetch(start.upload_url, { method: 'POST', headers: { Authorization: `OAuth ${pageToken}`, file_url: url } });
   if (!up.ok) throw new Error(`Facebook reel upload failed: ${up.status} ${await up.text()}`);
   await call(`${G}/${PAGE}/video_reels`, { method: 'POST', token: pageToken,
-    params: { upload_phase: 'finish', video_id: start.video_id, video_state: 'PUBLISHED', description: t.text } });
+    params: { upload_phase: 'finish', video_id: start.video_id, description: t.text,
+      ...(process.env.FB_SCHEDULE_AT ? { video_state: 'SCHEDULED', scheduled_publish_time: process.env.FB_SCHEDULE_AT } : { video_state: 'PUBLISHED' }) } });
   await sleep(15000);
   await creditComment(start.video_id, pkg, pageToken, 8000);
   return { platform: 'facebook', kind: 'reel', id: start.video_id, url: `https://www.facebook.com/reel/${start.video_id}` };

@@ -1,0 +1,65 @@
+name: ZALA schedule approved videos
+
+# Schedules one video the owner approved (media/tools/publish-approved.json) on YouTube and Facebook.
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "video id listed in publish-approved.json"
+        required: true
+        type: string
+      dry:
+        description: "yes = only build the title and description"
+        required: false
+        default: "no"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zala-publish-approved
+  cancel-in-progress: false
+
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      ID: ${{ inputs.id }}
+      DRY: ${{ inputs.dry == 'yes' && '1' || '' }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_AR }}
+      META_SYSTEM_USER_TOKEN: ${{ secrets.META_SYSTEM_USER_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bring the approved package
+        run: |
+          set -euo pipefail
+          E="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws s3 sync "s3://${R2_BUCKET}/renders/$ID/publish" publish --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/render-state-ar/content/youtube/$ID.json" script.json --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/render-state-ar/content/library/items.jsonl" items.jsonl --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" verdict.json --endpoint-url "$E" --no-progress
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/published.json" published.json --endpoint-url "$E" --no-progress || true
+      - name: Schedule
+        run: node media/tools/publish-approved.mjs "$ID"
+      - name: Remember what was published
+        if: always()
+        run: |
+          [ -f published.json ] && aws s3 cp published.json "s3://${R2_BUCKET}/renders/$ID/published.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress || true
