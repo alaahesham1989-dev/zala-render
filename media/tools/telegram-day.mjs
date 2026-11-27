@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // media/tools/telegram-day.mjs — posts today's written posts (social-posts.json) to the audience channels, each once.
-// A post is {id, lang, date, text, photo?}. A post up to two days late is still sent; older ones are left alone.
+// A post is {id, lang, date, text, photo?, pin?}; every post ends with the links to our other channels in its language. A post up to two days late is still sent; older ones are left alone.
 // What was sent is kept in telegram-done.json (the workflow keeps it on R2). DRY=1 only lists what would be sent.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,10 +24,15 @@ let failed = false;
 for (const post of due) {
   const chat = queue.channels[post.lang];
   if (!chat || BANNED.test(post.text)) { console.log(`${post.id} REFUSED: ${chat ? 'a forbidden phrase' : 'no channel'}`); failed = true; continue; }
-  const sent = post.photo ? await call('sendPhoto', { chat_id: chat, photo: post.photo, caption: post.text }) : await call('sendMessage', { chat_id: chat, text: post.text });
+  const text = [post.text, queue.footer?.[post.lang]].filter(Boolean).join('\n\n');
+  const sent = post.photo ? await call('sendPhoto', { chat_id: chat, photo: post.photo, caption: text }) : await call('sendMessage', { chat_id: chat, text });
   if (!sent.ok) { console.log(`${post.id} FAILED ${sent.description}`); failed = true; continue; }
   done[post.id] = { at: new Date().toISOString(), url: `https://t.me/${chat.slice(1)}/${sent.result.message_id}` };
   fs.writeFileSync(doneFile, JSON.stringify(done, null, 2));
   console.log(`${post.id} ${done[post.id].url}`);
+  if (post.pin) {
+    const pinned = await call('pinChatMessage', { chat_id: chat, message_id: sent.result.message_id, disable_notification: true });
+    console.log(`${post.id} pinned: ${pinned.ok ? 'yes' : `NO (${pinned.description})`}`);
+  }
 }
 if (failed) process.exitCode = 1;
