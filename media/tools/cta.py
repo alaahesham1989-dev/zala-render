@@ -293,7 +293,7 @@ def process(src, out, lang, kind, vid, force):
     fc.append(''.join(mix_in) + f'amix=inputs={len(mix_in)}:normalize=0:duration=first:dropout_transition=0,alimiter=limit=0.95[a]')
     fc.append(f'[{vlabel}]tpad=stop_mode=clone:stop_duration={tail:.3f},format=yuv420p[v]' if tail > 0 else f'[{vlabel}]format=yuv420p[v]')
     tmp_out = out + '.tmp.mp4'
-    cmd += ['-filter_complex', ';'.join(fc), '-map', '[v]', '-map', '[a]', '-map_metadata', '0', '-c:v', 'libx264', '-preset', 'medium', '-crf', '17',
+    cmd += ['-filter_complex', ';'.join(fc), '-map', '[v]', '-map', '[a]', '-map_metadata', '0', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-maxrate', '6M', '-bufsize', '12M',
             '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', tmp_out]
     run(cmd)
     d2 = probe(tmp_out)[0]

@@ -1325,7 +1325,7 @@ async function finalPass({ chain, mix, ass, out, tl, crf = 19 }) {
   const a = (tl.stingAt != null ? tl.stingAt + STING + 0.8 : 0.5), b = tl.mainEnd - 0.3;
   const fc = `[0:v]${GRADE}[g];[2:v]scale=-2:96,format=rgba,colorchannelmixer=aa=0.8[wm];[g][wm]overlay=W-w-56:34:enable='between(t,${a.toFixed(2)},${b.toFixed(2)})'[o];[o]${subsFilter(ass)}[v]`;
   await encodeTo(out, (part) => ['-i', chain, '-i', mix, '-loop', '1', '-i', path.join(BRAND, 'mark.png'), '-filter_complex', fc, '-map', '[v]', '-map', '1:a',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', String(crf), '-maxrate', '12M', '-bufsize', '24M', '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', '-t', tl.total.toFixed(2), part]);
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', String(Math.max(crf, 21)), '-maxrate', '8M', '-bufsize', '16M', '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', '-t', tl.total.toFixed(2), part]);
 }
 
 // ── vertical reels ───────────────────────────────────────────────────────────
@@ -1536,7 +1536,7 @@ async function renderReel(script, reel, data, music, tl, dir, work) {
 
   const out = path.join(dir, `${reel.id}.mp4`);
   await encodeTo(out, (part) => [...clips.flatMap((c) => ['-i', c]), '-i', endClip, '-loop', '1', '-i', path.join(BRAND, 'mark.png'), '-i', mix,
-    '-filter_complex_script', gf, '-map', '[v]', '-map', `${n + 2}:a`, '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-maxrate', '10M', '-bufsize', '20M', '-pix_fmt', 'yuv420p',
+    '-filter_complex_script', gf, '-map', '[v]', '-map', `${n + 2}:a`, '-c:v', 'libx264', '-preset', 'medium', '-crf', '21', '-maxrate', '8M', '-bufsize', '16M', '-pix_fmt', 'yuv420p',
     '-c:a', 'copy', '-movflags', '+faststart', '-t', total.toFixed(2), part]);
   ff(['-ss', '1.6', '-i', out, '-frames:v', '1', '-q:v', '2', path.join(dir, `${reel.id}_cover.jpg`)]);
   return { id: reel.id, title: reel.title, file: path.basename(out), duration: Math.round(total * 10) / 10 };
