@@ -1,4 +1,4 @@
-name: ZALA atlas voices - ten places a day, checked by listening
+name: ZALA atlas voices - as far as the free quota goes, checked by listening
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       places:
         description: "how many places (both languages each)"
         required: false
-        default: "10"
+        default: "300"
         type: string
       audit:
         description: "how many older voices to listen to"
