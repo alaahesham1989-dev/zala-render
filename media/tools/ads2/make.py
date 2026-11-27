@@ -95,7 +95,9 @@ def norm(w):
 def word_times(model, path, spoken, dur):
     """Start/end of every known word: whisper's clock, matched to our own words; gaps are shared by length."""
     heard = []
-    segs, _ = model.transcribe(path, language='ar', word_timestamps=True, beam_size=5, initial_prompt=' '.join(spoken))
+    # hand whisper the samples ourselves: its own file reader breaks with newer PyAV
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-ac', '1', '-ar', '16000', '-f', 'f32le', '-'], capture_output=True, check=True).stdout
+    segs, _ = model.transcribe(np.frombuffer(raw, dtype=np.float32).copy(), language='ar', word_timestamps=True, beam_size=5, initial_prompt=' '.join(spoken))
     for s in segs:
         heard += [(norm(w.word), w.start, w.end) for w in s.words]
     times = [None] * len(spoken)
