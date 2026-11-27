@@ -1,27 +1,43 @@
 {
-  "at": "2026-11-26T09:47:39.955Z",
+  "at": "2026-11-27T09:47:31.193Z",
   "impressionsAvailable": false,
   "bestTitles": [
     "Ancient Egypt: The Night 40 Pharaohs Disappeared",
     "Ancient Egypt: Imhotep Built the First Pyramid — Then Vanished",
     "Ancient Egypt: Alexander the Great Has No Tomb",
-    "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold",
-    "Ancient Egypt: Why Was an Egyptian Queen Buried With War Medals?"
+    "Ancient Egypt: Why Nobody Can Find Cleopatra's Tomb",
+    "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold"
   ],
   "bestShorts": [
+    "Ancient Egypt: A Pharaoh's Tomb Was Found in 1940 — Then Forgotten for Decades #shorts",
     "Ancient Egypt: Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
     "The Rise of King Menes – Founder of Ancient Egypt’s First Dynasty | Echoes of Egypt Shorts",
-    "Ancient Egypt's Lost Pyramid You've Never Heard Of #shorts",
-    "Ancient Egypt: The Sun Inside the Mountain #shorts",
-    "Ancient Egypt: Where Did the Great Pyramid's Golden Top Actually Go? #shorts"
+    "Ancient Egypt: They Found His Mummy With 3 Weapons Still In It #shorts",
+    "Ancient Egypt's Lost Pyramid You've Never Heard Of #shorts"
   ],
   "videos": [
+    {
+      "id": "daVWS8CbBKk",
+      "title": "Ancient Egypt: Why Pyramid Builders Were Paid in Beer",
+      "published": "2026-11-26T20:00:15Z",
+      "short": false,
+      "views": 2,
+      "sources": {}
+    },
+    {
+      "id": "e_V5FaSHnPk",
+      "title": "Ancient Egypt: The Queen Pharaohs Tried to Erase #shorts",
+      "published": "2026-11-26T14:25:01Z",
+      "short": true,
+      "views": 94,
+      "sources": {}
+    },
     {
       "id": "yiEbxmJ7L1c",
       "title": "Ancient Egypt: Ramesses II Walked Straight Into This Military Ambush #shorts",
       "published": "2026-11-25T20:00:00Z",
       "short": true,
-      "views": 33,
+      "views": 48,
       "sources": {}
     },
     {
@@ -29,7 +45,7 @@
       "title": "Only One Ancient Egyptian Pharaoh Was Ever Buried in Silver #shorts",
       "published": "2026-11-25T16:00:21Z",
       "short": true,
-      "views": 59,
+      "views": 65,
       "sources": {}
     },
     {
@@ -37,29 +53,45 @@
       "title": "Ancient Egypt: They Found His Mummy With 3 Weapons Still In It #shorts",
       "published": "2026-11-24T20:00:11Z",
       "short": true,
-      "views": 562,
-      "sources": {}
+      "views": 421,
+      "video": "WbYOrjr0jqw",
+      "averageViewDuration": 37,
+      "averageViewPercentage": 76.01,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 408,
+        "YT_SEARCH": 13,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "C9idHAReMEA",
       "title": "Ancient Egypt: A Pharaoh's Tomb Was Found in 1940 — Then Forgotten for Decades #shorts",
       "published": "2026-11-24T16:00:18Z",
       "short": true,
-      "views": 298,
-      "sources": {}
+      "views": 196,
+      "video": "C9idHAReMEA",
+      "averageViewDuration": 58,
+      "averageViewPercentage": 98.92,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 189,
+        "YT_SEARCH": 7,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "wlj3F_WVjNY",
       "title": "Ancient Egypt: The Lie That Almost Got Ramesses II Killed at Kadesh",
       "published": "2026-11-23T20:00:22Z",
       "short": false,
-      "views": 1,
+      "views": 4,
       "video": "wlj3F_WVjNY",
-      "averageViewDuration": 31,
-      "averageViewPercentage": 7.449999999999999,
+      "averageViewDuration": 41,
+      "averageViewPercentage": 9.86,
       "subscribersGained": 0,
       "sources": {
-        "RELATED_VIDEO": 1
+        "RELATED_VIDEO": 4
       }
     },
     {
@@ -67,14 +99,16 @@
       "title": "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold",
       "published": "2026-11-23T16:00:34Z",
       "short": false,
-      "views": 8,
+      "views": 19,
       "video": "9nrQP7Dq58Q",
-      "averageViewDuration": 136,
-      "averageViewPercentage": 28.850000000000005,
+      "averageViewDuration": 127,
+      "averageViewPercentage": 26.94,
       "subscribersGained": 0,
       "sources": {
-        "RELATED_VIDEO": 5,
-        "NO_LINK_OTHER": 3
+        "SUBSCRIBER": 10,
+        "RELATED_VIDEO": 7,
+        "NO_LINK_OTHER": 1,
+        "YT_SEARCH": 1
       }
     },
     {
@@ -82,13 +116,13 @@
       "title": "Ancient Egypt: His Skull Was Split in Battle — and He Became a Hero #shorts",
       "published": "2026-11-22T20:00:19Z",
       "short": true,
-      "views": 112,
+      "views": 113,
       "video": "IZWC9atW2y4",
       "averageViewDuration": 20,
-      "averageViewPercentage": 56.18,
+      "averageViewPercentage": 55.53,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 101,
+        "SHORTS": 102,
         "YT_SEARCH": 8,
         "NO_LINK_OTHER": 1,
         "YT_CHANNEL": 1,
@@ -100,14 +134,14 @@
       "title": "Ancient Egypt: An Egyptian Queen Was Buried With an Army's War Medals #shorts",
       "published": "2026-11-21T20:00:22Z",
       "short": true,
-      "views": 45,
+      "views": 49,
       "video": "hZsbBXflNgE",
-      "averageViewDuration": 22,
-      "averageViewPercentage": 45.37,
+      "averageViewDuration": 21,
+      "averageViewPercentage": 43.53,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 32,
-        "YT_SEARCH": 10,
+        "YT_SEARCH": 14,
         "YT_CHANNEL": 3,
         "NO_LINK_OTHER": 0
       }
@@ -117,14 +151,14 @@
       "title": "Ancient Egypt: The World's Oldest Makeup Was Found in This Egyptian Tomb #shorts",
       "published": "2026-11-20T20:00:13Z",
       "short": true,
-      "views": 206,
+      "views": 208,
       "video": "inow4PwRnFo",
       "averageViewDuration": 32,
       "averageViewPercentage": 60.94,
       "subscribersGained": 0,
       "sources": {
         "SHORTS": 191,
-        "YT_SEARCH": 14,
+        "YT_SEARCH": 16,
         "YT_CHANNEL": 1,
         "NO_LINK_OTHER": 0
       }
@@ -139,12 +173,7 @@
       "averageViewDuration": 46,
       "averageViewPercentage": 81.72,
       "subscribersGained": 0,
-      "sources": {
-        "SHORTS": 90,
-        "YT_SEARCH": 10,
-        "YT_OTHER_PAGE": 1,
-        "NO_LINK_OTHER": 0
-      }
+      "sources": {}
     },
     {
       "id": "a8BjtLe1qLI",
@@ -270,14 +299,14 @@
       "title": "The Ancient Egyptian Temple Built Entirely of Granite #shorts",
       "published": "2026-11-17T17:00:21Z",
       "short": true,
-      "views": 1038,
+      "views": 1039,
       "video": "VwGlWNTJYyQ",
       "averageViewDuration": 28,
-      "averageViewPercentage": 50.44,
+      "averageViewPercentage": 50.51,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 981,
-        "YT_SEARCH": 41,
+        "YT_SEARCH": 42,
         "YT_OTHER_PAGE": 12,
         "YT_CHANNEL": 2,
         "SOUND_PAGE": 2,
@@ -289,14 +318,14 @@
       "title": "Ancient Egypt: Finding Tomb KV62 #shorts",
       "published": "2026-11-17T16:00:36Z",
       "short": true,
-      "views": 227,
+      "views": 228,
       "video": "A9gEF8DD7Ak",
       "averageViewDuration": 25,
       "averageViewPercentage": 50.51,
       "subscribersGained": 0,
       "sources": {
         "SHORTS": 213,
-        "YT_SEARCH": 7,
+        "YT_SEARCH": 8,
         "YT_CHANNEL": 4,
         "YT_OTHER_PAGE": 2,
         "NO_LINK_OTHER": 1
@@ -375,7 +404,7 @@
       "title": "Experience Egypt in Pure Luxury with ZALA VIP #shorts",
       "published": "2026-11-15T22:00:00Z",
       "short": true,
-      "views": 30,
+      "views": 31,
       "video": "jSSISRoW9PI",
       "averageViewDuration": 37,
       "averageViewPercentage": 82.88,
@@ -383,7 +412,7 @@
       "sources": {
         "SHORTS": 27,
         "SUBSCRIBER": 2,
-        "YT_SEARCH": 1,
+        "YT_SEARCH": 2,
         "NO_LINK_OTHER": 0,
         "YT_OTHER_PAGE": 0
       }
@@ -547,20 +576,20 @@
       }
     },
     {
-      "id": "4lL1nWz8SIc",
-      "title": "Ancient Egypt: Nobody Can Find Cleopatra #shorts",
-      "published": "2026-11-06T16:00:28Z",
-      "short": true,
-      "views": 22,
-      "video": "4lL1nWz8SIc",
-      "averageViewDuration": 35,
-      "averageViewPercentage": 60.88,
+      "id": "EjAguOHeldM",
+      "title": "Ancient Egypt: Why Nobody Can Find Cleopatra's Tomb",
+      "published": "2026-11-05T18:10:31Z",
+      "short": false,
+      "views": 108,
+      "video": "EjAguOHeldM",
+      "averageViewDuration": 80,
+      "averageViewPercentage": 21.21,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 15,
-        "YT_CHANNEL": 6,
-        "YT_SEARCH": 1,
-        "NO_LINK_OTHER": 0
+        "SUBSCRIBER": 97,
+        "RELATED_VIDEO": 6,
+        "YT_CHANNEL": 3,
+        "NO_LINK_OTHER": 2
       }
     },
     {
