@@ -28,6 +28,12 @@ graves, protest, police or soldiers, and poor or near-duplicate pictures.
 Answer JSON only: {{"accept": [1, 4]}}"""
 
 
+def name_of(url):
+    """The file itself, whatever size or address it is linked by."""
+    last = urllib.parse.unquote(clean(url).rsplit('/', 1)[-1])
+    return re.sub(r'^(lossy-page1-)?\d+px-', '', last).replace(' ', '_').lower()
+
+
 def plain(v):
     return ' '.join(re.sub(r'<[^>]+>', ' ', str(v or '')).split())
 
@@ -67,7 +73,7 @@ def candidates(name_en, name_ar, lat, lng, known):
     searches.append(openverse(name_en))
     for search in searches:
         for c in search:
-            key = clean(c['u'])
+            key = name_of(c['u'])
             if key not in known and key not in found:
                 found[key] = c
         if len(found) >= 14:
@@ -111,14 +117,20 @@ for cc in lib.ORDER:
             break
         if (ONLY and pid not in ONLY) or (not ONLY and (pid in filled or pid not in seen)):
             continue  # only places whose own pictures were looked at, once each
-        good = [clean(u) for u in urls if u and clean(u) not in hidden] + [clean(a['u']) for a in added.get(pid, [])]
+        refused = {name_of(u) for u in hidden}
+        # an earlier addition that is really one of the place's own files is dropped from our list
+        own = {name_of(u) for u in urls if u}
+        added[pid] = [a for a in added.get(pid, []) if name_of(a['u']) not in own]
+        if not added[pid]:
+            del added[pid]
+        good = [name_of(u) for u in urls if u and clean(u) not in hidden] + [name_of(a['u']) for a in added.get(pid, [])]
         good = list(dict.fromkeys(good))
         need = TARGET - len(good)
         if need <= 0:
             filled[pid] = len(good)
             missing.pop(pid, None)
             continue
-        known = {clean(u) for u in urls if u} | set(good) | set(hidden)
+        known = own | set(good) | refused
         pool = candidates(name_en, name_ar, lat, lng, known)
         images, kept = [], []
         for c in pool:
