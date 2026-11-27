@@ -33,6 +33,24 @@ if (!text || text.length > 2500) throw new Error(`no usable guide text for ${cc}
 // The free voice quota is per model and per day: when one is used up the next one speaks.
 const MODELS = [...new Set([process.env.ATLAS_TTS_MODEL || 'gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts'])];
 let model = MODELS[0];
+// function reverent: the same rules as src/lib/reverence.ts in the site
+const AR_MARKS = '[\\u064B-\\u0652]*';
+const PROPHETS_AR = 'موسى|إبراهيم|عيسى|يوسف|يعقوب|إسماعيل|إسحاق|نوح|آدم|هارون|سليمان|داود|داوود|أيوب|صالح|هود|شعيب|يونس|زكريا|يحيى|إدريس|لوط|دانيال';
+const PROPHETS_EN = 'Moses|Musa|Abraham|Ibrahim|Jesus|Joseph|Yusuf|Jacob|Ishmael|Ismail|Isaac|Noah|Adam|Aaron|Solomon|David|Job|Jonah|Zechariah|Lot|Daniel';
+const SAID_AR = '(?!\\s*[،,]?\\s*(?:صلى|ﷺ|\\(ﷺ|عليه|\\(عليه))';
+const SAID_EN = '(?!\\s*[,]?\\s*\\((?:peace|pbuh))(?!\\s*,\\s*peace be upon)';
+const NOT_LETTER = '(?![\\u0621-\\u064A])';
+
+const rules = [
+  [new RegExp(`((?:النبي|الرسول|رسول الله|نبي الله|نبينا|سيدنا|للنبي|للرسول) محم${AR_MARKS}د${AR_MARKS})${NOT_LETTER}${SAID_AR}`, 'g'), '$1 صلى الله عليه وسلم'],
+  [new RegExp(`(رسول الله)${NOT_LETTER}(?!\\s+محمد)${SAID_AR}`, 'g'), '$1 صلى الله عليه وسلم'],
+  [new RegExp(`((?:النبي|للنبي|نبي الله|سيدنا) (?:${PROPHETS_AR}))${NOT_LETTER}${SAID_AR}`, 'g'), '$1 عليه السلام'],
+  [new RegExp(`(Prophet Muhammad)\\b${SAID_EN}`, 'g'), '$1 (peace be upon him)'],
+  [new RegExp(`(Prophet (?:${PROPHETS_EN}))\\b${SAID_EN}`, 'g'), '$1 (peace be upon him)'],
+];
+
+const reverent = (text) => rules.reduce((t, [pattern, to]) => t.replace(pattern, to), text);
+
 const voice = (lang === 'ar' ? process.env.ATLAS_VOICE_AR : process.env.ATLAS_VOICE_EN) || 'Orus';
 
 async function tts() {
@@ -43,7 +61,7 @@ async function tts() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
-          contents: [{ parts: [{ text }] }], // only the words: an instruction in front gets read aloud
+          contents: [{ parts: [{ text: reverent(text) }] }], // only the words: an instruction in front gets read aloud
           generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
         }),
       });
