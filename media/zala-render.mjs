@@ -102,7 +102,7 @@ function flatten(script, limit = 0) {
   const flat = [];
   script.chapters.forEach((c, ci) => c.lines.forEach((l, li) => flat.push({
     ci, li, key: `${ci}.${li}`, label: l.label || `c${String(ci + 1).padStart(2, '0')}_l${String(li + 1).padStart(2, '0')}`,
-    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip, extra: l.extra,
+    en: l.en, cap: numerals(l.en), ar: l.ar, say: l.say || l.en, take: l.take, shot: l.shot, pictures: l.pictures, card: l.card, map: l.map, sfx: l.sfx, callout: l.callout, part: l.part, clip: l.clip, extra: l.extra,
   })));
   return limit ? flat.slice(0, limit) : flat;
 }
@@ -181,7 +181,7 @@ const voiceParams = (script) => ({
   model: DEFAULT_MODEL, voice: script.voice || DEFAULT_VOICE, style: script.voiceStyle || DEFAULT_STYLE, tempo: Number(script.voiceTempo) || 1,
 });
 const voiceFileOf = (script, f, vp = voiceParams(script)) => f.extra ? extraVoice(script, f.say) :
-  path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo].join('|'))}.wav`);
+  path.join(CACHE, 'voice', script.id, `${f.label}-${hash([f.say, vp.model, vp.voice, vp.style, vp.tempo, ...(f.take ? [f.take] : [])].join('|'))}.wav`);
 
 const extraVoice = (script, text) => path.join(CACHE, 'voice', script.id, `x-${hash(text)}.wav`);
 

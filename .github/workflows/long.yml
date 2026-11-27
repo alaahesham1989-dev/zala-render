@@ -94,6 +94,7 @@ jobs:
           aws s3 cp "s3://${R2_BUCKET}/renders/$ID/items.jsonl" own-items.jsonl --endpoint-url "$E" --no-progress || true
           aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
           [ -s own-items.jsonl ] && cat own-items.jsonl >> content/library/items.jsonl || true
+          if [ -f "content/youtube/$ID.json" ] && aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" verdict-last.json --endpoint-url "$E" --no-progress; then node media/tools/revoice.mjs "content/youtube/$ID.json" verdict-last.json; fi
           # the same topic made before in another language: its pictures are used again, not fetched again
           if [ "$TOPIC" != "$ID" ] && aws s3 cp "s3://${R2_BUCKET}/renders/$TOPIC/items.jsonl" topic-items.jsonl --endpoint-url "$E" --no-progress; then cat topic-items.jsonl >> content/library/items.jsonl; fi
           node -e '

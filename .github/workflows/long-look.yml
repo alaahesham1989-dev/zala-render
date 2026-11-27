@@ -1,0 +1,33 @@
+name: ZALA long videos frames (read only)
+on:
+  push:
+    branches: [long-look]
+permissions:
+  contents: read
+jobs:
+  look:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: ${{ secrets.VITE_MEDIA_BASE_URL }}
+    steps:
+      - run: sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
+      - name: Frames across each video
+        run: |
+          set -uo pipefail
+          mkdir -p out
+          for id in ZV-ESL01 ZV-ENL01; do
+            url="${BASE%/}/renders/$id/publish/$id.mp4"
+            d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$url")
+            for k in $(seq 0 19); do
+              t=$(python3 -c "k=$k; d=$d; print(1.5 if k==0 else 7 if k==1 else round(d-4,1) if k==19 else round(20+(k-2)*(d-40)/17,1))")
+              ffmpeg -v error -y -ss "$t" -i "$url" -frames:v 1 -vf scale=384:-1 -q:v 4 "f$(printf %02d $k).jpg"
+            done
+            ffmpeg -v error -y -pattern_type glob -i 'f*.jpg' -vf "tile=4x5:padding=4:color=red" -frames:v 1 -q:v 4 "out/$id.jpg"
+            rm -f f*.jpg
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: long-look
+          path: out/
+          retention-days: 7

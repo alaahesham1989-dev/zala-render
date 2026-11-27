@@ -71,6 +71,7 @@ jobs:
           aws s3 cp "s3://${R2_BUCKET}/renders/$ID/items.jsonl" own-items.jsonl --endpoint-url "$E" --no-progress || true
           aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/review.json" review-last.json --endpoint-url "$E" --no-progress || true
           [ -s own-items.jsonl ] && cat own-items.jsonl >> content/library/items.jsonl || true
+          if [ -f "content/youtube/$ID.json" ] && aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" verdict-last.json --endpoint-url "$E" --no-progress; then node media/tools/revoice.mjs "content/youtube/$ID.json" verdict-last.json; fi
           node -e '
             const fs=require("fs"), f="content/library/treasures.json", id=process.env.ID, s=require("./media/tools/long-treasures.json")[id];
             const lib=JSON.parse(fs.readFileSync(f)); lib[id]={ title:s.subject, hook:s.subject, seconds:s.minutes*60, match:s.match, archive:s.archive, queries:s.queries };
