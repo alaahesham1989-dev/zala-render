@@ -134,3 +134,38 @@ jobs:
           [ -f "quality-$ID/verdict.json" ] && node -e 'const v=require("./quality-"+process.env.ID+"/verdict.json"); console.log("RESULT", v.id, "pass="+v.pass, "notes="+(v.notes||[]).length); v.reasons.slice(0,12).forEach((r)=>console.log("RESULT  - "+r.slice(0,200)))'
           [ -f "quality-$ID/review.json" ] && node -e 'const r=require("./quality-"+process.env.ID+"/review.json"); console.log("RESULT heard", JSON.stringify(r.hearing||null), "loudness", JSON.stringify(r.audio.loudness))'
           true
+
+  phone:
+    # a copy for the owner's phone: the same 1080p picture, newer compression, audio untouched; only for videos that passed
+    needs: make
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include: 
+          - { id: ZV-ARL01 }
+          - { id: ZV-ESL01 }
+          - { id: ZV-ENL01 }
+    env:
+      ID: ${{ matrix.id }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      E: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+    steps:
+      - name: Make the phone copy once
+        run: |
+          set -uo pipefail
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/review/verdict.json" v.json --endpoint-url "$E" --no-progress || exit 0
+          grep -q '"pass": *true' v.json || { echo "$ID has not passed: no copy"; exit 0; }
+          if aws s3 ls "s3://${R2_BUCKET}/renders/$ID/phone/$ID.mp4" --endpoint-url "$E" > /dev/null; then echo "$ID has its copy"; exit 0; fi
+          sudo apt-get update -y >/dev/null && sudo apt-get install -y ffmpeg >/dev/null
+          aws s3 cp "s3://${R2_BUCKET}/renders/$ID/publish/$ID.mp4" src.mp4 --endpoint-url "$E" --no-progress
+          ffmpeg -v error -y -i src.mp4 -map 0:v:0 -map 0:a:0 -c:v libx265 -preset medium -crf 22 -pix_fmt yuv420p -tag:v hvc1 -x265-params log-level=error -c:a copy -movflags +faststart phone.mp4
+          echo "RESULT $ID phone copy $(( $(stat -c%s phone.mp4)/1000000 ))MB"
+          aws s3 cp phone.mp4 "s3://${R2_BUCKET}/renders/$ID/phone/$ID.mp4" --endpoint-url "$E" --no-progress --content-type video/mp4
