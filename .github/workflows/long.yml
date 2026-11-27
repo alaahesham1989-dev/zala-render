@@ -130,11 +130,14 @@ jobs:
           aws s3 cp "content/youtube/$ID.json" "s3://${R2_BUCKET}/renders/$ID/script.json" --endpoint-url "$E" --no-progress
       - name: Make and check (listen and look), fixing once
         if: env.DONE != 'yes'
-        timeout-minutes: 290
+        timeout-minutes: 230   # leaves time to keep the work on R2 before the job's six hours end
         run: |
           set -uo pipefail
           exec > >(tee -a run.log) 2>&1
+          SECONDS=0
           for round in 1 2; do
+            # a second round only when the first was quick; otherwise the next day's run fixes what was refused
+            if [ "$round" -gt 1 ] && [ "$SECONDS" -gt 6000 ]; then echo "QUALITY: $ID left for the next run"; break; fi
             review=""; [ -f review-last.json ] && review=review-last.json
             [ "$round" -gt 1 ] && { review="quality-$ID/verdict.json"; [ -f "quality-$ID/review.json" ] && review="quality-$ID/review.json"; }
             bash media/tools/line/make.sh "$ID" tour "$review" || { echo "RESULT $ID make stopped (round $round)"; continue; }
