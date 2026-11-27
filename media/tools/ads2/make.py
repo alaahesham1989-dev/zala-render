@@ -9,7 +9,8 @@ WORK = os.environ['WORK']
 OUT = f'{WORK}/out'
 os.makedirs(OUT, exist_ok=True)
 B = json.load(open(f'{WORK}/bundle.json', encoding='utf-8'))
-SPEC = B['spec']
+HERE = os.path.dirname(os.path.abspath(__file__))
+SPEC = json.load(open(os.path.join(HERE, B['spec']['name'].replace('_ad', '') + '.json'), encoding='utf-8'))
 for name, data in B['files'].items():
     with open(f'{WORK}/{name}', 'wb') as f:
         f.write(base64.b64decode(data))
@@ -159,8 +160,8 @@ def draw_caption(img, groups, t, y):
     size = 74
     while True:
         f = font('bold', size)
-        widths = [d.textlength(w[0].rstrip('،.'), font=f, **kw(w[0])) for w in cur]
-        total = sum(widths) + 26 * (len(cur) - 1)
+        widths = [d.textlength(w[0].rstrip('،.'), font=f, **kw(w[0])) * 1.1 for w in cur]
+        total = sum(widths) + 22 * (len(cur) - 1)
         if total <= W - 150 or size <= 50:
             break
         size -= 4
@@ -170,9 +171,9 @@ def draw_caption(img, groups, t, y):
         shown = word.rstrip('،.')
         active = a - 0.04 <= t
         last = active and t < b + 0.12
-        ff = font('bold', int(size * (1.12 if last else 1.0) * (0.85 + 0.15 * grow)))
+        ff = font('bold', int(size * (1.08 if last else 1.0) * (0.85 + 0.15 * grow)))
         text(d, (x - wd / 2, y), shown, ff, fill=GOLD if last else WHITE, stroke=8)
-        x -= wd + 26
+        x -= wd + 22
 
 
 # ---------------------------------------------------------------- picture sources
