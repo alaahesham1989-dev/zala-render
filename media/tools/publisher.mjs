@@ -40,7 +40,7 @@ function bring(id) {
 async function publish(item) {
   const dir = bring(item.id);
   if (item.kind === 'episode') {
-    node([tool('autopublish.mjs'), dir, item.id, QUEUE]);
+    node([tool('autopublish.mjs'), dir, item.id, QUEUE], { AP_REELS: '0' });   // owner 2026-11-27: no cut shorts
     node([tool('atlas-link.mjs'), 'episode', item.id]);
   } else if (item.kind === 'tour') {
     node([tool('autopublish.mjs'), dir, item.id, QUEUE], { AP_HOUR: '21', AP_DAYS: '6', AP_REELS: '0' });
