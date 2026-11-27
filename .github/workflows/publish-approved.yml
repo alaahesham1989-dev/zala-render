@@ -8,6 +8,11 @@ on:
         description: "video id listed in publish-approved.json"
         required: true
         type: string
+      fix:
+        description: "yes = rewrite the words of an already scheduled video"
+        required: false
+        default: "no"
+        type: string
       dry:
         description: "yes = only build the title and description"
         required: false
@@ -28,6 +33,7 @@ jobs:
     env:
       ID: ${{ inputs.id }}
       DRY: ${{ inputs.dry == 'yes' && '1' || '' }}
+      FIX: ${{ inputs.fix == 'yes' && '1' || '' }}
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -60,6 +66,6 @@ jobs:
       - name: Schedule
         run: node media/tools/publish-approved.mjs "$ID"
       - name: Remember what was published
-        if: always()
+        if: always() && inputs.fix != 'yes'
         run: |
           [ -f published.json ] && aws s3 cp published.json "s3://${R2_BUCKET}/renders/$ID/published.json" --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" --no-progress || true

@@ -43,13 +43,15 @@ const reel = isMain ? null : pkg.reels.find((r) => r.id === `${id}-${which}`);
 if (!isMain && !reel) throw new Error(`No reel ${which} in the package`);
 const file = path.join(dir, isMain ? pkg.file : reel.file);
 const site = (medium) => `https://www.zalavip.com/?utm_source=youtube&utm_medium=${medium}&utm_campaign=${isMain ? id : reel.id}`;
-const title = isMain ? brandTitle(pkg.title, 100) : `${brandTitle(reel.title, 91)} #shorts`;
+// a package may bring its own words (an Arabic or Spanish video must not get the English channel's prefix and hashtags)
+const title = pkg.uploadTitle ? `${pkg.uploadTitle.slice(0, 91)}${isMain ? '' : ' #shorts'}` : isMain ? brandTitle(pkg.title, 100) : `${brandTitle(reel.title, 91)} #shorts`;
 // Owner's order: short words about the subject only; the credits go in the first comment once the video is public.
-const description = postText(pkg, which).slice(0, 4900);
+const description = (pkg.uploadDescription || postText(pkg, which)).slice(0, 4900);
+const language = pkg.lang || 'en';
 
 const size = fs.statSync(file).size;
 const body = {
-  snippet: { title, description, tags: pkg.tags, categoryId: '27', defaultLanguage: 'en', defaultAudioLanguage: 'en' },
+  snippet: { title, description, tags: pkg.tags, categoryId: '27', defaultLanguage: language, defaultAudioLanguage: language },
   status: {
     privacyStatus: publishAt ? 'private' : privacy, selfDeclaredMadeForKids: false, embeddable: true,
     // the narration is an AI voice, and reconstructed shots are marked on screen

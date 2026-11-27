@@ -43,6 +43,24 @@ if (process.env.DRY === '1') process.exit(0);
 const doneFile = path.join(REPO, 'published.json');
 const done = fs.existsSync(doneFile) ? JSON.parse(fs.readFileSync(doneFile, 'utf8')) : {};
 const save = () => fs.writeFileSync(doneFile, JSON.stringify(done, null, 2));
+const FIX = process.env.FIX === '1';
+if (FIX) {
+  // already uploaded: only the words change (title, description with credits, language)
+  const done = JSON.parse(fs.readFileSync(path.join(REPO, 'published.json'), 'utf8'));
+  const t = await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: process.env.YOUTUBE_CLIENT_ID, client_secret: process.env.YOUTUBE_CLIENT_SECRET, refresh_token: process.env.YOUTUBE_REFRESH_TOKEN, grant_type: 'refresh_token' }) })).json();
+  const yt = await fetch('https://www.googleapis.com/youtube/v3/videos?part=snippet', { method: 'PUT', headers: { Authorization: `Bearer ${t.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: done.youtube.id, snippet: { title: `${spec.title} #shorts`, description, categoryId: '27', tags: pkg.tags, defaultLanguage: 'ar', defaultAudioLanguage: 'ar' } }) });
+  const y = await yt.json();
+  console.log(yt.ok ? `FIXED ${id} youtube | ${y.snippet.title} | credits in description: ${y.snippet.description.includes('CC BY')}` : `FIX FAILED youtube ${yt.status} ${JSON.stringify(y.error?.errors || y.error).slice(0, 300)}`);
+  const G = 'https://graph.facebook.com/v21.0';
+  const page = await (await fetch(`${G}/${spec.meta.page}?fields=access_token&access_token=${process.env.META_SYSTEM_USER_TOKEN}`)).json();
+  const fb = await fetch(`${G}/${done.fb.id}`, { method: 'POST', body: new URLSearchParams({ description, access_token: page.access_token }) });
+  const f = await fb.json();
+  const back = await (await fetch(`${G}/${done.fb.id}?fields=description,published&access_token=${page.access_token}`)).json();
+  console.log(fb.ok ? `FIXED ${id} facebook | published now: ${back.published} | starts: ${String(back.description || '').slice(0, 40)} | credits: ${String(back.description || '').includes('CC BY')}` : `FIX FAILED facebook ${fb.status} ${JSON.stringify(f.error).slice(0, 300)}`);
+  process.exit(yt.ok && fb.ok ? 0 : 1);
+}
 const when = spec.at;                                   // ISO time the owner's schedule gives it
 if (!(Date.parse(when) > Date.now() + 15 * 60e3)) throw new Error(`${id}: the publish time must be at least 15 minutes ahead`);
 const run = (args, env = {}) => {
