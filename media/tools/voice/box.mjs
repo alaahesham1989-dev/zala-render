@@ -4,6 +4,7 @@
 //   node media/tools/voice/box.mjs open <job> result.zip      (laptop)
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import https from 'node:https';
 
 const env = {};
 try {
@@ -31,8 +32,14 @@ async function put(name, body) {
   const signature = hmac(sk, ['AWS4-HMAC-SHA256', stamp, scope, sha(canonical)].join('\n')).toString('hex');
   const auth = `AWS4-HMAC-SHA256 Credential=${K('R2_ACCESS_KEY_ID')}/${scope}, SignedHeaders=${names.join(';')}, Signature=${signature}`;
   delete headers.host;
-  const r = await fetch(`https://${host}${uri}`, { method: 'PUT', headers: { ...headers, authorization: auth }, body });
-  if (!r.ok) throw new Error(`R2 refused the upload: ${r.status}`);
+  // node:https, not fetch: a slow home upload runs past fetch's five-minute header timeout.
+  const status = await new Promise((resolve, reject) => {
+    const req = https.request({ host, path: uri, method: 'PUT', headers: { ...headers, authorization: auth, 'content-length': body.length } },
+      (res) => { res.resume(); res.on('end', () => resolve(res.statusCode)); });
+    req.on('error', reject);
+    req.end(body);
+  });
+  if (status !== 200) throw new Error(`R2 refused the upload: ${status}`);
 }
 
 const seal = (plain) => {

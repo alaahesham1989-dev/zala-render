@@ -1,0 +1,58 @@
+name: ZALA partner ad editor
+
+# Footage and result travel encrypted (media/tools/voice/box.mjs): nothing personal is stored readable here.
+on:
+  push:
+    branches: [ads-limo]
+    paths: [media/tools/ads2/job.txt]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "random job name given to box.mjs send"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: |
+          echo "JOB=${INPUT_JOB:-$(tr -d ' \r\n' < media/tools/ads2/job.txt)}" >> "$GITHUB_ENV"
+          echo "WORK=$RUNNER_TEMP/ad" >> "$GITHUB_ENV"
+        env:
+          INPUT_JOB: ${{ inputs.job }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip -q install boto3 cryptography
+      - name: Open the encrypted bundle
+        run: python media/tools/voice/cloud.py fetch
+        env:
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      - name: Tools and fonts
+        run: |
+          sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg libraqm0 libfribidi0 > /dev/null
+          pip -q install pillow numpy faster-whisper playwright
+          python -m playwright install --with-deps chromium > /dev/null
+          mkdir -p "$WORK/fonts"
+          curl -sfL -o "$WORK/fonts/plex.ttf" https://github.com/google/fonts/raw/main/ofl/ibmplexsansarabic/IBMPlexSansArabic-Bold.ttf
+          curl -sfL -o "$WORK/fonts/amiri.ttf" https://github.com/google/fonts/raw/main/ofl/amiri/Amiri-Bold.ttf
+          cp media/brand/logo.png "$WORK/logo.png"
+      - name: Photograph the real sign-up form
+        run: python media/tools/ads2/capture.py
+      - name: Edit the ad
+        run: python media/tools/ads2/make.py
+      - name: Seal the results
+        run: python media/tools/voice/cloud.py seal
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
