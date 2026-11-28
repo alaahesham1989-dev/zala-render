@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-27T09:47:31.193Z",
+  "at": "2026-11-28T09:47:35.036Z",
   "impressionsAvailable": false,
   "bestTitles": [
     "Ancient Egypt: The Night 40 Pharaohs Disappeared",
@@ -9,11 +9,11 @@
     "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold"
   ],
   "bestShorts": [
-    "Ancient Egypt: A Pharaoh's Tomb Was Found in 1940 — Then Forgotten for Decades #shorts",
     "Ancient Egypt: Is Queen Nefertiti Hiding in King Tut's Tomb? #shorts",
     "The Rise of King Menes – Founder of Ancient Egypt’s First Dynasty | Echoes of Egypt Shorts",
-    "Ancient Egypt: They Found His Mummy With 3 Weapons Still In It #shorts",
-    "Ancient Egypt's Lost Pyramid You've Never Heard Of #shorts"
+    "Ancient Egypt: A Pharaoh's Tomb Was Found in 1940 — Then Forgotten for Decades #shorts",
+    "Ancient Egypt's Lost Pyramid You've Never Heard Of #shorts",
+    "Ancient Egypt: The Sun Inside the Mountain #shorts"
   ],
   "videos": [
     {
@@ -21,7 +21,7 @@
       "title": "Ancient Egypt: Why Pyramid Builders Were Paid in Beer",
       "published": "2026-11-26T20:00:15Z",
       "short": false,
-      "views": 2,
+      "views": 8,
       "sources": {}
     },
     {
@@ -29,7 +29,7 @@
       "title": "Ancient Egypt: The Queen Pharaohs Tried to Erase #shorts",
       "published": "2026-11-26T14:25:01Z",
       "short": true,
-      "views": 94,
+      "views": 224,
       "sources": {}
     },
     {
@@ -37,30 +37,48 @@
       "title": "Ancient Egypt: Ramesses II Walked Straight Into This Military Ambush #shorts",
       "published": "2026-11-25T20:00:00Z",
       "short": true,
-      "views": 48,
-      "sources": {}
+      "views": 33,
+      "video": "yiEbxmJ7L1c",
+      "averageViewDuration": 33,
+      "averageViewPercentage": 56.81,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 29,
+        "YT_SEARCH": 2,
+        "YT_OTHER_PAGE": 2,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "53g1DQcf4w0",
       "title": "Only One Ancient Egyptian Pharaoh Was Ever Buried in Silver #shorts",
       "published": "2026-11-25T16:00:21Z",
       "short": true,
-      "views": 65,
-      "sources": {}
+      "views": 59,
+      "video": "53g1DQcf4w0",
+      "averageViewDuration": 40,
+      "averageViewPercentage": 69.15,
+      "subscribersGained": 0,
+      "sources": {
+        "SHORTS": 58,
+        "YT_SEARCH": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "WbYOrjr0jqw",
       "title": "Ancient Egypt: They Found His Mummy With 3 Weapons Still In It #shorts",
       "published": "2026-11-24T20:00:11Z",
       "short": true,
-      "views": 421,
+      "views": 562,
       "video": "WbYOrjr0jqw",
-      "averageViewDuration": 37,
-      "averageViewPercentage": 76.01,
+      "averageViewDuration": 34,
+      "averageViewPercentage": 69.51,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 408,
-        "YT_SEARCH": 13,
+        "SHORTS": 539,
+        "YT_SEARCH": 21,
+        "YT_OTHER_PAGE": 1,
         "NO_LINK_OTHER": 0
       }
     },
@@ -69,14 +87,14 @@
       "title": "Ancient Egypt: A Pharaoh's Tomb Was Found in 1940 — Then Forgotten for Decades #shorts",
       "published": "2026-11-24T16:00:18Z",
       "short": true,
-      "views": 196,
+      "views": 306,
       "video": "C9idHAReMEA",
-      "averageViewDuration": 58,
-      "averageViewPercentage": 98.92,
+      "averageViewDuration": 48,
+      "averageViewPercentage": 82.75,
       "subscribersGained": 0,
       "sources": {
-        "SHORTS": 189,
-        "YT_SEARCH": 7,
+        "SHORTS": 291,
+        "YT_SEARCH": 12,
         "NO_LINK_OTHER": 0
       }
     },
@@ -99,16 +117,16 @@
       "title": "Ancient Egypt | The Pharaohs Nobody Talks About: Buried in Silver, Not Gold",
       "published": "2026-11-23T16:00:34Z",
       "short": false,
-      "views": 19,
+      "views": 24,
       "video": "9nrQP7Dq58Q",
-      "averageViewDuration": 127,
-      "averageViewPercentage": 26.94,
+      "averageViewDuration": 117,
+      "averageViewPercentage": 24.9,
       "subscribersGained": 0,
       "sources": {
-        "SUBSCRIBER": 10,
+        "SUBSCRIBER": 14,
         "RELATED_VIDEO": 7,
-        "NO_LINK_OTHER": 1,
-        "YT_SEARCH": 1
+        "YT_SEARCH": 2,
+        "NO_LINK_OTHER": 1
       }
     },
     {
@@ -168,12 +186,17 @@
       "title": "Ancient Egypt: This Is What Carter Found Inside Tutankhamun's Final Coffin #shorts",
       "published": "2026-11-20T16:00:19Z",
       "short": true,
-      "views": 101,
+      "views": 107,
       "video": "2kEcO8sRQ2M",
-      "averageViewDuration": 46,
-      "averageViewPercentage": 81.72,
+      "averageViewDuration": 45,
+      "averageViewPercentage": 79.25,
       "subscribersGained": 0,
-      "sources": {}
+      "sources": {
+        "SHORTS": 90,
+        "YT_SEARCH": 16,
+        "YT_OTHER_PAGE": 1,
+        "NO_LINK_OTHER": 0
+      }
     },
     {
       "id": "a8BjtLe1qLI",
@@ -281,14 +304,14 @@
       "title": "Ancient Egypt: Was King Tut Buried with Space Metal? #shorts",
       "published": "2026-11-17T19:00:13Z",
       "short": true,
-      "views": 462,
+      "views": 463,
       "video": "wdwfLIrdCTI",
       "averageViewDuration": 31,
-      "averageViewPercentage": 62.529999999999994,
+      "averageViewPercentage": 62.4,
       "subscribersGained": 1,
       "sources": {
         "SHORTS": 437,
-        "YT_SEARCH": 22,
+        "YT_SEARCH": 23,
         "YT_OTHER_PAGE": 2,
         "YT_CHANNEL": 1,
         "NO_LINK_OTHER": 0
@@ -527,14 +550,14 @@
       "title": "Ancient Egypt: The Tunnel Under the Temple #shorts",
       "published": "2026-11-08T16:00:20Z",
       "short": true,
-      "views": 179,
+      "views": 180,
       "video": "w7Bq6MmvbZU",
       "averageViewDuration": 31,
       "averageViewPercentage": 54.61,
       "subscribersGained": 2,
       "sources": {
         "SHORTS": 174,
-        "YT_SEARCH": 3,
+        "YT_SEARCH": 4,
         "SUBSCRIBER": 1,
         "YT_CHANNEL": 1,
         "NO_LINK_OTHER": 0
@@ -698,14 +721,14 @@
       "title": "Ancient Egypt: Where Did the Great Pyramid's Golden Top Actually Go? #shorts",
       "published": "2026-10-26T01:41:08Z",
       "short": true,
-      "views": 261,
+      "views": 262,
       "video": "EGuGMlpBC4Y",
-      "averageViewDuration": 44,
-      "averageViewPercentage": 68.89,
+      "averageViewDuration": 43,
+      "averageViewPercentage": 68.51,
       "subscribersGained": 3,
       "sources": {
         "SHORTS": 204,
-        "YT_SEARCH": 42,
+        "YT_SEARCH": 43,
         "YT_OTHER_PAGE": 9,
         "YT_CHANNEL": 6,
         "NO_LINK_OTHER": 0
